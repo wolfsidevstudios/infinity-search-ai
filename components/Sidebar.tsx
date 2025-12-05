@@ -2,24 +2,27 @@ import React from 'react';
 import { Home, Plus, Compass, Clock, User, Image as ImageIcon } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings') => void;
   onReset: () => void;
-  onOpenSettings: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset, onOpenSettings }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) => {
   return (
     <div className="fixed left-0 top-0 bottom-0 w-24 flex flex-col items-center justify-between py-8 z-50">
       
       {/* Top: Profile / Settings */}
       <div>
         <button 
-          onClick={onOpenSettings}
-          className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:scale-105 transition-all group shadow-sm"
+          onClick={() => onTabChange('settings')}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group shadow-sm border ${
+              activeTab === 'settings' 
+              ? 'bg-black border-black scale-110' 
+              : 'bg-gray-100 border-gray-200 hover:scale-105'
+          }`}
           title="Settings"
         >
-          <User size={20} className="text-gray-600 group-hover:text-black" />
+          <User size={20} className={activeTab === 'settings' ? 'text-white' : 'text-gray-600 group-hover:text-black'} />
         </button>
       </div>
 

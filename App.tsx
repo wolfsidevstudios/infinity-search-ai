@@ -10,7 +10,7 @@ import LoadingAnimation from './components/LoadingAnimation';
 import DashboardWidgets from './components/DashboardWidgets'; 
 import ConnectSpotifyModal from './components/ConnectSpotifyModal';
 import SpotifyResultsView from './components/SpotifyResultsView';
-import SettingsModal from './components/SettingsModal';
+import SettingsView from './components/SettingsView';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -33,7 +33,7 @@ const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings'>('home');
   
   // State for search
   const [searchState, setSearchState] = useState<SearchState>({
@@ -50,9 +50,6 @@ const App: React.FC = () => {
   // Spotify Auth State
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
-
-  // Settings State
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
@@ -241,7 +238,7 @@ const App: React.FC = () => {
     setSearchMode('web');
   };
 
-  const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'images') => {
+  const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'images' | 'settings') => {
     setActiveTab(tab);
     if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
          handleMediaSearch(searchState.query, mediaType);
@@ -301,7 +298,6 @@ const App: React.FC = () => {
         activeTab={activeTab} 
         onTabChange={handleTabChange} 
         onReset={handleReset} 
-        onOpenSettings={() => setShowSettingsModal(true)}
       />
 
       {/* Main Floating Content Area */}
@@ -315,7 +311,9 @@ const App: React.FC = () => {
                 ? 'none' 
                 : searchMode === 'spotify' 
                   ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` // Music themed BG
-                  : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
+                  : activeTab === 'settings'
+                    ? `url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop')` // Abstract BG for settings
+                    : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
             backgroundColor: activeTab === 'home' && searchState.status === 'idle' 
                 ? '#ffffff' 
                 : '#000000', 
@@ -350,7 +348,7 @@ const App: React.FC = () => {
 
         {/* Content Container */}
         <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${
-            activeTab === 'images' 
+            activeTab === 'images' || activeTab === 'settings'
             ? 'overflow-hidden' 
             : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8' 
         }`}>
@@ -368,7 +366,6 @@ const App: React.FC = () => {
                         onModeChange={handleModeChange}
                     />
                     
-                    {/* Hide widgets if in Spotify mode to keep focus clean, or keep them? Keeping them is standard. */}
                     {searchMode === 'web' && (
                         <div className="w-full animate-fadeIn delay-300">
                            <DashboardWidgets />
@@ -415,23 +412,16 @@ const App: React.FC = () => {
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={onMediaTypeSwitch}/></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
+            {activeTab === 'settings' && <div className="w-full h-full"><SettingsView isSpotifyConnected={!!spotifyToken}/></div>}
 
         </div>
       </main>
 
-      {/* Spotify Connect Modal */}
+      {/* Spotify Connect Modal (Separate popup logic handled by app state) */}
       {showSpotifyModal && (
           <ConnectSpotifyModal 
             onClose={() => setShowSpotifyModal(false)}
             onConnect={initiateSpotifyLogin}
-          />
-      )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-          <SettingsModal 
-            onClose={() => setShowSettingsModal(false)}
-            isSpotifyConnected={!!spotifyToken}
           />
       )}
 
