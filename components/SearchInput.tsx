@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Plus, Upload, Music, Globe, FileText, X } from 'lucide-react';
+import { ArrowRight, Plus, Upload, Music, Globe, FileText, X, BookOpen } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -9,11 +10,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'spotify' | 'notion') => void;
+  onSearch: (query: string, mode: 'web' | 'spotify' | 'notion' | 'bible') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'spotify' | 'notion';
-  onModeChange: (mode: 'web' | 'spotify' | 'notion') => void;
+  activeMode: 'web' | 'spotify' | 'notion' | 'bible';
+  onModeChange: (mode: 'web' | 'spotify' | 'notion' | 'bible') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -51,7 +52,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'spotify' | 'notion') => {
+  const handleModeSelect = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -72,6 +73,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const getPlaceholder = () => {
       if (activeMode === 'spotify') return "Search for songs, artists, albums...";
       if (activeMode === 'notion') return "Search your workspace docs...";
+      if (activeMode === 'bible') return "Search verse (e.g., John 3:16) or topic...";
       if (attachedFile) return "Ask about this file...";
       return "Search for anything...";
   };
@@ -88,6 +90,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
                  <>Search <span className="text-[#1DB954]">Spotify</span></>
             ) : activeMode === 'notion' ? (
                  <>Search <span className="text-black">Notion</span></>
+            ) : activeMode === 'bible' ? (
+                 <>Search <span className="text-[#8c7b66] font-serif italic">Scripture</span></>
             ) : (
                  <>What <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">do you want to know?</span></>
             )}
@@ -136,6 +140,17 @@ const SearchInput: React.FC<SearchInputProps> = ({
                             <span className="font-medium">Web Search</span>
                         </button>
                         
+                        <div className="h-[1px] bg-gray-200/50 mx-2 my-1"></div>
+
+                        <button 
+                            type="button"
+                            onClick={() => handleModeSelect('bible')}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'bible' ? 'bg-[#f4ebe1] text-[#5c4b37] border border-[#d6c4b1]' : 'hover:bg-black/5 text-gray-700'}`}
+                        >
+                            <BookOpen size={18} />
+                            <span className="font-medium">Bible Search</span>
+                        </button>
+
                         <div className="h-[1px] bg-gray-200/50 mx-2 my-1"></div>
 
                          <button 
@@ -193,6 +208,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     ? 'bg-[#f0f9f4] focus:ring-green-100' 
                     : activeMode === 'notion'
                     ? 'bg-gray-50 focus:ring-gray-200'
+                    : activeMode === 'bible'
+                    ? 'bg-[#fffaf5] focus:ring-orange-100 border-orange-100'
                     : 'bg-white focus:ring-blue-100'
                 }`}
             />
@@ -201,7 +218,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 type="submit"
                 disabled={(!query.trim() && !attachedFile) || isSearching}
                 className={`absolute right-3 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 text-white disabled:opacity-30 disabled:hover:scale-100 ${
-                    activeMode === 'spotify' ? 'bg-[#1DB954]' : 'bg-black'
+                    activeMode === 'spotify' ? 'bg-[#1DB954]' : activeMode === 'bible' ? 'bg-[#8c7b66]' : 'bg-black'
                 }`}
             >
                 <ArrowRight size={24} />

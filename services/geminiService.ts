@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Source } from "../types";
 
 // Helper to get the AI client, prioritizing Local Storage key if set
-const getAiClient = () => {
+export const getAiClient = () => {
     const customKey = localStorage.getItem('gemini_api_key');
     // Fallback to process.env.API_KEY if no custom key is provided
     return new GoogleGenAI({ apiKey: customKey || process.env.API_KEY });

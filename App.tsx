@@ -14,6 +14,7 @@ import ConnectNotionModal from './components/ConnectNotionModal';
 import ConnectFigmaModal from './components/ConnectFigmaModal';
 import SpotifyResultsView from './components/SpotifyResultsView';
 import NotionResultsView from './components/NotionResultsView';
+import BibleResultsView from './components/BibleResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -25,6 +26,7 @@ import { fetchNasaImages } from './services/nasaService';
 import { supabase } from './services/supabaseClient';
 import { searchSpotify } from './services/spotifyService';
 import { searchNotion } from './services/notionService';
+import { fetchBiblePassage } from './services/bibleService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -69,7 +71,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'spotify' | 'notion'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'spotify' | 'notion' | 'bible'>('web');
 
   // File Upload State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -174,7 +176,7 @@ const App: React.FC = () => {
       }, 500);
   };
 
-  const handleModeChange = (mode: 'web' | 'spotify' | 'notion') => {
+  const handleModeChange = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
       if (mode === 'spotify' && !spotifyToken) {
           setShowSpotifyModal(true);
       } else if (mode === 'notion' && !notionToken) {
@@ -230,7 +232,7 @@ const App: React.FC = () => {
       setAttachedFile(null);
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'spotify' | 'notion') => {
+  const handleSearch = async (query: string, mode: 'web' | 'spotify' | 'notion' | 'bible') => {
     setSearchState(prev => ({ 
         ...prev, 
         status: 'searching', 
@@ -287,6 +289,44 @@ const App: React.FC = () => {
               summary: `Workspace search for ${query}`,
               sources: []
           });
+
+      } else if (mode === 'bible') {
+          // Bible Search
+          const preferredVersion = localStorage.getItem('bible_version') || 'kjv';
+          const bibleData = await fetchBiblePassage(query, preferredVersion);
+
+          if (bibleData) {
+              setSearchState({
+                  status: 'results',
+                  query,
+                  summary: `Passage from ${bibleData.reference}`,
+                  sources: [],
+                  media: [{
+                      id: bibleData.reference,
+                      type: 'bible',
+                      thumbnailUrl: '',
+                      contentUrl: '',
+                      pageUrl: '',
+                      title: bibleData.reference,
+                      source: bibleData.translation_id,
+                      data: bibleData
+                  }]
+              });
+
+              addToHistory({
+                  type: 'search',
+                  title: `Scripture: ${bibleData.reference}`,
+                  summary: bibleData.text.substring(0, 100) + '...',
+                  sources: []
+              });
+          } else {
+             setSearchState(prev => ({ 
+                 ...prev, 
+                 status: 'results', 
+                 media: [], // Empty media signals no results found
+                 summary: "No results found." 
+             }));
+          }
 
       } else {
           // Standard Web Search (with optional file context)
@@ -419,6 +459,9 @@ const App: React.FC = () => {
           } else if (item.title.startsWith("Notion: ")) {
               setSearchMode('notion');
               handleSearch(item.title.replace("Notion: ", ""), 'notion');
+          } else if (item.title.startsWith("Scripture: ")) {
+              setSearchMode('bible');
+              handleSearch(item.title.replace("Scripture: ", ""), 'bible');
           } else if (item.title.startsWith("Images: ")) {
               handleMediaSearch(item.title.replace("Images: ", ""), 'image');
           } else if (item.title.startsWith("Videos: ")) {
@@ -444,7 +487,7 @@ const App: React.FC = () => {
 
   // --- BACKGROUND LOGIC ---
   const getBackgroundStyle = () => {
-      if (activeTab === 'settings' || searchMode === 'notion') {
+      if (activeTab === 'settings' || searchMode === 'notion' || searchMode === 'bible') {
           return {
               backgroundImage: 'none',
               backgroundColor: '#ffffff'
@@ -541,7 +584,7 @@ const App: React.FC = () => {
             }}
         >
             <div className={`absolute inset-0 transition-all duration-1000 ${
-                (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || searchMode === 'notion'
+                (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || searchMode === 'notion' || searchMode === 'bible'
                 ? 'bg-transparent' 
                 : 'bg-black/40 backdrop-blur-sm' 
             }`} />
@@ -551,17 +594,18 @@ const App: React.FC = () => {
             <div className="pointer-events-auto">
                 {activeTab === 'home' && searchState.status === 'results' && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform ${searchMode === 'notion' ? 'bg-black' : 'bg-white'}`}/>
-                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 ${searchMode === 'notion' ? 'text-black' : 'text-white'}`}>Back to Search</span>
+                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform ${searchMode === 'notion' || searchMode === 'bible' ? 'bg-black' : 'bg-white'}`}/>
+                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 ${searchMode === 'notion' || searchMode === 'bible' ? 'text-black' : 'text-white'}`}>Back to Search</span>
                     </div>
                 )}
             </div>
             
             {!(activeTab === 'home' && searchState.status === 'idle') && (
-                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 ${searchMode === 'notion' ? 'text-black' : 'text-white'}`}>
+                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 ${searchMode === 'notion' || searchMode === 'bible' ? 'text-black' : 'text-white'}`}>
                     Infinity
                     {searchMode === 'spotify' && <span className="text-[#1DB954] text-xs uppercase tracking-widest border border-[#1DB954] px-1 rounded">Music</span>}
                     {searchMode === 'notion' && <span className="text-black text-xs uppercase tracking-widest border border-black px-1 rounded">Workspace</span>}
+                    {searchMode === 'bible' && <span className="text-[#8c7b66] text-xs uppercase tracking-widest border border-[#8c7b66] px-1 rounded">Scripture</span>}
                 </div>
             )}
         </div>
@@ -610,6 +654,8 @@ const App: React.FC = () => {
                             </>
                         ) : searchMode === 'notion' ? (
                             <NotionResultsView items={searchState.media} query={searchState.query} />
+                        ) : searchMode === 'bible' ? (
+                            <BibleResultsView items={searchState.media} query={searchState.query} />
                         ) : (
                             <>
                                 <div className="max-w-4xl mx-auto mb-6">

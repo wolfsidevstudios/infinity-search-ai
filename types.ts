@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio' | 'article';
+  type: 'image' | 'video' | 'audio' | 'article' | 'bible';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
@@ -16,7 +16,7 @@ export interface MediaItem {
   duration?: number; // Optional for videos/audio
   artist?: string; // Specific to audio
   album?: string; // Specific to audio
-  data?: any; // For additional metadata (e.g. Notion page details)
+  data?: any; // For additional metadata (e.g. Notion page details, Bible verses)
 }
 
 export interface SearchState {

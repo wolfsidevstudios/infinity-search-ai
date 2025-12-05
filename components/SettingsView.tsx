@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { BIBLE_VERSIONS } from '../services/bibleService';
 
 interface SettingsViewProps {
   isSpotifyConnected: boolean;
@@ -15,7 +16,7 @@ interface SettingsViewProps {
   user: SupabaseUser | null;
 }
 
-type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'connected';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'bible' | 'connected';
 
 const WALLPAPERS = [
   { id: 'default', url: null, name: 'Default White' },
@@ -38,11 +39,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  
+  // Bible Settings
+  const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
+  const [bibleVersion, setBibleVersion] = useState<string>('kjv');
 
   useEffect(() => {
     // Load saved key on mount
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) setApiKey(savedKey);
+    
+    const savedBibleVersion = localStorage.getItem('bible_version') || 'kjv';
+    const savedBibleLang = localStorage.getItem('bible_lang') || 'en';
+    setBibleVersion(savedBibleVersion);
+    setBibleLang(savedBibleLang as 'en' | 'es');
   }, []);
 
   const handleSaveKey = () => {
@@ -53,6 +63,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleBibleSave = (version: string) => {
+      setBibleVersion(version);
+      localStorage.setItem('bible_version', version);
+      localStorage.setItem('bible_lang', bibleLang);
   };
 
   const navItemClass = (tab: Tab) => `
@@ -83,6 +99,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
              <div onClick={() => setActiveTab('wallpapers')} className={navItemClass('wallpapers')}>
                 <ImageIcon size={20} /> Wallpapers
+            </div>
+            <div onClick={() => setActiveTab('bible')} className={navItemClass('bible')}>
+                <BookOpen size={20} /> Bible Preferences
             </div>
             <div onClick={() => setActiveTab('ai')} className={navItemClass('ai')}>
                 <Cpu size={20} /> Feature AI
@@ -209,6 +228,55 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         </div>
                     </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: BIBLE PREFERENCES */}
+          {activeTab === 'bible' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-slate-900">Bible Preferences</h3>
+              <p className="text-slate-500">Select your preferred language and translation for Bible search.</p>
+
+              <div className="flex gap-4 mb-6">
+                  <button 
+                    onClick={() => setBibleLang('en')}
+                    className={`px-6 py-3 rounded-full font-bold transition-all ${bibleLang === 'en' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                      English
+                  </button>
+                  <button 
+                    onClick={() => setBibleLang('es')}
+                    className={`px-6 py-3 rounded-full font-bold transition-all ${bibleLang === 'es' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                      Español
+                  </button>
+              </div>
+
+              <div className="space-y-4">
+                  {BIBLE_VERSIONS.filter(v => v.language === bibleLang).map((version) => (
+                      <div 
+                        key={version.id}
+                        onClick={() => handleBibleSave(version.id)}
+                        className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
+                            bibleVersion === version.id 
+                            ? 'border-black bg-gray-50 shadow-md' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                          <div className="flex items-center gap-4">
+                              <BookOpen size={20} className={bibleVersion === version.id ? 'text-black' : 'text-gray-400'} />
+                              <span className={`font-bold ${bibleVersion === version.id ? 'text-black' : 'text-gray-700'}`}>
+                                  {version.name}
+                              </span>
+                          </div>
+                          {bibleVersion === version.id && (
+                              <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-white">
+                                  <Check size={14} />
+                              </div>
+                          )}
+                      </div>
+                  ))}
               </div>
             </div>
           )}
