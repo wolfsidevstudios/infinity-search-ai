@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check } from 'lucide-react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface SettingsViewProps {
   isSpotifyConnected: boolean;
@@ -10,6 +12,7 @@ interface SettingsViewProps {
   onConnectFigma: () => void;
   onWallpaperChange: (url: string | null) => void;
   currentWallpaper: string | null;
+  user: SupabaseUser | null;
 }
 
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'connected';
@@ -29,7 +32,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onConnectSpotify, 
     onConnectFigma,
     onWallpaperChange,
-    currentWallpaper
+    currentWallpaper,
+    user
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -57,6 +61,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         ? 'bg-black text-white shadow-lg transform scale-105' 
         : 'text-gray-500 hover:bg-gray-100 hover:text-black'}
   `;
+
+  // Get user details or defaults
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayEmail = user?.email || 'user@example.com';
+  const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
     <div className="w-full h-full flex flex-col md:flex-row bg-white animate-fadeIn">
@@ -97,11 +106,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-slate-900">My Profile</h3>
               
               <div className="flex items-center gap-6 p-6 bg-gray-50/80 rounded-[32px] border border-gray-100">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-white">
-                   JD
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-white overflow-hidden">
+                   {avatarUrl ? (
+                       <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                   ) : (
+                       displayName.charAt(0).toUpperCase()
+                   )}
                 </div>
                 <div>
-                  <h4 className="text-2xl font-bold text-slate-900">John Doe</h4>
+                  <h4 className="text-2xl font-bold text-slate-900">{displayName}</h4>
                   <p className="text-slate-500 font-medium">Infinity Free Plan</p>
                 </div>
               </div>
@@ -109,11 +122,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="grid gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 ml-3 tracking-wider uppercase">Full Name</label>
-                  <input type="text" defaultValue="John Doe" className="w-full h-14 px-6 bg-gray-50 border border-gray-200 rounded-full focus:ring-4 focus:ring-black/5 focus:border-gray-300 outline-none transition-all" />
+                  <input type="text" readOnly value={displayName} className="w-full h-14 px-6 bg-gray-50 border border-gray-200 rounded-full focus:ring-4 focus:ring-black/5 focus:border-gray-300 outline-none transition-all text-gray-700" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-400 ml-3 tracking-wider uppercase">Email Address</label>
-                  <input type="email" defaultValue="john@example.com" className="w-full h-14 px-6 bg-gray-50 border border-gray-200 rounded-full focus:ring-4 focus:ring-black/5 focus:border-gray-300 outline-none transition-all" />
+                  <input type="email" readOnly value={displayEmail} className="w-full h-14 px-6 bg-gray-50 border border-gray-200 rounded-full focus:ring-4 focus:ring-black/5 focus:border-gray-300 outline-none transition-all text-gray-700" />
                 </div>
               </div>
 

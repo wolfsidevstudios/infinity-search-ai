@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
@@ -15,6 +16,7 @@ import SpotifyResultsView from './components/SpotifyResultsView';
 import NotionResultsView from './components/NotionResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
+import LoginPage from './components/LoginPage';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -23,6 +25,7 @@ import { supabase } from './services/supabaseClient';
 import { searchSpotify } from './services/spotifyService';
 import { searchNotion } from './services/notionService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem } from './types';
+import { User } from '@supabase/supabase-js';
 
 // Helper to mix results from different sources
 const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
@@ -47,6 +50,9 @@ interface AttachedFile {
 const App: React.FC = () => {
   // App Logic State
   const [isLandingPage, setIsLandingPage] = useState(true);
+  const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings'>('home');
   
   // Appearance
@@ -67,7 +73,7 @@ const App: React.FC = () => {
   // File Upload State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
 
-  // Auth State
+  // Auth State (Legacy/Direct Connections)
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
   
@@ -93,14 +99,23 @@ const App: React.FC = () => {
 
   // Init Session Check
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session && session.provider_token) {
-           if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
-           if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+    const checkSession = async () => {
+        setIsAuthChecking(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            setSessionUser(session.user);
+            if (session.provider_token) {
+               if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
+               if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+            }
         }
-    });
+        setIsAuthChecking(false);
+    };
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSessionUser(session?.user || null);
         if (session && session.provider_token) {
            if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
            if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
@@ -465,10 +480,35 @@ const App: React.FC = () => {
 
   const bgStyle = getBackgroundStyle();
 
+  // --- VIEW ROUTING ---
+  
   if (isLandingPage) {
       return (
         <div className="h-screen w-full overflow-y-auto bg-white">
              <MarketingPage onGetStarted={() => setIsLandingPage(false)} />
+        </div>
+      );
+  }
+
+  // If not on landing page, check auth.
+  // If loading, show nothing or spinner.
+  // If not logged in, show Login Page.
+  if (!sessionUser) {
+      if (isAuthChecking) return <div className="h-screen w-full bg-white flex items-center justify-center"><LoadingAnimation/></div>;
+      
+      return (
+        <div className="h-screen w-full bg-white">
+            <LoginPage onSkip={() => {
+                // Demo fallback user
+                setSessionUser({ 
+                    id: 'demo-user', 
+                    email: 'demo@infinity.ai',
+                    app_metadata: {}, 
+                    user_metadata: { full_name: 'Demo User' }, 
+                    aud: 'authenticated', 
+                    created_at: '' 
+                } as User);
+            }} />
         </div>
       );
   }
@@ -596,6 +636,7 @@ const App: React.FC = () => {
                         onConnectFigma={() => setShowFigmaModal(true)}
                         currentWallpaper={currentWallpaper}
                         onWallpaperChange={setCurrentWallpaper}
+                        user={sessionUser}
                     />
                 </div>
             )}
