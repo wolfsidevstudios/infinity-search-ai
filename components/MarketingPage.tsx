@@ -1,11 +1,40 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Search, Zap, Globe, Shield, Music, Layers, Cpu, Users, BarChart, MessageSquare, CheckCircle, Smartphone, Lock, HelpCircle, Code, Terminal, Activity, Bell, List, Star, ChevronDown, Check, LayoutGrid, Sparkles } from 'lucide-react';
 
 interface MarketingPageProps {
   onGetStarted: () => void;
   onViewAssets: () => void;
 }
+
+// Simple Scroll Reveal Component
+const ScrollReveal: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsVisible(true);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1 }
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div 
+            ref={ref} 
+            className={`transition-all duration-1000 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${className}`}
+        >
+            {children}
+        </div>
+    );
+};
 
 const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAssets }) => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -40,15 +69,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       {/* 1. Header (Updated Layout) */}
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-xl z-50 border-b border-gray-100/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-black">
-             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                 <div className="grid grid-cols-2 gap-0.5">
-                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                     <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                 </div>
-             </div>
+          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-black cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+             <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
              Infinity
           </div>
           
@@ -56,7 +78,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
             <button className="text-sm font-medium text-gray-600 hover:text-black transition-colors">Features</button>
             <button className="text-sm font-medium text-gray-600 hover:text-black transition-colors">Solutions</button>
             <button className="text-sm font-medium text-gray-600 hover:text-black transition-colors">Resources</button>
-            <button className="text-sm font-medium text-gray-600 hover:text-black transition-colors">Pricing</button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -68,31 +89,24 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
             </button>
             <button 
               onClick={onGetStarted}
-              className="bg-white text-black border border-gray-200 px-5 py-2 rounded-full text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm"
+              className="bg-black text-white border border-black px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
             >
-              Get demo
+              Get Started
             </button>
           </div>
         </div>
       </nav>
 
       {/* 2. Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden bg-dot-pattern">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden bg-dot-pattern bg-white">
         
         {/* Floating Elements Container */}
         <div className="max-w-7xl mx-auto relative min-h-[600px] flex flex-col items-center justify-center text-center z-10">
             
             {/* Center Content */}
-            <div className="relative z-20 max-w-4xl mx-auto">
-                <div className="mb-8 flex justify-center">
-                    <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-gray-100">
-                         <div className="grid grid-cols-2 gap-1.5">
-                             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                             <div className="w-3 h-3 bg-black rounded-full"></div>
-                             <div className="w-3 h-3 bg-black rounded-full"></div>
-                             <div className="w-3 h-3 bg-black rounded-full"></div>
-                         </div>
-                    </div>
+            <div className="relative z-20 max-w-4xl mx-auto animate-fadeIn">
+                <div className="mb-8 flex justify-center animate-float">
+                    <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-24 h-24 rounded-2xl shadow-2xl border-4 border-white" />
                 </div>
 
                 <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-6 leading-[1.1] text-slate-900">
@@ -106,15 +120,15 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
                 <button 
                     onClick={onGetStarted}
-                    className="px-8 py-4 bg-[#2563EB] text-white text-lg font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-xl hover:shadow-blue-500/20"
+                    className="px-8 py-4 bg-[#2563EB] text-white text-lg font-semibold rounded-full hover:bg-blue-700 transition-all shadow-xl hover:shadow-blue-500/20 hover:scale-105"
                 >
-                    Get free demo
+                    Start Searching — It's Free
                 </button>
             </div>
 
             {/* Floating Card 1: Top Left Sticky Note */}
             <div className="absolute top-0 left-0 md:left-20 xl:left-40 hidden md:block animate-float">
-                <div className="w-64 bg-[#FEF08A] p-6 rounded-sm shadow-xl rotate-[-6deg] relative border border-yellow-200">
+                <div className="w-64 bg-[#FEF08A] p-6 rounded-sm shadow-xl rotate-[-6deg] relative border border-yellow-200 hover:rotate-0 transition-transform duration-500">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-500 shadow-sm border-2 border-white"></div>
                     <p className="font-handwriting text-slate-800 text-lg leading-snug">
                         Ask Gemini to summarize the Q3 financial report from Notion...
@@ -127,7 +141,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
             {/* Floating Card 2: Top Right Reminders */}
             <div className="absolute top-10 right-0 md:right-20 xl:right-40 hidden md:block animate-float-delayed">
-                <div className="w-72 bg-white/80 backdrop-blur-xl p-5 rounded-[24px] shadow-2xl border border-gray-200 rotate-[3deg]">
+                <div className="w-72 bg-white/80 backdrop-blur-xl p-5 rounded-[24px] shadow-2xl border border-gray-200 rotate-[3deg] hover:rotate-0 transition-transform duration-500">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold text-gray-800 text-lg">Briefings</h3>
                         <span className="text-xs text-gray-400">Today</span>
@@ -152,7 +166,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
             {/* Floating Card 3: Bottom Left Tasks */}
             <div className="absolute bottom-0 left-0 md:left-10 xl:left-32 hidden md:block animate-float-horizontal">
-                 <div className="w-80 bg-white p-6 rounded-[24px] shadow-2xl border border-gray-100 rotate-[3deg]">
+                 <div className="w-80 bg-white p-6 rounded-[24px] shadow-2xl border border-gray-100 rotate-[3deg] hover:rotate-0 transition-transform duration-500">
                     <h3 className="font-bold text-gray-800 mb-4 text-left">Today's Searches</h3>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -172,7 +186,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
             {/* Floating Card 4: Bottom Right Integrations */}
             <div className="absolute bottom-10 right-0 md:right-10 xl:right-32 hidden md:block animate-float">
-                <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-gray-100 rotate-[-3deg]">
+                <div className="bg-white p-6 rounded-[32px] shadow-2xl border border-gray-100 rotate-[-3deg] hover:rotate-0 transition-transform duration-500">
                     <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider text-left">100+ Integrations</h3>
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-white border border-gray-200 rounded-2xl flex items-center justify-center shadow-sm">
@@ -218,6 +232,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
       {/* 4. Problem Statement */}
       <section className="py-24 px-6 bg-white">
+          <ScrollReveal>
           <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-4">The Problem</h2>
               <h3 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">Stop drowning in tabs.</h3>
@@ -227,10 +242,12 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   Infinity brings it all together in one beautiful, intelligent command center.
               </p>
           </div>
+          </ScrollReveal>
       </section>
 
       {/* 5. Features Bento Grid */}
-      <section className="py-24 px-6 bg-gray-50/50">
+      <section className="py-24 px-6 bg-gray-50/30">
+          <ScrollReveal>
           <div className="max-w-7xl mx-auto">
               <div className="mb-16 text-center">
                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Everything you need, instantly.</h2>
@@ -241,36 +258,37 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   
                   {/* Card 1: Visual Search (Large) */}
                   <div className="md:col-span-2 row-span-2 bg-white rounded-[32px] border border-gray-200 p-8 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
-                      <div className="absolute top-8 left-8 z-10">
+                      <div className="absolute top-8 left-8 z-10 pointer-events-none">
                           <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
                               <LayoutGrid size={24} />
                           </div>
                           <h3 className="text-2xl font-bold mb-2">Visual First Search</h3>
                           <p className="text-gray-500 max-w-sm">Browse results in a stunning gallery view. Perfect for designers, photographers, and visual thinkers.</p>
                       </div>
-                      {/* Abstract Visual Grid UI */}
-                      <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gray-50 rounded-tl-[32px] border-t border-l border-gray-200 p-4 grid grid-cols-2 gap-4 opacity-80 group-hover:opacity-100 transition-opacity">
-                          <div className="bg-white rounded-xl shadow-sm h-full w-full"></div>
-                          <div className="bg-gray-200 rounded-xl shadow-sm h-full w-full"></div>
-                          <div className="bg-black rounded-xl shadow-sm h-full w-full"></div>
-                          <div className="bg-blue-500 rounded-xl shadow-sm h-full w-full"></div>
+                      
+                      {/* Real Image Grid UI */}
+                      <div className="absolute bottom-0 right-0 w-3/4 h-3/4 bg-gray-50 rounded-tl-[32px] border-t border-l border-gray-200 p-4 grid grid-cols-2 gap-4 opacity-80 group-hover:opacity-100 transition-opacity overflow-hidden">
+                          <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80" className="rounded-xl shadow-sm h-full w-full object-cover transform group-hover:translate-y-2 transition-transform duration-700" alt="Abstract" />
+                          <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&q=80" className="rounded-xl shadow-sm h-full w-full object-cover transform group-hover:-translate-y-2 transition-transform duration-700" alt="Neon" />
+                          <img src="https://images.unsplash.com/photo-1542202229-7d93c33f5d07?auto=format&fit=crop&w=400&q=80" className="rounded-xl shadow-sm h-full w-full object-cover transform group-hover:translate-y-2 transition-transform duration-700 delay-100" alt="Forest" />
+                          <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=400&q=80" className="rounded-xl shadow-sm h-full w-full object-cover transform group-hover:-translate-y-2 transition-transform duration-700 delay-100" alt="City" />
                       </div>
                   </div>
 
                   {/* Card 2: AI Brain */}
                   <div className="bg-black text-white rounded-[32px] p-8 shadow-xl relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 blur-[60px] opacity-30"></div>
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500 blur-[60px] opacity-30 group-hover:opacity-50 transition-opacity duration-1000"></div>
                       <div className="relative z-10">
                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-4 backdrop-blur-md">
                               <Sparkles size={20} />
                           </div>
                           <h3 className="text-xl font-bold mb-2">Powered by Gemini</h3>
-                          <p className="text-white/60 text-sm">Advanced reasoning across documents and web sources.</p>
+                          <p className="text-white/60 text-sm">Advanced reasoning across documents and web sources. Context-aware and secure.</p>
                       </div>
                   </div>
 
                   {/* Card 3: Privacy */}
-                  <div className="bg-white rounded-[32px] border border-gray-200 p-8 shadow-sm hover:shadow-xl transition-all relative overflow-hidden">
+                  <div className="bg-white rounded-[32px] border border-gray-200 p-8 shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
                        <div className="relative z-10">
                           <div className="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4">
                               <Lock size={20} />
@@ -278,42 +296,47 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           <h3 className="text-xl font-bold mb-2">Privacy Built-in</h3>
                           <p className="text-gray-500 text-sm">Your API keys are stored locally. We never train on your data.</p>
                       </div>
+                      <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-green-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
                   </div>
 
               </div>
           </div>
+          </ScrollReveal>
       </section>
 
       {/* 6. How It Works */}
       <section className="py-24 px-6 bg-white">
+          <ScrollReveal>
           <div className="max-w-7xl mx-auto">
                <div className="text-center mb-16">
                    <h2 className="text-3xl font-bold">How Infinity Works</h2>
                </div>
                
                <div className="grid md:grid-cols-3 gap-12">
-                   <div className="text-center">
-                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm">1</div>
+                   <div className="text-center group">
+                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm group-hover:scale-110 transition-transform">1</div>
                        <h3 className="text-xl font-bold mb-3">Connect Apps</h3>
                        <p className="text-gray-500">Securely link your Spotify, Notion, and Figma accounts via OAuth.</p>
                    </div>
-                   <div className="text-center">
-                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm">2</div>
+                   <div className="text-center group">
+                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm group-hover:scale-110 transition-transform delay-100">2</div>
                        <h3 className="text-xl font-bold mb-3">Ask Anything</h3>
                        <p className="text-gray-500">Use natural language to search across all connected sources at once.</p>
                    </div>
-                   <div className="text-center">
-                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm">3</div>
+                   <div className="text-center group">
+                       <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-gray-100 shadow-sm group-hover:scale-110 transition-transform delay-200">3</div>
                        <h3 className="text-xl font-bold mb-3">Get Results</h3>
                        <p className="text-gray-500">See visualized answers, summaries, and direct file links instantly.</p>
                    </div>
                </div>
           </div>
+          </ScrollReveal>
       </section>
 
       {/* 7. Integrations Detail */}
       <section className="py-24 px-6 bg-black text-white relative overflow-hidden">
            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 to-black opacity-50"></div>
+           <ScrollReveal>
            <div className="max-w-7xl mx-auto relative z-10">
                <div className="grid md:grid-cols-2 gap-16 items-center">
                    <div>
@@ -354,10 +377,12 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    </div>
                </div>
            </div>
+           </ScrollReveal>
       </section>
 
       {/* 8. Testimonials */}
       <section className="py-24 px-6 bg-white">
+          <ScrollReveal>
           <div className="max-w-7xl mx-auto">
                <h2 className="text-3xl font-bold text-center mb-16">Loved by productive people</h2>
                <div className="grid md:grid-cols-3 gap-8">
@@ -366,7 +391,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                        { name: "Sarah Miller", role: "Content Creator", text: "The visual search is a game changer. Being able to see results from Pexels and my Notion docs side-by-side is magic." },
                        { name: "James Wilson", role: "Developer", text: "I love that I can bring my own API key. It feels secure and the responses are incredibly fast." }
                    ].map((t, i) => (
-                       <div key={i} className="bg-gray-50 p-8 rounded-[32px] border border-gray-100">
+                       <div key={i} className="bg-gray-50 p-8 rounded-[32px] border border-gray-100 hover:-translate-y-2 transition-transform duration-300 shadow-sm hover:shadow-lg">
                            <div className="flex gap-1 mb-4 text-yellow-400">
                                <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
                            </div>
@@ -379,74 +404,77 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    ))}
                </div>
           </div>
+          </ScrollReveal>
       </section>
 
-      {/* 9. Pricing */}
+      {/* 9. Pricing (Completely Free) */}
       <section className="py-24 px-6 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16">
-                  <h2 className="text-3xl font-bold mb-4">Simple, transparent pricing</h2>
-                  <p className="text-gray-500">Start for free, upgrade for power.</p>
+          <ScrollReveal>
+          <div className="max-w-7xl mx-auto text-center">
+              <div className="mb-16">
+                  <h2 className="text-3xl md:text-5xl font-bold mb-6">Completely Free. Forever.</h2>
+                  <p className="text-gray-500 text-xl max-w-2xl mx-auto">
+                      Infinity is a community project supported by user contributions. 
+                      Bring your own API key for unlimited AI power.
+                  </p>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                  {/* Free Plan */}
-                  <div className="p-8 rounded-[32px] border border-gray-200 hover:border-gray-300 transition-all">
-                      <h3 className="text-xl font-bold mb-2">Starter</h3>
-                      <div className="text-4xl font-bold mb-6">$0</div>
-                      <p className="text-gray-500 mb-8">Perfect for personal use and exploration.</p>
-                      <ul className="space-y-4 mb-8">
-                          {['Unlimited Web Search', '3 Connected Apps', 'Basic Visual Results', 'Community Support'].map(f => (
-                              <li key={f} className="flex items-center gap-3">
-                                  <CheckCircle size={18} className="text-green-500" />
-                                  <span>{f}</span>
-                              </li>
-                          ))}
-                      </ul>
-                      <button onClick={onGetStarted} className="w-full py-4 rounded-xl border border-gray-200 font-bold hover:bg-gray-50 transition-colors">Get Started</button>
-                  </div>
+              <div className="max-w-3xl mx-auto">
+                  <div className="p-10 rounded-[40px] border border-gray-200 bg-white hover:border-black/10 hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                      
+                      <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10">
+                          <div className="text-left">
+                              <h3 className="text-3xl font-bold mb-2">Fair Use Plan</h3>
+                              <p className="text-gray-500">Everything included.</p>
+                          </div>
+                          <div className="text-6xl font-bold tracking-tight">$0</div>
+                      </div>
 
-                  {/* Pro Plan */}
-                  <div className="p-8 rounded-[32px] bg-black text-white relative overflow-hidden">
-                      <div className="absolute top-0 right-0 bg-gradient-to-bl from-blue-600 to-transparent w-32 h-32 opacity-50"></div>
-                      <h3 className="text-xl font-bold mb-2">Pro</h3>
-                      <div className="text-4xl font-bold mb-6">$12<span className="text-lg font-normal text-gray-400">/mo</span></div>
-                      <p className="text-gray-400 mb-8">For power users who need advanced reasoning.</p>
-                      <ul className="space-y-4 mb-8">
-                          {['Everything in Starter', 'Unlimited Integrations', 'Gemini 1.5 Pro Access', 'Priority Support', 'Early Feature Access'].map(f => (
-                              <li key={f} className="flex items-center gap-3">
-                                  <CheckCircle size={18} className="text-blue-400" />
-                                  <span>{f}</span>
-                              </li>
+                      <div className="grid md:grid-cols-2 gap-4 text-left mb-10">
+                          {['Unlimited Web Search', 'Unlimited Connected Apps', 'Visual Results Gallery', 'Notion Integration', 'Spotify Integration', 'Figma Integration', 'Local-First Privacy', 'Community Support'].map(f => (
+                              <div key={f} className="flex items-center gap-3">
+                                  <CheckCircle size={20} className="text-green-500 shrink-0" />
+                                  <span className="text-gray-700 font-medium">{f}</span>
+                              </div>
                           ))}
-                      </ul>
-                      <button onClick={onGetStarted} className="w-full py-4 rounded-xl bg-blue-600 font-bold hover:bg-blue-700 transition-colors shadow-lg">Upgrade to Pro</button>
+                      </div>
+
+                      <button 
+                        onClick={onGetStarted} 
+                        className="w-full py-5 rounded-full bg-black text-white text-lg font-bold hover:bg-gray-800 hover:scale-[1.02] transition-all shadow-xl"
+                      >
+                          Get Started for Free
+                      </button>
+                      <p className="mt-4 text-xs text-gray-400">Open source friendly. No hidden fees.</p>
                   </div>
               </div>
           </div>
+          </ScrollReveal>
       </section>
 
       {/* 10. FAQ */}
-      <section className="py-24 px-6 bg-gray-50">
+      <section className="py-24 px-6 bg-white">
+           <ScrollReveal>
            <div className="max-w-3xl mx-auto">
                <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
                <div className="space-y-4">
                    {[
                        { q: "Is my data secure?", a: "Yes. Infinity operates on a 'local-first' principle for API keys. Your Gemini API key is stored in your browser's local storage and is never sent to our servers." },
-                       { q: "Do I need a paid Gemini subscription?", a: "To use the advanced features with your own key, you might need a billing account with Google Cloud, but the free tier of Gemini API is sufficient for many use cases." },
+                       { q: "Why is it free?", a: "We believe in democratizing access to intelligent search. We cover basic costs, and power users provide their own API keys for heavy lifting." },
                        { q: "Can I connect custom apps?", a: "Currently we support Notion, Spotify, and Figma. We are working on a developer API to allow custom integrations soon." },
                        { q: "Is there a mobile app?", a: "Infinity is a Progressive Web App (PWA). You can add it to your home screen on iOS and Android for a native-like experience." }
                    ].map((item, index) => (
-                       <div key={index} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                       <div key={index} className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
                            <button 
                                 onClick={() => toggleFaq(index)}
-                                className="w-full p-6 text-left flex justify-between items-center font-bold text-slate-900"
+                                className="w-full p-6 text-left flex justify-between items-center font-bold text-slate-900 hover:bg-gray-100 transition-colors"
                            >
                                {item.q}
-                               <ChevronDown size={20} className={`transition-transform ${openFaq === index ? 'rotate-180' : ''}`} />
+                               <ChevronDown size={20} className={`transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
                            </button>
                            {openFaq === index && (
-                               <div className="px-6 pb-6 text-slate-500 leading-relaxed">
+                               <div className="px-6 pb-6 text-slate-500 leading-relaxed animate-fadeIn">
                                    {item.a}
                                </div>
                            )}
@@ -454,11 +482,13 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    ))}
                </div>
            </div>
+           </ScrollReveal>
       </section>
 
       {/* 11. Final CTA */}
       <section className="py-32 px-6 bg-white text-center relative overflow-hidden">
            <div className="absolute inset-0 bg-dot-pattern opacity-50 pointer-events-none"></div>
+           <ScrollReveal>
            <div className="relative z-10 max-w-4xl mx-auto">
                <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8">
                    Ready to organize <br/> your digital chaos?
@@ -467,10 +497,11 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    onClick={onGetStarted}
                    className="px-10 py-5 bg-black text-white text-xl font-bold rounded-full hover:scale-105 transition-transform shadow-2xl"
                >
-                   Start Searching for Free
+                   Start Searching Now
                </button>
-               <p className="mt-6 text-gray-500 text-sm">No credit card required • Cancel anytime</p>
+               <p className="mt-6 text-gray-500 text-sm">No credit card required</p>
            </div>
+           </ScrollReveal>
       </section>
 
       {/* 12. Footer */}
@@ -478,15 +509,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
                   <div>
-                      <div className="flex items-center gap-2 font-bold text-2xl tracking-tight mb-6">
-                        <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                            <div className="grid grid-cols-2 gap-0.5">
-                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                            </div>
-                        </div>
+                      <div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-6">
+                        <img src="https://iili.io/fIDzzRS.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
                         Infinity
                       </div>
                       <p className="text-gray-400 max-w-sm">
@@ -497,17 +521,17 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                       <div>
                           <h4 className="font-bold mb-6">Product</h4>
                           <ul className="space-y-4 text-gray-500 text-sm">
-                              <li className="hover:text-black cursor-pointer">Features</li>
-                              <li className="hover:text-black cursor-pointer">Pricing</li>
-                              <li className="hover:text-black cursor-pointer">Changelog</li>
+                              <li className="hover:text-black cursor-pointer transition-colors">Features</li>
+                              <li className="hover:text-black cursor-pointer transition-colors">Pricing</li>
+                              <li className="hover:text-black cursor-pointer transition-colors">Changelog</li>
                           </ul>
                       </div>
                       <div>
                           <h4 className="font-bold mb-6">Resources</h4>
                           <ul className="space-y-4 text-gray-500 text-sm">
-                              <li className="hover:text-black cursor-pointer" onClick={onViewAssets}>Media Kit</li>
-                              <li className="hover:text-black cursor-pointer">Careers</li>
-                              <li className="hover:text-black cursor-pointer">Contact</li>
+                              <li className="hover:text-black cursor-pointer transition-colors" onClick={onViewAssets}>Media Kit</li>
+                              <li className="hover:text-black cursor-pointer transition-colors">Careers</li>
+                              <li className="hover:text-black cursor-pointer transition-colors">Contact</li>
                           </ul>
                       </div>
                   </div>
@@ -515,8 +539,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
                   <p className="text-gray-400 text-sm">© 2025 Infinity Search Inc.</p>
                   <div className="flex gap-6 text-gray-400">
-                      <Globe size={20} className="hover:text-black cursor-pointer" />
-                      <MessageSquare size={20} className="hover:text-black cursor-pointer" />
+                      <Globe size={20} className="hover:text-black cursor-pointer transition-colors" />
+                      <MessageSquare size={20} className="hover:text-black cursor-pointer transition-colors" />
                   </div>
               </div>
           </div>
