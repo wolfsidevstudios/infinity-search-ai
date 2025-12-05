@@ -1,0 +1,7 @@
+{
+  "name": "Lumina Search Agent",
+  "description": "An AI-powered visual search agent with web grounding and image results.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
