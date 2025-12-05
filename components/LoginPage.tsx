@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Music, ArrowRight, Loader2 } from 'lucide-react';
+import { Music, ArrowRight, Loader2, Mail, Lock, User as UserIcon } from 'lucide-react';
 
 interface LoginPageProps {
   onSkip?: () => void; // Optional for demo purposes if auth fails
@@ -10,8 +10,14 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  
+  // Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
 
-  const handleLogin = async (provider: 'spotify' | 'notion') => {
+  const handleOAuthLogin = async (provider: 'spotify' | 'notion') => {
     setLoading(provider);
     setError(null);
     try {
@@ -28,6 +34,39 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
     } catch (e: any) {
       console.error('Login error:', e);
       setError(e.message || 'Failed to login');
+      setLoading(null);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading('email');
+    setError(null);
+
+    try {
+      if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            }
+          }
+        });
+        if (error) throw error;
+        // If successful, Supabase might require email confirmation depending on settings
+        // For this UI, we'll assume auto-login or alert the user
+        setError('Account created! Please check your email if confirmation is required.');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      }
+    } catch (err: any) {
+      setError(err.message);
       setLoading(null);
     }
   };
@@ -67,67 +106,129 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
 
       {/* Right Panel - Login Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 relative">
-        <div className="w-full max-w-md space-y-10">
+        <div className="w-full max-w-md space-y-8 animate-fadeIn">
             
             <div className="text-center md:text-left">
-                <h2 className="text-3xl font-bold text-slate-900 mb-3">Welcome back</h2>
-                <p className="text-slate-500">Sign in to continue to your workspace.</p>
+                <h2 className="text-3xl font-bold text-slate-900 mb-3">
+                  {mode === 'signin' ? 'Welcome back' : 'Create an account'}
+                </h2>
+                <p className="text-slate-500">
+                  {mode === 'signin' ? 'Sign in to continue to your workspace.' : 'Enter your details to get started.'}
+                </p>
             </div>
 
             {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-medium border border-red-100 flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                <div className={`p-4 rounded-2xl text-sm font-medium border flex items-center gap-2 ${error.includes('created') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                   <div className={`w-1.5 h-1.5 rounded-full ${error.includes('created') ? 'bg-green-600' : 'bg-red-600'}`} />
                    {error}
                 </div>
             )}
 
-            <div className="space-y-4">
+            {/* Email/Pass Form */}
+            <form onSubmit={handleEmailAuth} className="space-y-4">
+               {mode === 'signup' && (
+                 <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
+                    <div className="relative">
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input 
+                          type="text" 
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="John Doe"
+                          className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                        />
+                    </div>
+                 </div>
+               )}
+
+               <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+                  <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input 
+                        type="email" 
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                      />
+                  </div>
+               </div>
+
+               <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+                  <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input 
+                        type="password" 
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                      />
+                  </div>
+               </div>
+
+               <button 
+                  type="submit"
+                  disabled={!!loading}
+                  className="w-full h-14 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
+               >
+                  {loading === 'email' ? <Loader2 className="animate-spin" /> : (mode === 'signin' ? 'Sign In' : 'Sign Up')}
+               </button>
+            </form>
+
+            {/* Toggle Mode */}
+            <div className="text-center text-sm text-gray-500">
+               {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}
+               <button 
+                 type="button"
+                 onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
+                 className="ml-2 font-bold text-blue-600 hover:underline"
+               >
+                 {mode === 'signin' ? 'Sign up' : 'Sign in'}
+               </button>
+            </div>
+
+            <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-gray-200 after:h-px after:flex-1 after:bg-gray-200">
+                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Or continue with</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
                 {/* Spotify Button */}
                 <button 
-                  onClick={() => handleLogin('spotify')}
+                  onClick={() => handleOAuthLogin('spotify')}
                   disabled={!!loading}
-                  className="w-full h-16 bg-[#1DB954] hover:bg-[#1ed760] text-white rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-green-500/20 flex items-center justify-center gap-3 relative overflow-hidden group"
+                  className="h-14 bg-white border border-gray-200 hover:bg-gray-50 text-slate-900 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group"
                 >
-                    {loading === 'spotify' ? (
-                         <Loader2 className="animate-spin" />
-                    ) : (
-                        <>
-                            <Music size={24} className="group-hover:rotate-12 transition-transform" />
-                            <span>Continue with Spotify</span>
-                        </>
-                    )}
+                    <Music size={20} className="text-[#1DB954]" />
+                    <span>Spotify</span>
                 </button>
 
                 {/* Notion Button */}
                 <button 
-                  onClick={() => handleLogin('notion')}
+                  onClick={() => handleOAuthLogin('notion')}
                   disabled={!!loading}
-                  className="w-full h-16 bg-white border-2 border-gray-100 hover:border-gray-300 text-slate-900 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
+                  className="h-14 bg-white border border-gray-200 hover:bg-gray-50 text-slate-900 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
                 >
-                     {loading === 'notion' ? (
-                         <Loader2 className="animate-spin text-gray-400" />
-                    ) : (
-                        <>
-                             <svg viewBox="0 0 122.88 128.1" fill="currentColor" className="w-6 h-6">
-                                <path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/>
-                             </svg>
-                            <span>Continue with Notion</span>
-                        </>
-                    )}
+                     <svg viewBox="0 0 122.88 128.1" fill="currentColor" className="w-5 h-5">
+                        <path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/>
+                     </svg>
+                    <span>Notion</span>
                 </button>
             </div>
 
-            <div className="pt-8 flex items-center gap-4 before:h-px before:flex-1 before:bg-gray-200 after:h-px after:flex-1 after:bg-gray-200">
-                <span className="text-gray-400 text-sm">or</span>
-            </div>
-
              {/* Demo Skip (Optional for Development) */}
-             <div className="text-center">
+             <div className="text-center pt-4">
                 <button 
                     onClick={onSkip}
-                    className="text-sm font-medium text-gray-500 hover:text-black transition-colors flex items-center justify-center gap-1 mx-auto"
+                    className="text-xs font-medium text-gray-400 hover:text-black transition-colors flex items-center justify-center gap-1 mx-auto"
                 >
-                    Skip login for demo <ArrowRight size={14} />
+                    Skip login for demo <ArrowRight size={12} />
                 </button>
              </div>
         </div>
