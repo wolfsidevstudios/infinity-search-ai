@@ -10,6 +10,7 @@ import LoadingAnimation from './components/LoadingAnimation';
 import DashboardWidgets from './components/DashboardWidgets'; 
 import ConnectSpotifyModal from './components/ConnectSpotifyModal';
 import ConnectNotionModal from './components/ConnectNotionModal';
+import ConnectFigmaModal from './components/ConnectFigmaModal';
 import SpotifyResultsView from './components/SpotifyResultsView';
 import NotionResultsView from './components/NotionResultsView';
 import SettingsView from './components/SettingsView';
@@ -41,6 +42,9 @@ const App: React.FC = () => {
   const [isLandingPage, setIsLandingPage] = useState(true);
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings'>('home');
   
+  // Appearance
+  const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
+
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
     status: 'idle',
@@ -60,6 +64,9 @@ const App: React.FC = () => {
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [showNotionModal, setShowNotionModal] = useState(false);
 
+  const [isFigmaConnected, setIsFigmaConnected] = useState(false);
+  const [showFigmaModal, setShowFigmaModal] = useState(false);
+
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
     items: [],
@@ -78,9 +85,6 @@ const App: React.FC = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session && session.provider_token) {
-           // This handles standard oauth. For multi-provider in one app, usually requires more complex state management
-           // For this demo, we assume token is set via provider_token
-           // Real implementation would manage tokens per provider in local storage or database
            if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
            if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
         }
@@ -107,15 +111,13 @@ const App: React.FC = () => {
   };
 
   const initiateNotionLogin = async () => {
-      // Mock login for demo purposes to avoid breaking flow without real Supabase Notion setup
       setNotionToken('mock-notion-token');
       setShowNotionModal(false);
-      /* 
-      await supabase.auth.signInWithOAuth({
-          provider: 'notion',
-          options: { redirectTo: window.location.origin }
-      });
-      */
+  };
+
+  const initiateFigmaConnection = () => {
+      setIsFigmaConnected(true);
+      setShowFigmaModal(false);
   };
 
   const handleModeChange = (mode: 'web' | 'spotify' | 'notion') => {
@@ -340,6 +342,55 @@ const App: React.FC = () => {
       }
   };
 
+  // --- BACKGROUND LOGIC ---
+  const getBackgroundStyle = () => {
+      // 1. Settings or Notion Mode -> Always White
+      if (activeTab === 'settings' || searchMode === 'notion') {
+          return {
+              backgroundImage: 'none',
+              backgroundColor: '#ffffff'
+          };
+      }
+      
+      // 2. Home Tab logic
+      if (activeTab === 'home') {
+          // If a custom wallpaper is selected, prioritize it for Home (both idle and results, or just idle)
+          // Let's allow it for idle. For results, typically we darken it or keep it.
+          if (currentWallpaper) {
+              return {
+                  backgroundImage: `url('${currentWallpaper}')`,
+                  backgroundColor: '#000000',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+              };
+          }
+
+          // Default behaviors if no custom wallpaper
+          if (searchState.status === 'idle') {
+              return {
+                  backgroundImage: 'none',
+                  backgroundColor: '#ffffff'
+              };
+          }
+      }
+
+      // 3. Spotify Mode -> Special Image
+      if (searchMode === 'spotify') {
+          return {
+              backgroundImage: `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')`,
+              backgroundColor: '#000000'
+          };
+      }
+
+      // 4. Default / Fallback / Discover / History (Dark theme usually)
+      return {
+          backgroundImage: `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
+          backgroundColor: '#000000'
+      };
+  };
+
+  const bgStyle = getBackgroundStyle();
+
   // --- RENDER ---
   
   if (isLandingPage) {
@@ -363,21 +414,12 @@ const App: React.FC = () => {
         <div 
             className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out"
             style={{ 
-            backgroundImage: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' 
-                ? 'none' 
-                : searchMode === 'spotify' 
-                  ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` 
-                  : searchMode === 'notion'
-                  ? 'none' // White background for Notion
-                  : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
-            backgroundColor: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' || searchMode === 'notion'
-                ? '#ffffff' 
-                : '#000000', 
-            transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' 
+                ...bgStyle,
+                transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' 
             }}
         >
             <div className={`absolute inset-0 transition-all duration-1000 ${
-                (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' || searchMode === 'notion'
+                (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || searchMode === 'notion'
                 ? 'bg-transparent' 
                 : 'bg-black/40 backdrop-blur-sm' 
             }`} />
@@ -479,8 +521,12 @@ const App: React.FC = () => {
                     <SettingsView 
                         isSpotifyConnected={!!spotifyToken} 
                         isNotionConnected={!!notionToken}
+                        isFigmaConnected={isFigmaConnected}
                         onConnectNotion={() => setShowNotionModal(true)}
                         onConnectSpotify={() => setShowSpotifyModal(true)}
+                        onConnectFigma={() => setShowFigmaModal(true)}
+                        currentWallpaper={currentWallpaper}
+                        onWallpaperChange={setCurrentWallpaper}
                     />
                 </div>
             )}
@@ -499,6 +545,12 @@ const App: React.FC = () => {
           <ConnectNotionModal 
             onClose={() => setShowNotionModal(false)}
             onConnect={initiateNotionLogin}
+          />
+      )}
+      {showFigmaModal && (
+          <ConnectFigmaModal 
+            onClose={() => setShowFigmaModal(false)}
+            onConnect={initiateFigmaConnection}
           />
       )}
 

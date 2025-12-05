@@ -1,16 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check } from 'lucide-react';
 
 interface SettingsViewProps {
   isSpotifyConnected: boolean;
   isNotionConnected: boolean;
+  isFigmaConnected: boolean;
   onConnectNotion: () => void;
   onConnectSpotify: () => void;
+  onConnectFigma: () => void;
+  onWallpaperChange: (url: string | null) => void;
+  currentWallpaper: string | null;
 }
 
-type Tab = 'profile' | 'customization' | 'ai' | 'connected';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'connected';
 
-const SettingsView: React.FC<SettingsViewProps> = ({ isSpotifyConnected, isNotionConnected, onConnectNotion, onConnectSpotify }) => {
+const WALLPAPERS = [
+  { id: 'default', url: null, name: 'Default White' },
+  { id: 'abstract', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000&auto=format&fit=crop', name: 'Neon Abstract' },
+  { id: 'user1', url: 'https://iili.io/fItvPs9.jpg', name: 'Dark Gradient' },
+  { id: 'user2', url: 'https://iili.io/fItv4xS.jpg', name: 'Soft Mesh' },
+];
+
+const SettingsView: React.FC<SettingsViewProps> = ({ 
+    isSpotifyConnected, 
+    isNotionConnected, 
+    isFigmaConnected,
+    onConnectNotion, 
+    onConnectSpotify, 
+    onConnectFigma,
+    onWallpaperChange,
+    currentWallpaper
+}) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
@@ -52,6 +72,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isSpotifyConnected, isNotio
             <div onClick={() => setActiveTab('customization')} className={navItemClass('customization')}>
                 <Palette size={20} /> Customization
             </div>
+             <div onClick={() => setActiveTab('wallpapers')} className={navItemClass('wallpapers')}>
+                <ImageIcon size={20} /> Wallpapers
+            </div>
             <div onClick={() => setActiveTab('ai')} className={navItemClass('ai')}>
                 <Cpu size={20} /> Feature AI
             </div>
@@ -61,7 +84,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isSpotifyConnected, isNotio
         </div>
 
         <div className="mt-auto pl-4 text-xs text-gray-400 font-medium">
-            Lumina v2.0.0
+            Lumina v2.1.0
         </div>
       </div>
 
@@ -133,6 +156,46 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isSpotifyConnected, isNotio
                          <div className="absolute left-1 top-1 w-7 h-7 bg-white rounded-full shadow-md transition-transform"></div>
                     </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+           {/* TAB: WALLPAPERS */}
+           {activeTab === 'wallpapers' && (
+            <div className="space-y-8 animate-slideUp max-w-4xl">
+              <h3 className="text-3xl font-bold text-slate-900">Home Wallpaper</h3>
+              <p className="text-slate-500">Choose a background for your main search dashboard.</p>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {WALLPAPERS.map((wp) => (
+                    <div 
+                        key={wp.id}
+                        onClick={() => onWallpaperChange(wp.url)}
+                        className={`group cursor-pointer relative aspect-[9/16] rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md ${
+                            currentWallpaper === wp.url ? 'border-black scale-105 shadow-xl' : 'border-transparent hover:scale-105'
+                        }`}
+                    >
+                        {wp.url ? (
+                            <img src={wp.url} alt={wp.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full bg-white flex items-center justify-center border border-gray-100">
+                                <span className="text-gray-400 font-bold text-sm">Default</span>
+                            </div>
+                        )}
+                        
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        
+                        {currentWallpaper === wp.url && (
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-black rounded-full flex items-center justify-center text-white shadow-lg">
+                                <Check size={14} />
+                            </div>
+                        )}
+                        
+                        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white text-xs font-bold">{wp.name}</span>
+                        </div>
+                    </div>
+                ))}
               </div>
             </div>
           )}
@@ -221,19 +284,34 @@ const SettingsView: React.FC<SettingsViewProps> = ({ isSpotifyConnected, isNotio
                     </div>
                 </div>
 
-                {/* Google Card (Placeholder) */}
-                <div className="flex items-center justify-between p-6 bg-gray-50 border border-gray-200 rounded-[32px] shadow-inner opacity-70 grayscale hover:grayscale-0 transition-all">
+                {/* Figma Card */}
+                <div className="flex items-center justify-between p-6 bg-white border border-gray-200 rounded-[32px] shadow-sm hover:shadow-lg transition-all">
                     <div className="flex items-center gap-5">
-                         <div className="w-14 h-14 bg-white border border-gray-200 rounded-2xl flex items-center justify-center shadow-sm transform -rotate-2">
-                             <img src="https://www.google.com/favicon.ico" alt="Google" className="w-7 h-7" />
-                         </div>
-                         <div>
-                            <h4 className="font-bold text-xl text-slate-900">Google Drive</h4>
-                            <p className="text-sm text-slate-500 font-medium">Coming soon</p>
+                        <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center text-white shadow-md p-3">
+                             <svg xmlns="http://www.w3.org/2000/svg" shapeRendering="geometricPrecision" textRendering="geometricPrecision" imageRendering="optimizeQuality" fillRule="evenodd" clipRule="evenodd" viewBox="0 0 346 512.36">
+                                <g fillRule="nonzero">
+                                    <path fill="#00B6FF" d="M172.53 246.9c0-42.04 34.09-76.11 76.12-76.11h11.01c.3.01.63-.01.94-.01 47.16 0 85.4 38.25 85.4 85.4 0 47.15-38.24 85.39-85.4 85.39-.31 0-.64-.01-.95-.01l-11 .01c-42.03 0-76.12-34.09-76.12-76.12V246.9z"/>
+                                    <path fill="#24CB71" d="M0 426.98c0-47.16 38.24-85.41 85.4-85.41l87.13.01v84.52c0 47.65-39.06 86.26-86.71 86.26C38.67 512.36 0 474.13 0 426.98z"/>
+                                    <path fill="#FF7237" d="M172.53.01v170.78h87.13c.3-.01.63.01.94.01 47.16 0 85.4-38.25 85.4-85.4C346 38.24 307.76 0 260.6 0c-.31 0-.64.01-.95.01h-87.12z"/>
+                                    <path fill="#FF3737" d="M0 85.39c0 47.16 38.24 85.4 85.4 85.4h87.13V.01H85.39C38.24.01 0 38.24 0 85.39z"/>
+                                    <path fill="#874FFF" d="M0 256.18c0 47.16 38.24 85.4 85.4 85.4h87.13V170.8H85.39C38.24 170.8 0 209.03 0 256.18z"/>
+                                </g>
+                             </svg>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-xl text-slate-900">Figma</h4>
+                            <p className="text-sm text-slate-500 font-medium">{isFigmaConnected ? 'Connected' : 'Not connected'}</p>
                         </div>
                     </div>
-                     <button className="h-10 px-6 bg-white text-gray-400 border border-gray-200 rounded-full text-sm font-bold cursor-not-allowed">Connect</button>
+                    <div>
+                        {isFigmaConnected ? (
+                             <button className="h-10 px-6 bg-red-50 text-red-600 rounded-full text-sm font-bold border border-red-100 hover:bg-red-100 transition-colors">Disconnect</button>
+                        ) : (
+                             <button onClick={onConnectFigma} className="h-10 px-6 bg-black text-white rounded-full text-sm font-bold shadow-md hover:bg-gray-800">Connect</button>
+                        )}
+                    </div>
                 </div>
+
               </div>
             </div>
           )}
