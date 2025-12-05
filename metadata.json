@@ -1,5 +1,5 @@
 {
-  "name": "Lumina Search Agent",
+  "name": "Infinity Search AI",
   "description": "An AI-powered visual search agent with web grounding and image results.",
   "requestFramePermissions": [
     "geolocation"

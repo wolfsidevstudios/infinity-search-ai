@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowRight, Search, Zap, Globe, Shield, Music, Layers, Cpu, Users, BarChart, MessageSquare, CheckCircle, Smartphone, Lock, HelpCircle } from 'lucide-react';
 
@@ -14,10 +13,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-xl z-50 border-b border-gray-100 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-2xl tracking-tight">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center shadow-lg">
-              <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
-            </div>
-            Lumina
+            <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm object-cover" />
+            Infinity
           </div>
           <div className="flex items-center gap-6">
             <button className="hidden md:block text-sm font-medium text-gray-500 hover:text-black transition-colors">Features</button>
@@ -50,7 +47,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-500 max-w-2xl mx-auto mb-12 font-light leading-relaxed animate-slideUp" style={{ animationDelay: '0.1s' }}>
-            Lumina connects your apps, web searches, and local files into a single, intelligent workspace powered by Gemini AI.
+            Infinity connects your apps, web searches, and local files into a single, intelligent workspace powered by Gemini AI.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-slideUp" style={{ animationDelay: '0.2s' }}>
@@ -76,7 +73,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                         <div className="w-3 h-3 rounded-full bg-green-400/20" />
                     </div>
                     <div className="flex-1 mx-4 h-8 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center justify-center text-xs text-gray-400 font-mono">
-                        lumina-search.ai
+                        infinity-search.ai
                     </div>
                 </div>
                 <div className="flex-1 p-8 md:p-12 flex flex-col items-center justify-center bg-white relative overflow-hidden">
@@ -195,7 +192,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                   <div className="text-blue-500 font-bold mb-6 tracking-widest uppercase">The Brain</div>
                   <h2 className="text-5xl font-bold mb-6 leading-tight">It doesn't just search.<br/>It <span className="text-blue-400">thinks.</span></h2>
                   <p className="text-gray-400 text-xl leading-relaxed mb-8">
-                      Traditional search engines give you links. Lumina reads, synthesizes, and presents answers. Whether it's complex code documentation or a simple recipe, get the "what" without the "where".
+                      Traditional search engines give you links. Infinity reads, synthesizes, and presents answers. Whether it's complex code documentation or a simple recipe, get the "what" without the "where".
                   </p>
                   <ul className="space-y-4">
                       {['Multi-step reasoning', 'Context awareness', 'Real-time data synthesis'].map((item, i) => (
@@ -300,7 +297,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                   <div className="grid grid-cols-3 gap-4 text-center border-b border-gray-200 pb-6 mb-6 font-bold text-lg">
                       <div className="text-left text-gray-400">Feature</div>
                       <div className="text-gray-400">Traditional</div>
-                      <div className="text-black">Lumina</div>
+                      <div className="text-black">Infinity</div>
                   </div>
                   {[
                       { feat: 'Ad Tracking', bad: 'Aggressive', good: 'Zero' },
@@ -330,7 +327,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                   </div>
                   <h2 className="text-4xl font-bold mb-4">Your data stays yours.</h2>
                   <p className="text-gray-500 text-lg leading-relaxed mb-6">
-                      We believe privacy is a fundamental right. Lumina performs searches locally where possible, encrypts data in transit, and never sells your personal information to advertisers.
+                      We believe privacy is a fundamental right. Infinity performs searches locally where possible, encrypts data in transit, and never sells your personal information to advertisers.
                   </p>
                   <a href="#" className="text-blue-600 font-bold underline decoration-2 underline-offset-4">Read our Security Whitepaper</a>
               </div>
@@ -359,7 +356,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
               <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
               <div className="space-y-6">
                   {[
-                      { q: 'Is Lumina free to use?', a: 'Yes, we offer a generous free tier that includes unlimited web searches. Premium features like advanced AI models require a subscription.' },
+                      { q: 'Is Infinity free to use?', a: 'Yes, we offer a generous free tier that includes unlimited web searches. Premium features like advanced AI models require a subscription.' },
                       { q: 'How do I connect my apps?', a: 'Simply go to Settings > Connected Apps and sign in with your provider. We use standard OAuth 2.0 protocols.' },
                       { q: 'Can I bring my own API key?', a: 'Absolutely. Power users can input their own Gemini API key in settings to bypass rate limits.' },
                   ].map((item, i) => (
@@ -380,10 +377,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
               <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
                   <div>
                       <div className="flex items-center gap-2 font-bold text-2xl tracking-tight mb-6">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                          <div className="w-3 h-3 bg-black rounded-full" />
-                        </div>
-                        Lumina
+                        <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm object-cover" />
+                        Infinity
                       </div>
                       <p className="text-gray-400 max-w-sm">
                           The intelligent search workspace for the modern internet.
@@ -409,7 +404,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                   </div>
               </div>
               <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <p className="text-gray-500 text-sm">© 2025 Lumina Search Inc.</p>
+                  <p className="text-gray-500 text-sm">© 2025 Infinity Search Inc.</p>
                   <div className="flex gap-6 text-gray-500">
                       <Globe size={20} className="hover:text-white cursor-pointer" />
                       <MessageSquare size={20} className="hover:text-white cursor-pointer" />

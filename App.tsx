@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
@@ -511,7 +510,7 @@ const App: React.FC = () => {
             
             {!(activeTab === 'home' && searchState.status === 'idle') && (
                 <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 ${searchMode === 'notion' ? 'text-black' : 'text-white'}`}>
-                    Lumina
+                    Infinity
                     {searchMode === 'spotify' && <span className="text-[#1DB954] text-xs uppercase tracking-widest border border-[#1DB954] px-1 rounded">Music</span>}
                     {searchMode === 'notion' && <span className="text-black text-xs uppercase tracking-widest border border-black px-1 rounded">Workspace</span>}
                 </div>

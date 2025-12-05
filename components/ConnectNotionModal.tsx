@@ -27,13 +27,9 @@ const ConnectNotionModal: React.FC<ConnectNotionModalProps> = ({ onClose, onConn
 
         {/* Icons Row */}
         <div className="flex items-center gap-6 mb-8 mt-4">
-            {/* App Logo Placeholder */}
-            <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center shadow-lg">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            {/* App Logo */}
+            <div className="w-20 h-20 bg-white border border-gray-100 rounded-3xl flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="https://iili.io/fIDzzRS.png" alt="Infinity" className="w-full h-full object-cover" />
             </div>
             
             {/* Link Icon */}
@@ -49,9 +45,9 @@ const ConnectNotionModal: React.FC<ConnectNotionModalProps> = ({ onClose, onConn
             </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Connect Lumina to Notion</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Connect Infinity to Notion</h2>
         <p className="text-gray-500 text-center mb-8 px-4 leading-relaxed">
-            Allow Lumina to search your Notion pages and databases to provide answers from your personal workspace.
+            Allow Infinity to search your Notion pages and databases to provide answers from your personal workspace.
         </p>
 
         <div className="flex w-full gap-4">

@@ -84,7 +84,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="mt-auto pl-4 text-xs text-gray-400 font-medium">
-            Lumina v2.1.0
+            Infinity v2.1.0
         </div>
       </div>
 
@@ -102,7 +102,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <div>
                   <h4 className="text-2xl font-bold text-slate-900">John Doe</h4>
-                  <p className="text-slate-500 font-medium">Lumina Free Plan</p>
+                  <p className="text-slate-500 font-medium">Infinity Free Plan</p>
                 </div>
               </div>
 
@@ -205,7 +205,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-slate-900">Feature AI</h3>
               <p className="text-slate-600 leading-relaxed font-medium bg-blue-50/50 p-6 rounded-[24px] border border-blue-100">
-                Unlock the full potential of Lumina by connecting your own Google Gemini API key. 
+                Unlock the full potential of Infinity by connecting your own Google Gemini API key. 
                 Your key is stored locally on your device and never sent to our servers.
               </p>
 
