@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Search, Zap, Globe, Shield, Music, Layers, Cpu, Users, BarChart, MessageSquare, CheckCircle, Smartphone, Lock, HelpCircle } from 'lucide-react';
+import { ArrowRight, Search, Zap, Globe, Shield, Music, Layers, Cpu, Users, BarChart, MessageSquare, CheckCircle, Smartphone, Lock, HelpCircle, Code, Terminal, Activity } from 'lucide-react';
 
 interface MarketingPageProps {
   onGetStarted: () => void;
@@ -9,6 +9,52 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-black selection:text-white overflow-x-hidden">
       
+      {/* Custom Styles for Animations */}
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-scroll {
+          animation: scroll 30s linear infinite;
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
+        }
+        .animate-float-delayed {
+          animation: float-delayed 7s ease-in-out infinite;
+          animation-delay: 1s;
+        }
+
+        @keyframes pulse-ring {
+          0% { transform: scale(0.8); opacity: 0.5; }
+          100% { transform: scale(1.3); opacity: 0; }
+        }
+        .animate-pulse-ring {
+          animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes scan {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan {
+          animation: scan 4s linear infinite;
+        }
+      `}</style>
+
       {/* 1. Navbar */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-xl z-50 border-b border-gray-100 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -83,7 +129,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                         ))}
                     </div>
                     
-                    <div className="w-full max-w-xl bg-white rounded-full shadow-2xl border border-gray-100 p-2 flex items-center gap-4 transform transition-transform hover:scale-105 duration-500 group cursor-pointer">
+                    <div className="w-full max-w-xl bg-white rounded-full shadow-2xl border border-gray-100 p-2 flex items-center gap-4 transform transition-transform hover:scale-105 duration-500 group cursor-pointer animate-float">
                         <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white shrink-0 group-hover:bg-blue-600 transition-colors">
                             <Search size={24} />
                         </div>
@@ -91,23 +137,43 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                             Ask anything...
                         </div>
                     </div>
+
+                    {/* Floating App Icons */}
+                    <div className="absolute top-1/4 left-10 w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-gray-100 animate-float-delayed">
+                        <Music className="text-green-500" />
+                    </div>
+                    <div className="absolute bottom-1/4 right-10 w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-gray-100 animate-float">
+                         <Layers className="text-black" />
+                    </div>
                 </div>
              </div>
           </div>
         </div>
       </section>
 
-      {/* 3. Social Proof / Trusted By */}
-      <section className="py-12 border-b border-gray-100 bg-gray-50/30">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Trusted by innovators at</p>
-            <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                {/* SVG Logos Placeholders */}
-                <div className="text-xl font-bold flex items-center gap-2"><Globe size={24}/> Acme Corp</div>
-                <div className="text-xl font-bold flex items-center gap-2"><Layers size={24}/> StackFlow</div>
-                <div className="text-xl font-bold flex items-center gap-2"><Cpu size={24}/> AI Labs</div>
-                <div className="text-xl font-bold flex items-center gap-2"><Zap size={24}/> Bolt Inc</div>
-                <div className="text-xl font-bold flex items-center gap-2"><Shield size={24}/> SecureNet</div>
+      {/* 3. Infinite Marquee */}
+      <section className="py-12 border-b border-gray-100 bg-gray-50/50 overflow-hidden">
+        <p className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">Powering Teams At</p>
+        <div className="relative w-full overflow-hidden">
+            <div className="flex w-[200%] animate-scroll">
+                {/* Logo Set 1 */}
+                <div className="flex justify-around min-w-[50%] px-10 gap-12 opacity-40 grayscale hover:grayscale-0 transition-all">
+                    <div className="text-xl font-bold flex items-center gap-2"><Globe size={24}/> Acme Corp</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Layers size={24}/> StackFlow</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Cpu size={24}/> AI Labs</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Zap size={24}/> Bolt Inc</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Shield size={24}/> SecureNet</div>
+                     <div className="text-xl font-bold flex items-center gap-2"><Activity size={24}/> HealthPlus</div>
+                </div>
+                 {/* Logo Set 2 (Duplicate for smooth scroll) */}
+                <div className="flex justify-around min-w-[50%] px-10 gap-12 opacity-40 grayscale hover:grayscale-0 transition-all">
+                    <div className="text-xl font-bold flex items-center gap-2"><Globe size={24}/> Acme Corp</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Layers size={24}/> StackFlow</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Cpu size={24}/> AI Labs</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Zap size={24}/> Bolt Inc</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Shield size={24}/> SecureNet</div>
+                    <div className="text-xl font-bold flex items-center gap-2"><Activity size={24}/> HealthPlus</div>
+                </div>
             </div>
         </div>
       </section>
@@ -133,9 +199,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                         Powered by Google's Gemini 2.5 Flash model, get answers synthesized from the live web in milliseconds.
                     </p>
                     <div className="mt-10 flex gap-3">
-                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider">Web</div>
-                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider">Images</div>
-                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider">News</div>
+                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider animate-float">Web</div>
+                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider animate-float-delayed">Images</div>
+                        <div className="px-5 py-2 bg-white shadow-sm rounded-xl text-xs font-bold uppercase tracking-wider animate-float">News</div>
                     </div>
                 </div>
 
@@ -184,8 +250,55 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
         </div>
       </section>
 
+      {/* NEW SECTION: Live Processing Terminal */}
+      <section className="py-24 bg-[#0a0a0a] text-white relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-12">
+            <div className="w-full md:w-1/2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-900/30 text-green-400 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                    <Terminal size={14} /> Live Agent V2
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">Behind the curtain.</h2>
+                <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                    Watch how Infinity breaks down complex queries, delegates tasks to specialized sub-agents, and cross-references data in real-time.
+                </p>
+                
+                <div className="flex gap-4">
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> System Online
+                    </div>
+                     <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div> Gemini 2.5 Active
+                    </div>
+                </div>
+            </div>
+
+            <div className="w-full md:w-1/2 bg-[#111] rounded-xl border border-gray-800 shadow-2xl p-4 font-mono text-xs md:text-sm h-[320px] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                
+                {/* Simulated Logs */}
+                <div className="space-y-2 opacity-80">
+                    <div className="text-green-400">user@infinity:~$ search "climate change impact on gdp"</div>
+                    <div className="text-blue-400">>>> INTENT_DETECTED: [Economic_Analysis, Environment]</div>
+                    <div className="text-gray-400">... Initiating web_crawler_v4</div>
+                    <div className="text-gray-400">... Accessing specialized_datasets (IMF, World Bank)</div>
+                    <div className="text-yellow-400">! Found 142 referenced papers</div>
+                    <div className="text-gray-400">... Synthesizing cross-references</div>
+                    <div className="pl-4 border-l border-gray-700 text-gray-500">
+                         {`{ "region": "global", "projected_loss": "11-14%", "timeline": "2050" }`}
+                    </div>
+                    <div className="text-purple-400">>>> GENERATING_SUMMARY...</div>
+                    <div className="text-green-400">Done (0.42s).</div>
+                    <div className="animate-pulse">_</div>
+                </div>
+
+                {/* Scan Line */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-500/10 to-transparent h-[20%] w-full animate-scan pointer-events-none"></div>
+            </div>
+        </div>
+      </section>
+
       {/* 5. Deep Dive: Intelligence */}
-      <section className="py-24 bg-black text-white overflow-hidden relative">
+      <section className="py-24 bg-black text-white overflow-hidden relative border-t border-gray-900">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black" />
           <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-16">
               <div className="md:w-1/2">
@@ -203,20 +316,35 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                   </ul>
               </div>
               <div className="md:w-1/2 relative">
+                  {/* Glowing Ring Animation */}
                   <div className="absolute inset-0 bg-blue-500 blur-[100px] opacity-20 animate-pulse" />
-                  <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 relative">
-                      <div className="flex gap-4 mb-6 border-b border-gray-800 pb-4">
-                          <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400"><Cpu size={20}/></div>
-                          <div>
-                              <div className="text-sm text-gray-400">Processing Query</div>
-                              <div className="font-mono text-xs text-green-400">Analyzing 14 sources...</div>
-                          </div>
+                  
+                  {/* Central Node */}
+                  <div className="relative w-full aspect-square flex items-center justify-center">
+                      <div className="absolute w-64 h-64 border border-blue-500/30 rounded-full animate-pulse-ring"></div>
+                      <div className="absolute w-48 h-48 border border-purple-500/30 rounded-full animate-pulse-ring" style={{ animationDelay: '1s' }}></div>
+                      
+                      {/* Floating Nodes */}
+                      <div className="absolute top-10 right-20 w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center border border-gray-700 animate-float">
+                          <Globe className="text-blue-400"/>
                       </div>
-                      <div className="space-y-3">
-                          <div className="h-2 bg-gray-800 rounded w-full" />
-                          <div className="h-2 bg-gray-800 rounded w-5/6" />
-                          <div className="h-2 bg-gray-800 rounded w-4/6" />
-                          <div className="h-2 bg-gray-800 rounded w-full" />
+                      <div className="absolute bottom-20 left-10 w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center border border-gray-700 animate-float-delayed">
+                          <Code className="text-green-400"/>
+                      </div>
+                      
+                      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 relative z-10 shadow-2xl w-80">
+                          <div className="flex gap-4 mb-6 border-b border-gray-800 pb-4">
+                              <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400"><Cpu size={20}/></div>
+                              <div>
+                                  <div className="text-sm text-gray-400">Processing Query</div>
+                                  <div className="font-mono text-xs text-green-400">Analyzing 14 sources...</div>
+                              </div>
+                          </div>
+                          <div className="space-y-3">
+                              <div className="h-2 bg-gray-800 rounded w-full animate-pulse" />
+                              <div className="h-2 bg-gray-800 rounded w-5/6 animate-pulse" style={{ animationDelay: '0.2s' }} />
+                              <div className="h-2 bg-gray-800 rounded w-4/6 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                          </div>
                       </div>
                   </div>
               </div>
@@ -234,8 +362,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                       { name: 'Figma', icon: <Zap size={32}/>, color: 'text-purple-500' },
                       { name: 'Google Drive', icon: <Globe size={32}/>, color: 'text-blue-500' },
                   ].map((app, i) => (
-                      <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center gap-4 hover:-translate-y-2 transition-transform">
-                          <div className={`w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center ${app.color}`}>
+                      <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center gap-4 hover:-translate-y-2 transition-transform group">
+                          <div className={`w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center ${app.color} group-hover:scale-110 transition-transform`}>
                               {app.icon}
                           </div>
                           <h3 className="font-bold text-xl">{app.name}</h3>
@@ -254,12 +382,12 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
               </div>
               <div className="grid md:grid-cols-3 gap-8">
                   {[
-                      { title: 'For Developers', desc: 'Find code snippets, debug errors, and search documentation without leaving your flow.', icon: <Cpu/> },
+                      { title: 'For Developers', desc: 'Find code snippets, debug errors, and search documentation without leaving your flow.', icon: <Code/> },
                       { title: 'For Creatives', desc: 'Search visual inspiration, find assets in Figma, and generate moodboards instantly.', icon: <Zap/> },
                       { title: 'For Students', desc: 'Summarize long papers, find credible sources, and organize your research notes.', icon: <MessageSquare/> },
                   ].map((caseItem, i) => (
                       <div key={i} className="p-8 border border-gray-100 rounded-[32px] hover:bg-gray-50 transition-colors">
-                          <div className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center mb-6">
+                          <div className="w-12 h-12 bg-black text-white rounded-xl flex items-center justify-center mb-6 shadow-lg">
                               {caseItem.icon}
                           </div>
                           <h3 className="text-xl font-bold mb-3">{caseItem.title}</h3>
@@ -293,7 +421,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
       <section className="py-24 px-6 bg-white">
           <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold text-center mb-12">Why switch?</h2>
-              <div className="bg-gray-50 rounded-[32px] p-8 md:p-12">
+              <div className="bg-gray-50 rounded-[32px] p-8 md:p-12 border border-gray-100 shadow-xl">
                   <div className="grid grid-cols-3 gap-4 text-center border-b border-gray-200 pb-6 mb-6 font-bold text-lg">
                       <div className="text-left text-gray-400">Feature</div>
                       <div className="text-gray-400">Traditional</div>
@@ -306,8 +434,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted }) => {
                       { feat: 'App Search', bad: 'Impossible', good: 'Native' },
                       { feat: 'Privacy', bad: 'Data Sold', good: 'Encrypted' },
                   ].map((row, i) => (
-                      <div key={i} className="grid grid-cols-3 gap-4 text-center py-4 border-b border-gray-200 last:border-0 items-center">
-                          <div className="text-left font-medium">{row.feat}</div>
+                      <div key={i} className="grid grid-cols-3 gap-4 text-center py-4 border-b border-gray-200 last:border-0 items-center hover:bg-gray-50 transition-colors rounded-lg">
+                          <div className="text-left font-medium pl-2">{row.feat}</div>
                           <div className="text-gray-400">{row.bad}</div>
                           <div className="font-bold flex justify-center items-center gap-2">
                               <CheckCircle size={16} className="text-green-500" /> {row.good}
