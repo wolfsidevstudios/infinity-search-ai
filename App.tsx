@@ -307,28 +307,26 @@ const App: React.FC = () => {
         <div 
             className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out"
             style={{ 
-            backgroundImage: activeTab === 'home' && searchState.status === 'idle' 
+            backgroundImage: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' 
                 ? 'none' 
                 : searchMode === 'spotify' 
                   ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` // Music themed BG
-                  : activeTab === 'settings'
-                    ? `url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop')` // Abstract BG for settings
-                    : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
-            backgroundColor: activeTab === 'home' && searchState.status === 'idle' 
+                  : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
+            backgroundColor: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' 
                 ? '#ffffff' 
                 : '#000000', 
             transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' 
             }}
         >
             <div className={`absolute inset-0 transition-all duration-1000 ${
-                activeTab === 'home' && searchState.status === 'idle' 
+                (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings'
                 ? 'bg-transparent' 
                 : 'bg-black/40 backdrop-blur-sm' 
             }`} />
         </div>
 
         {/* Header */}
-        <div className="h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0">
+        <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' ? 'hidden' : ''}`}>
             <div className="pointer-events-auto">
                 {activeTab === 'home' && searchState.status === 'results' && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
