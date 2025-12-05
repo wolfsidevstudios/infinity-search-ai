@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight, Plus, Upload, Music, Globe } from 'lucide-react';
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'spotify') => void;
+  onSearch: (query: string, mode: 'web' | 'spotify' | 'notion') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'spotify';
-  onModeChange: (mode: 'web' | 'spotify') => void;
+  activeMode: 'web' | 'spotify' | 'notion';
+  onModeChange: (mode: 'web' | 'spotify' | 'notion') => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, centered, activeMode, onModeChange }) => {
@@ -31,9 +31,15 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'spotify') => {
+  const handleModeSelect = (mode: 'web' | 'spotify' | 'notion') => {
       onModeChange(mode);
       setShowDropdown(false);
+  };
+
+  const getPlaceholder = () => {
+      if (activeMode === 'spotify') return "Search for songs, artists, albums...";
+      if (activeMode === 'notion') return "Search your workspace docs...";
+      return "Search for anything...";
   };
 
   return (
@@ -46,6 +52,8 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
         <h1 className="text-3xl md:text-5xl font-semibold text-slate-800 mb-10 tracking-tight text-center">
             {activeMode === 'spotify' ? (
                  <>Search <span className="text-[#1DB954]">Spotify</span></>
+            ) : activeMode === 'notion' ? (
+                 <>Search <span className="text-black">Notion</span></>
             ) : (
                  <>What <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">do you want to know?</span></>
             )}
@@ -66,7 +74,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
 
                 {/* Frosted Dropdown */}
                 {showDropdown && (
-                    <div className="absolute top-14 left-0 w-56 bg-white/80 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl p-2 animate-slideUp flex flex-col gap-1 overflow-hidden">
+                    <div className="absolute top-14 left-0 w-64 bg-white/80 backdrop-blur-xl border border-white/40 rounded-2xl shadow-2xl p-2 animate-slideUp flex flex-col gap-1 overflow-hidden">
                         <button 
                             type="button"
                             onClick={() => handleModeSelect('web')}
@@ -78,6 +86,28 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
                         
                         <div className="h-[1px] bg-gray-200/50 mx-2 my-1"></div>
 
+                         <button 
+                            type="button"
+                            onClick={() => handleModeSelect('notion')}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'notion' ? 'bg-black text-white shadow-lg' : 'hover:bg-black/5 text-gray-700'}`}
+                        >
+                            <div className="w-4 h-4 flex items-center justify-center">
+                                <svg viewBox="0 0 122.88 128.1" fill="currentColor"><path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/></svg>
+                            </div>
+                            <span className="font-medium">Notion</span>
+                        </button>
+
+                        <button 
+                            type="button"
+                            onClick={() => handleModeSelect('spotify')}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'spotify' ? 'bg-[#1DB954] text-white shadow-lg' : 'hover:bg-[#1DB954]/10 hover:text-[#1DB954] text-gray-700'}`}
+                        >
+                            <Music size={18} />
+                            <span className="font-medium">Spotify</span>
+                        </button>
+
+                        <div className="h-[1px] bg-gray-200/50 mx-2 my-1"></div>
+
                         <button 
                             type="button"
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-black/5 text-gray-700 transition-all text-left"
@@ -85,15 +115,6 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
                         >
                             <Upload size={18} />
                             <span className="font-medium">File Upload</span>
-                        </button>
-                        
-                        <button 
-                            type="button"
-                            onClick={() => handleModeSelect('spotify')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'spotify' ? 'bg-[#1DB954] text-white shadow-lg' : 'hover:bg-[#1DB954]/10 hover:text-[#1DB954] text-gray-700'}`}
-                        >
-                            <Music size={18} />
-                            <span className="font-medium">Spotify Search</span>
                         </button>
                     </div>
                 )}
@@ -104,10 +125,14 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={activeMode === 'spotify' ? "Search for songs, artists, albums..." : "Search for anything..."}
+                placeholder={getPlaceholder()}
                 disabled={isSearching}
                 className={`w-full h-[72px] pl-16 pr-20 rounded-full border border-gray-200 text-slate-800 placeholder-slate-400 shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] focus:outline-none focus:ring-4 transition-all text-xl ${
-                    activeMode === 'spotify' ? 'bg-[#f0f9f4] focus:ring-green-100' : 'bg-white focus:ring-blue-100'
+                    activeMode === 'spotify' 
+                    ? 'bg-[#f0f9f4] focus:ring-green-100' 
+                    : activeMode === 'notion'
+                    ? 'bg-gray-50 focus:ring-gray-200'
+                    : 'bg-white focus:ring-blue-100'
                 }`}
             />
             

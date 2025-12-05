@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MediaItem } from '../types';
-import { Sparkles, Play, Pause, Music, ExternalLink } from 'lucide-react';
+import { Sparkles, Play, Music, ExternalLink } from 'lucide-react';
 import { getMusicInsights } from '../services/geminiService';
 
 interface SpotifyResultsViewProps {
@@ -33,26 +33,26 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
       {/* Hero Section: Top Result + Embed + AI */}
       <div className="flex flex-col lg:flex-row gap-6 mb-10">
         
-        {/* Left: Album Art & Embed */}
-        <div className="flex-1 bg-gradient-to-br from-[#1DB954]/20 to-black/40 backdrop-blur-2xl border border-white/10 rounded-[40px] p-6 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#1DB954] blur-[100px] opacity-20 pointer-events-none"></div>
+        {/* Left: Album Art & Embed (White Theme) */}
+        <div className="flex-1 bg-white border border-gray-200 rounded-[40px] p-6 shadow-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#1DB954] blur-[100px] opacity-10 pointer-events-none"></div>
             
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start relative z-10">
                 {/* Album Art */}
-                <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-[32px] overflow-hidden shadow-2xl border-4 border-white/10 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-[32px] overflow-hidden shadow-2xl border-4 border-gray-100 rotate-3 group-hover:rotate-0 transition-transform duration-500">
                     <img src={topResult.thumbnailUrl} alt={topResult.title} className="w-full h-full object-cover" />
                 </div>
 
                 {/* Details */}
-                <div className="flex-1 text-center md:text-left pt-2">
-                    <div className="inline-flex items-center gap-1 bg-[#1DB954] text-black text-xs font-bold px-3 py-1 rounded-full mb-3 shadow-lg">
-                        <Music size={12} fill="black" /> TOP RESULT
+                <div className="flex-1 text-center md:text-left pt-2 w-full">
+                    <div className="inline-flex items-center gap-1 bg-[#1DB954] text-white text-xs font-bold px-3 py-1 rounded-full mb-3 shadow-md">
+                        <Music size={12} fill="white" /> TOP RESULT
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 leading-tight drop-shadow-lg">{topResult.title}</h1>
-                    <p className="text-xl text-white/70 font-medium mb-6">{topResult.artist}</p>
+                    <h1 className="text-3xl md:text-5xl font-bold text-slate-900 mb-2 leading-tight tracking-tight">{topResult.title}</h1>
+                    <p className="text-xl text-slate-500 font-medium mb-6">{topResult.artist}</p>
                     
                     {/* Spotify Embed */}
-                    <div className="w-full rounded-2xl overflow-hidden shadow-lg bg-black/50">
+                    <div className="w-full rounded-2xl overflow-hidden shadow-md">
                         <iframe 
                             src={`https://open.spotify.com/embed/track/${topResult.id}?utm_source=generator&theme=0`} 
                             width="100%" 
@@ -68,35 +68,35 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
             </div>
         </div>
 
-        {/* Right: AI Insight */}
-        <div className="lg:w-1/3 bg-white/10 backdrop-blur-xl border border-white/10 rounded-[40px] p-8 shadow-xl flex flex-col justify-center relative overflow-hidden">
-             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500 blur-[80px] opacity-20"></div>
+        {/* Right: AI Insight (White Theme) */}
+        <div className="lg:w-1/3 bg-white border border-gray-200 rounded-[40px] p-8 shadow-lg flex flex-col justify-center relative overflow-hidden">
+             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500 blur-[80px] opacity-10"></div>
              
-             <div className="flex items-center gap-2 mb-4 text-purple-300">
+             <div className="flex items-center gap-2 mb-4 text-purple-600">
                  <Sparkles size={20} className={loadingInsight ? 'animate-spin' : ''} />
                  <span className="text-xs font-bold uppercase tracking-widest">AI Insight</span>
              </div>
 
              {loadingInsight ? (
                  <div className="space-y-2 animate-pulse">
-                     <div className="h-4 bg-white/10 rounded w-full"></div>
-                     <div className="h-4 bg-white/10 rounded w-5/6"></div>
-                     <div className="h-4 bg-white/10 rounded w-4/6"></div>
+                     <div className="h-4 bg-gray-100 rounded w-full"></div>
+                     <div className="h-4 bg-gray-100 rounded w-5/6"></div>
+                     <div className="h-4 bg-gray-100 rounded w-4/6"></div>
                  </div>
              ) : (
-                 <p className="text-lg text-white font-light leading-relaxed">
+                 <p className="text-lg text-slate-700 font-light leading-relaxed">
                      {insight}
                  </p>
              )}
              
-             <div className="mt-auto pt-6 opacity-50 text-xs text-white">
+             <div className="mt-auto pt-6 opacity-50 text-xs text-slate-400">
                  Generated by Gemini for {query}
              </div>
         </div>
       </div>
 
       {/* List: Other Results */}
-      <h2 className="text-2xl font-bold text-white mb-6 pl-2">More Results</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-6 pl-2">More Results</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.slice(1).map((item) => (
               <a 
@@ -104,9 +104,9 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
                 href={item.pageUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-[24px] p-3 transition-all duration-300 hover:-translate-y-1 group"
+                className="flex items-center gap-4 bg-white hover:bg-gray-50 border border-gray-100 hover:border-gray-200 rounded-[24px] p-3 transition-all duration-300 hover:-translate-y-1 group shadow-sm hover:shadow-md"
               >
-                  <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden shadow-md relative">
+                  <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden shadow-sm relative">
                       <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Play size={16} className="text-white fill-white" />
@@ -114,12 +114,12 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
                   </div>
                   
                   <div className="min-w-0 flex-1">
-                      <h3 className="text-white font-bold truncate group-hover:text-[#1DB954] transition-colors">{item.title}</h3>
-                      <p className="text-white/60 text-sm truncate">{item.artist}</p>
-                      <p className="text-white/30 text-xs mt-1">{item.album}</p>
+                      <h3 className="text-slate-900 font-bold truncate group-hover:text-[#1DB954] transition-colors">{item.title}</h3>
+                      <p className="text-slate-500 text-sm truncate">{item.artist}</p>
+                      <p className="text-slate-400 text-xs mt-1">{item.album}</p>
                   </div>
 
-                  <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-white/20 group-hover:text-[#1DB954] group-hover:border-[#1DB954]/50 transition-all">
+                  <div className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 group-hover:text-[#1DB954] group-hover:border-[#1DB954]/50 transition-all">
                       <ExternalLink size={14} />
                   </div>
               </a>

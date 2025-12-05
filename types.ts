@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio';
+  type: 'image' | 'video' | 'audio' | 'article';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
@@ -16,6 +16,7 @@ export interface MediaItem {
   duration?: number; // Optional for videos/audio
   artist?: string; // Specific to audio
   album?: string; // Specific to audio
+  data?: any; // For additional metadata (e.g. Notion page details)
 }
 
 export interface SearchState {

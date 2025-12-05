@@ -9,14 +9,18 @@ import ImageGridView from './components/ImageGridView';
 import LoadingAnimation from './components/LoadingAnimation';
 import DashboardWidgets from './components/DashboardWidgets'; 
 import ConnectSpotifyModal from './components/ConnectSpotifyModal';
+import ConnectNotionModal from './components/ConnectNotionModal';
 import SpotifyResultsView from './components/SpotifyResultsView';
+import NotionResultsView from './components/NotionResultsView';
 import SettingsView from './components/SettingsView';
+import MarketingPage from './components/MarketingPage';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
 import { supabase } from './services/supabaseClient';
 import { searchSpotify } from './services/spotifyService';
+import { searchNotion } from './services/notionService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem } from './types';
 
 // Helper to mix results from different sources
@@ -33,9 +37,11 @@ const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
 };
 
 const App: React.FC = () => {
+  // App Logic State
+  const [isLandingPage, setIsLandingPage] = useState(true);
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings'>('home');
   
-  // State for search
+  // Search State
   const [searchState, setSearchState] = useState<SearchState>({
     status: 'idle',
     query: '',
@@ -45,11 +51,14 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'spotify'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'spotify' | 'notion'>('web');
 
-  // Spotify Auth State
+  // Auth State
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+  
+  const [notionToken, setNotionToken] = useState<string | null>(null);
+  const [showNotionModal, setShowNotionModal] = useState(false);
 
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
@@ -65,18 +74,22 @@ const App: React.FC = () => {
   // State for viewing an article
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
 
-  // Init Spotify Session Check
+  // Init Session Check
   useEffect(() => {
-    // Check local session/url hash for auth result
     supabase.auth.getSession().then(({ data: { session } }) => {
         if (session && session.provider_token) {
-            setSpotifyToken(session.provider_token);
+           // This handles standard oauth. For multi-provider in one app, usually requires more complex state management
+           // For this demo, we assume token is set via provider_token
+           // Real implementation would manage tokens per provider in local storage or database
+           if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
+           if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
         }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session && session.provider_token) {
-            setSpotifyToken(session.provider_token);
+           if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
+           if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
         }
     });
 
@@ -93,9 +106,23 @@ const App: React.FC = () => {
       });
   };
 
-  const handleModeChange = (mode: 'web' | 'spotify') => {
+  const initiateNotionLogin = async () => {
+      // Mock login for demo purposes to avoid breaking flow without real Supabase Notion setup
+      setNotionToken('mock-notion-token');
+      setShowNotionModal(false);
+      /* 
+      await supabase.auth.signInWithOAuth({
+          provider: 'notion',
+          options: { redirectTo: window.location.origin }
+      });
+      */
+  };
+
+  const handleModeChange = (mode: 'web' | 'spotify' | 'notion') => {
       if (mode === 'spotify' && !spotifyToken) {
           setShowSpotifyModal(true);
+      } else if (mode === 'notion' && !notionToken) {
+          setShowNotionModal(true);
       } else {
           setSearchMode(mode);
       }
@@ -110,7 +137,7 @@ const App: React.FC = () => {
       setHistory(prev => [newItem, ...prev]);
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'spotify') => {
+  const handleSearch = async (query: string, mode: 'web' | 'spotify' | 'notion') => {
     setSearchState(prev => ({ 
         ...prev, 
         status: 'searching', 
@@ -127,8 +154,7 @@ const App: React.FC = () => {
           }
 
           const tracks = await searchSpotify(query, spotifyToken);
-          
-          await new Promise(resolve => setTimeout(resolve, 800)); // Animation delay
+          await new Promise(resolve => setTimeout(resolve, 800)); 
 
           setSearchState({
               status: 'results',
@@ -137,14 +163,35 @@ const App: React.FC = () => {
               sources: [],
               media: tracks
           });
-
-          // Also populate the "Images" tab (repurposed as Media gallery)
-          setMediaGridData({ items: tracks, loading: false });
           
           addToHistory({
               type: 'search',
               title: `Spotify: ${query}`,
               summary: `Music search results for ${query}`,
+              sources: []
+          });
+
+      } else if (mode === 'notion') {
+          if (!notionToken) {
+              setSearchState(prev => ({ ...prev, status: 'idle', error: "Not authenticated with Notion" }));
+              setShowNotionModal(true);
+              return;
+          }
+
+          const pages = await searchNotion(query, notionToken);
+          
+          setSearchState({
+              status: 'results',
+              query,
+              summary: `Found ${pages.length} pages in Notion.`,
+              sources: [],
+              media: pages
+          });
+
+          addToHistory({
+              type: 'search',
+              title: `Notion: ${query}`,
+              summary: `Workspace search for ${query}`,
               sources: []
           });
 
@@ -267,6 +314,9 @@ const App: React.FC = () => {
           if (item.title.startsWith("Spotify: ")) {
              setSearchMode('spotify');
              handleSearch(item.title.replace("Spotify: ", ""), 'spotify');
+          } else if (item.title.startsWith("Notion: ")) {
+              setSearchMode('notion');
+              handleSearch(item.title.replace("Notion: ", ""), 'notion');
           } else if (item.title.startsWith("Images: ")) {
               handleMediaSearch(item.title.replace("Images: ", ""), 'image');
           } else if (item.title.startsWith("Videos: ")) {
@@ -290,6 +340,12 @@ const App: React.FC = () => {
       }
   };
 
+  // --- RENDER ---
+  
+  if (isLandingPage) {
+      return <MarketingPage onGetStarted={() => setIsLandingPage(false)} />;
+  }
+
   return (
     <div className="relative h-screen w-full bg-[#f2f4f6] text-slate-800 flex overflow-hidden">
       
@@ -310,16 +366,18 @@ const App: React.FC = () => {
             backgroundImage: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' 
                 ? 'none' 
                 : searchMode === 'spotify' 
-                  ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` // Music themed BG
+                  ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` 
+                  : searchMode === 'notion'
+                  ? 'none' // White background for Notion
                   : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
-            backgroundColor: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' 
+            backgroundColor: (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' || searchMode === 'notion'
                 ? '#ffffff' 
                 : '#000000', 
             transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' 
             }}
         >
             <div className={`absolute inset-0 transition-all duration-1000 ${
-                (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings'
+                (activeTab === 'home' && searchState.status === 'idle') || activeTab === 'settings' || searchMode === 'notion'
                 ? 'bg-transparent' 
                 : 'bg-black/40 backdrop-blur-sm' 
             }`} />
@@ -330,16 +388,17 @@ const App: React.FC = () => {
             <div className="pointer-events-auto">
                 {activeTab === 'home' && searchState.status === 'results' && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-white group-hover:scale-150 transition-transform"/>
-                        <span className="text-white/80 font-medium tracking-wide group-hover:text-white">Back to Search</span>
+                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform ${searchMode === 'notion' ? 'bg-black' : 'bg-white'}`}/>
+                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 ${searchMode === 'notion' ? 'text-black' : 'text-white'}`}>Back to Search</span>
                     </div>
                 )}
             </div>
             
             {!(activeTab === 'home' && searchState.status === 'idle') && (
-                <div className="text-white font-bold tracking-tight text-xl opacity-80 flex items-center gap-2">
+                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 ${searchMode === 'notion' ? 'text-black' : 'text-white'}`}>
                     Lumina
                     {searchMode === 'spotify' && <span className="text-[#1DB954] text-xs uppercase tracking-widest border border-[#1DB954] px-1 rounded">Music</span>}
+                    {searchMode === 'notion' && <span className="text-black text-xs uppercase tracking-widest border border-black px-1 rounded">Workspace</span>}
                 </div>
             )}
         </div>
@@ -381,25 +440,30 @@ const App: React.FC = () => {
                 {/* Results */}
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
-                        <div className="max-w-4xl mx-auto mb-8">
-                            <h2 className="text-3xl font-bold text-white drop-shadow-md mb-2 flex items-center gap-3">
-                                {searchMode === 'spotify' && <span className="text-[#1DB954]">Spotify Results:</span>}
-                                {searchState.query}
-                            </h2>
-                        </div>
-                        
-                        {/* Custom Render for Spotify Results vs Web Results */}
+                        {/* Custom Render per Mode */}
                         {searchMode === 'spotify' ? (
-                            <SpotifyResultsView items={searchState.media} query={searchState.query} />
+                            <>
+                                <div className="max-w-6xl mx-auto mb-6 px-4">
+                                     <h2 className="text-3xl font-bold text-white flex items-center gap-3">{searchState.query}</h2>
+                                </div>
+                                <SpotifyResultsView items={searchState.media} query={searchState.query} />
+                            </>
+                        ) : searchMode === 'notion' ? (
+                            <NotionResultsView items={searchState.media} query={searchState.query} />
                         ) : (
-                            <ResultsView 
-                                summary={searchState.summary} 
-                                sources={searchState.sources} 
-                                images={searchState.media} 
-                                onOpenImageGrid={() => {
-                                    handleMediaSearch(searchState.query, 'image');
-                                }}
-                            />
+                            <>
+                                <div className="max-w-4xl mx-auto mb-6">
+                                    <h2 className="text-3xl font-bold text-white drop-shadow-md mb-2">{searchState.query}</h2>
+                                </div>
+                                <ResultsView 
+                                    summary={searchState.summary} 
+                                    sources={searchState.sources} 
+                                    images={searchState.media} 
+                                    onOpenImageGrid={() => {
+                                        handleMediaSearch(searchState.query, 'image');
+                                    }}
+                                />
+                            </>
                         )}
                     </div>
                 )}
@@ -410,16 +474,31 @@ const App: React.FC = () => {
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={onMediaTypeSwitch}/></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
-            {activeTab === 'settings' && <div className="w-full h-full"><SettingsView isSpotifyConnected={!!spotifyToken}/></div>}
+            {activeTab === 'settings' && (
+                <div className="w-full h-full">
+                    <SettingsView 
+                        isSpotifyConnected={!!spotifyToken} 
+                        isNotionConnected={!!notionToken}
+                        onConnectNotion={() => setShowNotionModal(true)}
+                        onConnectSpotify={() => setShowSpotifyModal(true)}
+                    />
+                </div>
+            )}
 
         </div>
       </main>
 
-      {/* Spotify Connect Modal (Separate popup logic handled by app state) */}
+      {/* Modals */}
       {showSpotifyModal && (
           <ConnectSpotifyModal 
             onClose={() => setShowSpotifyModal(false)}
             onConnect={initiateSpotifyLogin}
+          />
+      )}
+      {showNotionModal && (
+          <ConnectNotionModal 
+            onClose={() => setShowNotionModal(false)}
+            onConnect={initiateNotionLogin}
           />
       )}
 
