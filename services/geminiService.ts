@@ -1,10 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 import { Source } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to get the AI client, prioritizing Local Storage key if set
+const getAiClient = () => {
+    const customKey = localStorage.getItem('gemini_api_key');
+    // Fallback to process.env.API_KEY if no custom key is provided
+    return new GoogleGenAI({ apiKey: customKey || process.env.API_KEY });
+};
 
 export const searchWithGemini = async (query: string): Promise<{ text: string; sources: Source[] }> => {
   try {
+    const ai = getAiClient();
     const modelName = "gemini-2.5-flash";
 
     const systemInstruction = "You are a helpful visual search agent. Provide a concise, informative summary of the search query. Focus on key facts. Do not use markdown headers, just paragraphs.";
@@ -57,7 +63,7 @@ export const searchWithGemini = async (query: string): Promise<{ text: string; s
   } catch (error) {
     console.error("Gemini Search Error:", error);
     return { 
-        text: "I encountered an issue connecting to the AI service. Please check your connection and try again.", 
+        text: "I encountered an issue connecting to the AI service. Please check your connection or your custom API Key in settings.", 
         sources: [] 
     };
   }
@@ -65,6 +71,7 @@ export const searchWithGemini = async (query: string): Promise<{ text: string; s
 
 export const summarizeWorldEvents = async (headlines: string[]): Promise<string> => {
     try {
+        const ai = getAiClient();
         const prompt = `Here are the top news headlines right now:
         ${headlines.map(h => `- ${h}`).join('\n')}
         
@@ -84,6 +91,7 @@ export const summarizeWorldEvents = async (headlines: string[]): Promise<string>
 
 export const getMusicInsights = async (track: string, artist: string): Promise<string> => {
     try {
+        const ai = getAiClient();
         const prompt = `Write a 2-sentence interesting description or fun fact about the song "${track}" by ${artist}. Keep it engaging and concise for a music player interface.`;
         
         const response = await ai.models.generateContent({

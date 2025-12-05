@@ -10,6 +10,7 @@ import LoadingAnimation from './components/LoadingAnimation';
 import DashboardWidgets from './components/DashboardWidgets'; 
 import ConnectSpotifyModal from './components/ConnectSpotifyModal';
 import SpotifyResultsView from './components/SpotifyResultsView';
+import SettingsModal from './components/SettingsModal';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -49,6 +50,9 @@ const App: React.FC = () => {
   // Spotify Auth State
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
   const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+
+  // Settings State
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
@@ -293,7 +297,12 @@ const App: React.FC = () => {
     <div className="relative h-screen w-full bg-[#f2f4f6] text-slate-800 flex overflow-hidden">
       
       {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange} 
+        onReset={handleReset} 
+        onOpenSettings={() => setShowSettingsModal(true)}
+      />
 
       {/* Main Floating Content Area */}
       <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500">
@@ -415,6 +424,14 @@ const App: React.FC = () => {
           <ConnectSpotifyModal 
             onClose={() => setShowSpotifyModal(false)}
             onConnect={initiateSpotifyLogin}
+          />
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+          <SettingsModal 
+            onClose={() => setShowSettingsModal(false)}
+            isSpotifyConnected={!!spotifyToken}
           />
       )}
 

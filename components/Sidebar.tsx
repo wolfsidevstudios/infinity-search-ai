@@ -5,15 +5,20 @@ interface SidebarProps {
   activeTab: 'home' | 'discover' | 'history' | 'article' | 'images';
   onTabChange: (tab: 'home' | 'discover' | 'history' | 'images') => void;
   onReset: () => void;
+  onOpenSettings: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset, onOpenSettings }) => {
   return (
     <div className="fixed left-0 top-0 bottom-0 w-24 flex flex-col items-center justify-between py-8 z-50">
       
-      {/* Top: Profile */}
+      {/* Top: Profile / Settings */}
       <div>
-        <button className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:scale-105 transition-all group shadow-sm">
+        <button 
+          onClick={onOpenSettings}
+          className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:scale-105 transition-all group shadow-sm"
+          title="Settings"
+        >
           <User size={20} className="text-gray-600 group-hover:text-black" />
         </button>
       </div>
