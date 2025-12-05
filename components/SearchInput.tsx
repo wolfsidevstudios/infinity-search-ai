@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Plus, Upload, Music, Globe } from 'lucide-react';
+import { ArrowRight, Plus, Upload, Music, Globe, FileText, X } from 'lucide-react';
+
+interface AttachedFile {
+  name: string;
+  type: 'image' | 'text' | 'pdf';
+  content: string;
+  mimeType: string;
+}
 
 interface SearchInputProps {
   onSearch: (query: string, mode: 'web' | 'spotify' | 'notion') => void;
@@ -7,12 +14,25 @@ interface SearchInputProps {
   centered: boolean;
   activeMode: 'web' | 'spotify' | 'notion';
   onModeChange: (mode: 'web' | 'spotify' | 'notion') => void;
+  onFileSelect?: (file: File) => void;
+  attachedFile?: AttachedFile | null;
+  onRemoveFile?: () => void;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, centered, activeMode, onModeChange }) => {
+const SearchInput: React.FC<SearchInputProps> = ({ 
+    onSearch, 
+    isSearching, 
+    centered, 
+    activeMode, 
+    onModeChange,
+    onFileSelect,
+    attachedFile,
+    onRemoveFile
+}) => {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -26,7 +46,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
+    if (query.trim() || attachedFile) {
       onSearch(query, activeMode);
     }
   };
@@ -36,9 +56,23 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
       setShowDropdown(false);
   };
 
+  const handleFileUploadClick = () => {
+      fileInputRef.current?.click();
+      setShowDropdown(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0] && onFileSelect) {
+          onFileSelect(e.target.files[0]);
+      }
+      // Reset input so same file can be selected again if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const getPlaceholder = () => {
       if (activeMode === 'spotify') return "Search for songs, artists, albums...";
       if (activeMode === 'notion') return "Search your workspace docs...";
+      if (attachedFile) return "Ask about this file...";
       return "Search for anything...";
   };
 
@@ -61,6 +95,24 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
       )}
 
       <form onSubmit={handleSubmit} className="w-full relative group">
+        
+        {/* Attached File Chip */}
+        {attachedFile && (
+            <div className="absolute top-[-44px] left-0 animate-slideUp z-20">
+                <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200 pl-3 pr-2 py-1.5 rounded-full shadow-sm text-sm font-medium text-slate-700">
+                    <FileText size={14} className="text-blue-500" />
+                    <span className="max-w-[150px] truncate">{attachedFile.name}</span>
+                    <button 
+                        type="button" 
+                        onClick={onRemoveFile}
+                        className="ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500"
+                    >
+                        <X size={12} />
+                    </button>
+                </div>
+            </div>
+        )}
+
         <div className="relative flex items-center">
             {/* Plus Button with Dropdown */}
             <div className="absolute left-2 z-20" ref={dropdownRef}>
@@ -111,7 +163,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
                         <button 
                             type="button"
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-black/5 text-gray-700 transition-all text-left"
-                            onClick={() => alert("File upload feature coming soon!")}
+                            onClick={handleFileUploadClick}
                         >
                             <Upload size={18} />
                             <span className="font-medium">File Upload</span>
@@ -119,6 +171,15 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
                     </div>
                 )}
             </div>
+
+            {/* Hidden File Input */}
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileChange}
+                accept="image/*,application/pdf,text/*"
+            />
 
             {/* Input Field */}
             <input
@@ -138,7 +199,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ onSearch, isSearching, center
             
             <button
                 type="submit"
-                disabled={!query.trim() || isSearching}
+                disabled={(!query.trim() && !attachedFile) || isSearching}
                 className={`absolute right-3 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 text-white disabled:opacity-30 disabled:hover:scale-100 ${
                     activeMode === 'spotify' ? 'bg-[#1DB954]' : 'bg-black'
                 }`}

@@ -37,6 +37,13 @@ const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
     return result;
 };
 
+interface AttachedFile {
+  name: string;
+  type: 'image' | 'text' | 'pdf';
+  content: string; // Base64 or text content
+  mimeType: string;
+}
+
 const App: React.FC = () => {
   // App Logic State
   const [isLandingPage, setIsLandingPage] = useState(true);
@@ -56,6 +63,9 @@ const App: React.FC = () => {
 
   // Search Mode
   const [searchMode, setSearchMode] = useState<'web' | 'spotify' | 'notion'>('web');
+
+  // File Upload State
+  const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
 
   // Auth State
   const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
@@ -139,6 +149,47 @@ const App: React.FC = () => {
       setHistory(prev => [newItem, ...prev]);
   };
 
+  const handleFileSelect = (file: File) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+          const content = e.target?.result as string;
+          let type: 'image' | 'text' | 'pdf' = 'text';
+          
+          if (file.type.startsWith('image/')) {
+              type = 'image';
+              // Keep pure base64 for API if needed, or Data URL. 
+              // Gemini usually wants standard base64 for inlineData.
+              // data:image/png;base64,....
+          } else if (file.type === 'application/pdf') {
+              type = 'pdf';
+          }
+
+          // For images/pdf, we need base64 string without the prefix for Gemini
+          let rawData = content;
+          if (type === 'image' || type === 'pdf') {
+              rawData = content.split(',')[1];
+          }
+
+          setAttachedFile({
+              name: file.name,
+              type,
+              content: rawData,
+              mimeType: file.type
+          });
+      };
+
+      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+          reader.readAsDataURL(file);
+      } else {
+          reader.readAsText(file);
+      }
+  };
+
+  const handleRemoveFile = () => {
+      setAttachedFile(null);
+  };
+
   const handleSearch = async (query: string, mode: 'web' | 'spotify' | 'notion') => {
     setSearchState(prev => ({ 
         ...prev, 
@@ -198,9 +249,14 @@ const App: React.FC = () => {
           });
 
       } else {
-          // Standard Web Search
+          // Standard Web Search (with optional file context)
+          const fileContext = attachedFile ? {
+              content: attachedFile.content,
+              mimeType: attachedFile.mimeType
+          } : undefined;
+
           const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
-            searchWithGemini(query),
+            searchWithGemini(query, fileContext),
             fetchPixabayImages(query, 4),
             fetchPexelsImages(query, 4),
             fetchNasaImages(query)
@@ -228,6 +284,9 @@ const App: React.FC = () => {
           setSearchState(newSearchState);
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
+          
+          // Clear file after search
+          setAttachedFile(null);
       }
       
     } catch (error) {
@@ -285,6 +344,7 @@ const App: React.FC = () => {
       media: [],
     });
     setSearchMode('web');
+    setAttachedFile(null);
   };
 
   const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'images' | 'settings') => {
@@ -354,8 +414,6 @@ const App: React.FC = () => {
       
       // 2. Home Tab logic
       if (activeTab === 'home') {
-          // If a custom wallpaper is selected, prioritize it for Home (both idle and results, or just idle)
-          // Let's allow it for idle. For results, typically we darken it or keep it.
           if (currentWallpaper) {
               return {
                   backgroundImage: `url('${currentWallpaper}')`,
@@ -365,7 +423,6 @@ const App: React.FC = () => {
               };
           }
 
-          // Default behaviors if no custom wallpaper
           if (searchState.status === 'idle') {
               return {
                   backgroundImage: 'none',
@@ -382,7 +439,7 @@ const App: React.FC = () => {
           };
       }
 
-      // 4. Default / Fallback / Discover / History (Dark theme usually)
+      // 4. Default / Fallback
       return {
           backgroundImage: `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
           backgroundColor: '#000000'
@@ -394,7 +451,12 @@ const App: React.FC = () => {
   // --- RENDER ---
   
   if (isLandingPage) {
-      return <MarketingPage onGetStarted={() => setIsLandingPage(false)} />;
+      // Ensure landing page can scroll by wrapping in a scrollable container
+      return (
+        <div className="h-screen w-full overflow-y-auto bg-white">
+             <MarketingPage onGetStarted={() => setIsLandingPage(false)} />
+        </div>
+      );
   }
 
   return (
@@ -463,6 +525,9 @@ const App: React.FC = () => {
                         centered={true}
                         activeMode={searchMode}
                         onModeChange={handleModeChange}
+                        onFileSelect={handleFileSelect}
+                        attachedFile={attachedFile}
+                        onRemoveFile={handleRemoveFile}
                     />
                     
                     {searchMode === 'web' && (

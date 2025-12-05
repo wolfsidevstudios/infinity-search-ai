@@ -8,19 +8,48 @@ const getAiClient = () => {
     return new GoogleGenAI({ apiKey: customKey || process.env.API_KEY });
 };
 
-export const searchWithGemini = async (query: string): Promise<{ text: string; sources: Source[] }> => {
+interface FileContext {
+  content: string; // Base64 or Text
+  mimeType: string;
+}
+
+export const searchWithGemini = async (query: string, fileContext?: FileContext): Promise<{ text: string; sources: Source[] }> => {
   try {
     const ai = getAiClient();
     const modelName = "gemini-2.5-flash";
 
-    const systemInstruction = "You are a helpful visual search agent. Provide a concise, informative summary of the search query. Focus on key facts. Do not use markdown headers, just paragraphs.";
+    const systemInstruction = "You are a helpful visual search agent. Provide a concise, informative summary of the search query. Focus on key facts. Do not use markdown headers, just paragraphs. If a file is provided, analyze it to answer the user's query.";
 
     // Configure tools
     const tools = [{ googleSearch: {} }];
 
+    let contents: any = query;
+
+    // Handle File Context
+    if (fileContext) {
+        if (fileContext.mimeType.startsWith('image/') || fileContext.mimeType === 'application/pdf') {
+             // Use inlineData for images and PDFs
+             contents = {
+                 role: 'user',
+                 parts: [
+                     { text: query },
+                     {
+                         inlineData: {
+                             mimeType: fileContext.mimeType,
+                             data: fileContext.content
+                         }
+                     }
+                 ]
+             };
+        } else {
+             // For text files, append content to prompt
+             contents = `${query}\n\n[Attached File Context]:\n${fileContext.content}`;
+        }
+    }
+
     const response = await ai.models.generateContent({
       model: modelName,
-      contents: query,
+      contents: contents,
       config: {
         tools: tools,
         systemInstruction: systemInstruction,

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, TrendingUp, TrendingDown, Newspaper, MapPin, Bone, Utensils, Trophy, PlayCircle, ArrowRight } from 'lucide-react';
 import { fetchWeather, getWeatherIcon, WeatherData } from '../services/weatherService';
@@ -86,6 +85,7 @@ const DashboardWidgets: React.FC = () => {
 
   const currentArticle = news[currentNewsIndex];
   const currentRecipe = recipes[currentRecipeIndex];
+  const topSport = sportsNews[0];
 
   // Common Widget Style
   const widgetClass = "rounded-[32px] overflow-hidden shadow-lg border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl relative group";
@@ -235,41 +235,55 @@ const DashboardWidgets: React.FC = () => {
             </div>
         </div>
 
-        {/* 6. Sports (4 cols) */}
-        <div className={`md:col-span-4 ${widgetClass} bg-gray-900 overflow-y-auto glass-scroll h-[260px]`}>
-            <div className="sticky top-0 bg-gray-900/90 backdrop-blur-xl p-4 border-b border-white/10 z-10 flex justify-between items-center">
-                <h3 className="text-white font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-                    <Trophy size={14} className="text-yellow-500" /> Sports Highlights
-                </h3>
-            </div>
-            
-            <div className="p-2 space-y-2">
-                {sportsNews.length > 0 ? sportsNews.slice(0, 5).map((sport, i) => (
-                    <a 
-                        key={i} 
-                        href={sport.url} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex gap-3 p-2 rounded-xl hover:bg-white/10 transition-colors group/item"
-                    >
-                        <div className="w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-800">
-                             <img src={sport.urlToImage || ''} alt="sport" className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="text-white text-sm font-semibold leading-tight line-clamp-2 mb-1 group-hover/item:text-yellow-400 transition-colors">
-                                {sport.title}
-                            </h4>
-                            <div className="flex items-center gap-1 text-[10px] text-white/40">
-                                <span>ESPN</span>
-                                <span>•</span>
-                                <span>{new Date(sport.publishedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            </div>
-                        </div>
-                    </a>
-                )) : (
-                    <div className="p-4 text-white/40 text-sm text-center">Loading sports data...</div>
-                )}
-            </div>
+        {/* 6. Sports (4 cols) - REDESIGNED */}
+        <div className={`md:col-span-4 ${widgetClass} relative h-[260px]`}>
+            {topSport ? (
+                <>
+                    {/* Background Top Sport */}
+                    <div className="absolute inset-0 bg-gray-900">
+                        <img 
+                            src={topSport.urlToImage || 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1000&auto=format&fit=crop'} 
+                            alt="Sport" 
+                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+                    </div>
+
+                    {/* Content Top Half */}
+                    <div className="absolute top-0 left-0 right-0 p-5">
+                         <div className="flex items-center justify-between">
+                            <h3 className="text-white font-black italic uppercase tracking-wider flex items-center gap-2 text-sm">
+                                <Trophy size={14} className="text-yellow-500" /> SportsCenter
+                            </h3>
+                            <span className="text-[10px] bg-red-600 text-white px-1.5 rounded font-bold">LIVE</span>
+                         </div>
+                    </div>
+
+                    {/* Content Bottom Half */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                         <h4 className="text-white text-lg font-bold leading-tight mb-2 line-clamp-2 shadow-black drop-shadow-md">
+                             {topSport.title}
+                         </h4>
+                         
+                         {/* Mini List of other sports below */}
+                         <div className="border-t border-white/20 pt-3 mt-2 flex flex-col gap-2">
+                             {sportsNews.slice(1, 3).map((item, i) => (
+                                 <a key={i} href={item.url} target="_blank" className="flex items-center gap-2 group/link cursor-pointer">
+                                     <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                                     <span className="text-xs text-white/80 truncate group-hover/link:text-white transition-colors">
+                                         {item.title}
+                                     </span>
+                                 </a>
+                             ))}
+                         </div>
+                    </div>
+                </>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-white/40">
+                    <Trophy size={32} className="mb-2" />
+                    <span className="text-sm">Loading Sports...</span>
+                </div>
+            )}
         </div>
       </div>
 
