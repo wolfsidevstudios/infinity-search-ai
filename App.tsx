@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
 import ResultsView from './components/ResultsView';
@@ -7,11 +7,15 @@ import ArticleDetailView from './components/ArticleDetailView';
 import HistoryView from './components/HistoryView';
 import ImageGridView from './components/ImageGridView';
 import LoadingAnimation from './components/LoadingAnimation';
-import DashboardWidgets from './components/DashboardWidgets'; // Import new widgets
+import DashboardWidgets from './components/DashboardWidgets'; 
+import ConnectSpotifyModal from './components/ConnectSpotifyModal';
+import SpotifyResultsView from './components/SpotifyResultsView';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
+import { supabase } from './services/supabaseClient';
+import { searchSpotify } from './services/spotifyService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem } from './types';
 
 // Helper to mix results from different sources
@@ -39,6 +43,13 @@ const App: React.FC = () => {
     media: [],
   });
 
+  // Search Mode
+  const [searchMode, setSearchMode] = useState<'web' | 'spotify'>('web');
+
+  // Spotify Auth State
+  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
+  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
+
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
     items: [],
@@ -53,6 +64,42 @@ const App: React.FC = () => {
   // State for viewing an article
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
 
+  // Init Spotify Session Check
+  useEffect(() => {
+    // Check local session/url hash for auth result
+    supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && session.provider_token) {
+            setSpotifyToken(session.provider_token);
+        }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session && session.provider_token) {
+            setSpotifyToken(session.provider_token);
+        }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const initiateSpotifyLogin = async () => {
+      await supabase.auth.signInWithOAuth({
+          provider: 'spotify',
+          options: {
+              scopes: 'user-read-email user-top-read user-library-read streaming',
+              redirectTo: window.location.origin
+          }
+      });
+  };
+
+  const handleModeChange = (mode: 'web' | 'spotify') => {
+      if (mode === 'spotify' && !spotifyToken) {
+          setShowSpotifyModal(true);
+      } else {
+          setSearchMode(mode);
+      }
+  };
+
   const addToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
       const newItem: HistoryItem = {
           ...item,
@@ -62,7 +109,7 @@ const App: React.FC = () => {
       setHistory(prev => [newItem, ...prev]);
   };
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, mode: 'web' | 'spotify') => {
     setSearchState(prev => ({ 
         ...prev, 
         status: 'searching', 
@@ -71,40 +118,67 @@ const App: React.FC = () => {
     setActiveTab('home');
 
     try {
-      // Parallel execution for speed
-      const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
-        searchWithGemini(query),
-        fetchPixabayImages(query, 4),
-        fetchPexelsImages(query, 4),
-        fetchNasaImages(query)
-      ]);
+      if (mode === 'spotify') {
+          if (!spotifyToken) {
+              setSearchState(prev => ({ ...prev, status: 'idle', error: "Not authenticated with Spotify" }));
+              setShowSpotifyModal(true);
+              return;
+          }
 
-      const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
+          const tracks = await searchSpotify(query, spotifyToken);
+          
+          await new Promise(resolve => setTimeout(resolve, 800)); // Animation delay
 
-      // Add search to history with result data
-      addToHistory({
-        type: 'search',
-        title: query,
-        summary: aiData.text,
-        sources: aiData.sources
-      });
+          setSearchState({
+              status: 'results',
+              query,
+              summary: `Found top tracks for "${query}" on Spotify.`,
+              sources: [],
+              media: tracks
+          });
 
-      // Artificial delay for animation effect
-      await new Promise(resolve => setTimeout(resolve, 1500));
+          // Also populate the "Images" tab (repurposed as Media gallery)
+          setMediaGridData({ items: tracks, loading: false });
+          
+          addToHistory({
+              type: 'search',
+              title: `Spotify: ${query}`,
+              summary: `Music search results for ${query}`,
+              sources: []
+          });
 
-      const newSearchState: SearchState = {
-        status: 'results',
-        query,
-        summary: aiData.text,
-        sources: aiData.sources,
-        media: combinedImages,
-      };
-
-      setSearchState(newSearchState);
-      
-      // Also prepopulate media grid (defaulting to images)
-      setMediaGridData({ items: combinedImages, loading: false });
-      setMediaType('image');
+      } else {
+          // Standard Web Search
+          const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
+            searchWithGemini(query),
+            fetchPixabayImages(query, 4),
+            fetchPexelsImages(query, 4),
+            fetchNasaImages(query)
+          ]);
+    
+          const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
+    
+          addToHistory({
+            type: 'search',
+            title: query,
+            summary: aiData.text,
+            sources: aiData.sources
+          });
+    
+          await new Promise(resolve => setTimeout(resolve, 1500));
+    
+          const newSearchState: SearchState = {
+            status: 'results',
+            query,
+            summary: aiData.text,
+            sources: aiData.sources,
+            media: combinedImages,
+          };
+    
+          setSearchState(newSearchState);
+          setMediaGridData({ items: combinedImages, loading: false });
+          setMediaType('image');
+      }
       
     } catch (error) {
       console.error(error);
@@ -160,12 +234,12 @@ const App: React.FC = () => {
       sources: [],
       media: [],
     });
+    setSearchMode('web');
   };
 
   const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'images') => {
     setActiveTab(tab);
-    // Auto-populate image tab if we have a search query but no grid data yet
-    if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query) {
+    if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
          handleMediaSearch(searchState.query, mediaType);
     }
   };
@@ -183,18 +257,22 @@ const App: React.FC = () => {
 
   const handleSummarizeArticle = (url: string) => {
       const query = `Summarize this article: ${url}`;
-      handleSearch(query);
+      setSearchMode('web');
+      handleSearch(query, 'web');
   };
 
   const handleHistorySelect = (item: HistoryItem) => {
       if (item.type === 'search') {
-          // If it was an image search (heuristic check on title)
-          if (item.title.startsWith("Images: ")) {
+          if (item.title.startsWith("Spotify: ")) {
+             setSearchMode('spotify');
+             handleSearch(item.title.replace("Spotify: ", ""), 'spotify');
+          } else if (item.title.startsWith("Images: ")) {
               handleMediaSearch(item.title.replace("Images: ", ""), 'image');
           } else if (item.title.startsWith("Videos: ")) {
               handleMediaSearch(item.title.replace("Videos: ", ""), 'video');
           } else {
-              handleSearch(item.title); // Re-run as normal search by default
+              setSearchMode('web');
+              handleSearch(item.title, 'web');
           }
       } else if (item.type === 'article' && item.data) {
           setCurrentArticle(item.data);
@@ -204,7 +282,6 @@ const App: React.FC = () => {
 
   const onMediaTypeSwitch = (newType: 'image' | 'video') => {
       setMediaType(newType);
-      // Strategy: If searchState.query exists, use it. Otherwise clear.
       if (searchState.query) {
           handleMediaSearch(searchState.query, newType);
       } else {
@@ -215,37 +292,36 @@ const App: React.FC = () => {
   return (
     <div className="relative h-screen w-full bg-[#f2f4f6] text-slate-800 flex overflow-hidden">
       
-      {/* Sidebar is fixed on the white/gray background */}
+      {/* Sidebar */}
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
       {/* Main Floating Content Area */}
-      {/* H-Screen constraint with margins ensures strict layout sizing for internal scrolling */}
       <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500">
         
-        {/* Dynamic Background Layer (Inside the floating card) */}
+        {/* Dynamic Background */}
         <div 
             className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out"
             style={{ 
             backgroundImage: activeTab === 'home' && searchState.status === 'idle' 
-                ? 'none' // No background image for the initial "clean search" look
-                : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
+                ? 'none' 
+                : searchMode === 'spotify' 
+                  ? `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')` // Music themed BG
+                  : `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`,
             backgroundColor: activeTab === 'home' && searchState.status === 'idle' 
-                ? '#ffffff' // White background for clean search
-                : '#000000', // Black fallback
+                ? '#ffffff' 
+                : '#000000', 
             transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' 
             }}
         >
-            {/* Overlay */}
             <div className={`absolute inset-0 transition-all duration-1000 ${
                 activeTab === 'home' && searchState.status === 'idle' 
                 ? 'bg-transparent' 
-                : 'bg-black/40 backdrop-blur-sm' // Darken background for content readability
+                : 'bg-black/40 backdrop-blur-sm' 
             }`} />
         </div>
 
-        {/* Header/Logo Area (Inside Floating Card) */}
+        {/* Header */}
         <div className="h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0">
-            {/* Back button logic for Search Results */}
             <div className="pointer-events-auto">
                 {activeTab === 'home' && searchState.status === 'results' && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
@@ -255,111 +331,92 @@ const App: React.FC = () => {
                 )}
             </div>
             
-            {/* Show Logo only when NOT in clean search mode (because search mode has large text) */}
             {!(activeTab === 'home' && searchState.status === 'idle') && (
-                <div className="text-white font-bold tracking-tight text-xl opacity-80">Lumina</div>
+                <div className="text-white font-bold tracking-tight text-xl opacity-80 flex items-center gap-2">
+                    Lumina
+                    {searchMode === 'spotify' && <span className="text-[#1DB954] text-xs uppercase tracking-widest border border-[#1DB954] px-1 rounded">Music</span>}
+                </div>
             )}
         </div>
 
-        {/* Content Container (Inside Floating Card) */}
-        {/* Key Fix: Ensure flex-1 and accurate overflow handling */}
+        {/* Content Container */}
         <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${
             activeTab === 'images' 
-            ? 'overflow-hidden' // Disable parent scroll for images tab, it handles its own
-            : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8' // Enable parent scroll for others
+            ? 'overflow-hidden' 
+            : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8' 
         }`}>
             
-            {/* HOME TAB CONTENT */}
+            {/* HOME TAB */}
             {activeTab === 'home' && (
               <>
-                {/* Center View: Input */}
+                {/* Center Input View */}
                 <div className={`flex-1 flex flex-col justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
                     <SearchInput 
                         onSearch={handleSearch} 
                         isSearching={searchState.status === 'searching'} 
                         centered={true}
+                        activeMode={searchMode}
+                        onModeChange={handleModeChange}
                     />
                     
-                    {/* NEW: Dashboard Widgets placed directly below search bar on Home screen */}
-                    <div className="w-full animate-fadeIn delay-300">
-                       <DashboardWidgets />
-                    </div>
+                    {/* Hide widgets if in Spotify mode to keep focus clean, or keep them? Keeping them is standard. */}
+                    {searchMode === 'web' && (
+                        <div className="w-full animate-fadeIn delay-300">
+                           <DashboardWidgets />
+                        </div>
+                    )}
                 </div>
 
-                {/* Searching View */}
+                {/* Loading */}
                 {searchState.status === 'searching' && (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <LoadingAnimation />
                     </div>
                 )}
 
-                {/* Results View */}
+                {/* Results */}
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
                         <div className="max-w-4xl mx-auto mb-8">
                             <h2 className="text-3xl font-bold text-white drop-shadow-md mb-2 flex items-center gap-3">
+                                {searchMode === 'spotify' && <span className="text-[#1DB954]">Spotify Results:</span>}
                                 {searchState.query}
                             </h2>
                         </div>
-                        <ResultsView 
-                            summary={searchState.summary} 
-                            sources={searchState.sources} 
-                            images={searchState.media} 
-                            onOpenImageGrid={() => {
-                                handleMediaSearch(searchState.query, 'image');
-                            }}
-                        />
+                        
+                        {/* Custom Render for Spotify Results vs Web Results */}
+                        {searchMode === 'spotify' ? (
+                            <SpotifyResultsView items={searchState.media} query={searchState.query} />
+                        ) : (
+                            <ResultsView 
+                                summary={searchState.summary} 
+                                sources={searchState.sources} 
+                                images={searchState.media} 
+                                onOpenImageGrid={() => {
+                                    handleMediaSearch(searchState.query, 'image');
+                                }}
+                            />
+                        )}
                     </div>
                 )}
               </>
             )}
 
-            {/* DISCOVER TAB CONTENT */}
-            {activeTab === 'discover' && (
-              <div className="w-full h-full pt-4">
-                <DiscoverView 
-                    onOpenArticle={handleOpenArticle} 
-                    onSummarize={handleSummarizeArticle}
-                />
-              </div>
-            )}
-
-            {/* MEDIA (IMAGES/VIDEOS) TAB CONTENT */}
-            {activeTab === 'images' && (
-                <div className="w-full h-full">
-                    <ImageGridView 
-                        items={mediaGridData.items}
-                        onSearch={handleMediaSearch}
-                        loading={mediaGridData.loading}
-                        activeMediaType={mediaType}
-                        onMediaTypeChange={onMediaTypeSwitch}
-                    />
-                </div>
-            )}
-
-            {/* ARTICLE READER CONTENT */}
-            {activeTab === 'article' && currentArticle && (
-                <div className="w-full h-full pt-4">
-                    <ArticleDetailView 
-                        article={currentArticle} 
-                        onBack={() => setActiveTab('discover')} 
-                        onSummarize={handleSummarizeArticle}
-                    />
-                </div>
-            )}
-
-            {/* HISTORY TAB CONTENT */}
-            {activeTab === 'history' && (
-                <div className="w-full h-full pt-4">
-                    <HistoryView 
-                        history={history} 
-                        onSelectItem={handleHistorySelect}
-                    />
-                </div>
-            )}
+            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle}/></div>}
+            {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={onMediaTypeSwitch}/></div>}
+            {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
+            {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
 
         </div>
       </main>
+
+      {/* Spotify Connect Modal */}
+      {showSpotifyModal && (
+          <ConnectSpotifyModal 
+            onClose={() => setShowSpotifyModal(false)}
+            onConnect={initiateSpotifyLogin}
+          />
+      )}
 
     </div>
   );

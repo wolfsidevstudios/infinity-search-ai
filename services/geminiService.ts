@@ -24,10 +24,9 @@ export const searchWithGemini = async (query: string): Promise<{ text: string; s
     const text = response.text || "I couldn't find information on that topic.";
     
     // Extract sources from grounding metadata
+    const candidates = response.candidates;
     const sources: Source[] = [];
     
-    // Navigate the complex response structure for grounding
-    const candidates = response.candidates;
     if (candidates && candidates.length > 0) {
       const groundingMetadata = candidates[0].groundingMetadata;
       if (groundingMetadata && groundingMetadata.groundingChunks) {
@@ -41,7 +40,6 @@ export const searchWithGemini = async (query: string): Promise<{ text: string; s
                   hostname: url.hostname
                 });
             } catch (e) {
-                // If URL parsing fails, skip or use raw
                 sources.push({
                     title: chunk.web.title || "Source",
                     uri: chunk.web.uri,
@@ -53,13 +51,11 @@ export const searchWithGemini = async (query: string): Promise<{ text: string; s
       }
     }
 
-    // Filter duplicates based on URI
     const uniqueSources = sources.filter((v, i, a) => a.findIndex(v2 => (v2.uri === v.uri)) === i);
 
     return { text, sources: uniqueSources };
   } catch (error) {
     console.error("Gemini Search Error:", error);
-    // Return a graceful fallback instead of throwing, so the UI can show something
     return { 
         text: "I encountered an issue connecting to the AI service. Please check your connection and try again.", 
         sources: [] 
@@ -83,5 +79,20 @@ export const summarizeWorldEvents = async (headlines: string[]): Promise<string>
     } catch (error) {
         console.error("Gemini Summary Error:", error);
         return "Discover the latest stories from around the globe.";
+    }
+}
+
+export const getMusicInsights = async (track: string, artist: string): Promise<string> => {
+    try {
+        const prompt = `Write a 2-sentence interesting description or fun fact about the song "${track}" by ${artist}. Keep it engaging and concise for a music player interface.`;
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+
+        return response.text || `Listen to ${track} by ${artist} on Spotify.`;
+    } catch (error) {
+        return `Enjoy listening to ${track} by ${artist}.`;
     }
 }

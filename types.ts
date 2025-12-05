@@ -1,3 +1,4 @@
+
 export interface Source {
   title: string;
   uri: string;
@@ -6,13 +7,15 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'audio';
   thumbnailUrl: string;
-  contentUrl: string; // Full image URL or Video file URL
+  contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
   title: string;
   source: string;
-  duration?: number; // Optional for videos
+  duration?: number; // Optional for videos/audio
+  artist?: string; // Specific to audio
+  album?: string; // Specific to audio
 }
 
 export interface SearchState {
@@ -84,4 +87,19 @@ export interface HistoryItem {
   summary?: string;
   sources?: Source[];
   data?: any; // To store search state or article data to restore it
+}
+
+export interface SpotifyTrack {
+  id: string;
+  name: string;
+  preview_url: string | null;
+  external_urls: {
+    spotify: string;
+  };
+  album: {
+    name: string;
+    images: { url: string }[];
+  };
+  artists: { name: string }[];
+  duration_ms: number;
 }
