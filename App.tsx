@@ -17,6 +17,7 @@ import NotionResultsView from './components/NotionResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
+import AssetsPage from './components/AssetsPage';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -49,7 +50,7 @@ interface AttachedFile {
 
 const App: React.FC = () => {
   // App Logic State
-  const [isLandingPage, setIsLandingPage] = useState(true);
+  const [view, setView] = useState<'landing' | 'login' | 'app' | 'assets'>('landing');
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
@@ -109,6 +110,9 @@ const App: React.FC = () => {
                if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
                if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
             }
+            setView('app');
+        } else {
+            // Keep default view as landing
         }
         setIsAuthChecking(false);
     };
@@ -482,18 +486,22 @@ const App: React.FC = () => {
 
   // --- VIEW ROUTING ---
   
-  if (isLandingPage) {
+  if (view === 'assets') {
+      return <AssetsPage onBack={() => setView('landing')} />;
+  }
+
+  if (view === 'landing') {
       return (
         <div className="h-screen w-full overflow-y-auto bg-white">
-             <MarketingPage onGetStarted={() => setIsLandingPage(false)} />
+             <MarketingPage 
+                onGetStarted={() => setView('login')} 
+                onViewAssets={() => setView('assets')}
+             />
         </div>
       );
   }
 
-  // If not on landing page, check auth.
-  // If loading, show nothing or spinner.
-  // If not logged in, show Login Page.
-  if (!sessionUser) {
+  if (view === 'login' && !sessionUser) {
       if (isAuthChecking) return <div className="h-screen w-full bg-white flex items-center justify-center"><LoadingAnimation/></div>;
       
       return (
@@ -508,6 +516,7 @@ const App: React.FC = () => {
                     aud: 'authenticated', 
                     created_at: '' 
                 } as User);
+                setView('app');
             }} />
         </div>
       );

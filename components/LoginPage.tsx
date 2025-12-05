@@ -55,8 +55,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
           }
         });
         if (error) throw error;
-        // If successful, Supabase might require email confirmation depending on settings
-        // For this UI, we'll assume auto-login or alert the user
         setError('Account created! Please check your email if confirmation is required.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -72,7 +70,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 flex p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen w-full bg-gray-50 flex p-4 md:p-6 lg:p-8 overflow-y-auto">
       
       {/* Left Panel - Floating Curved Edge */}
       <div className="hidden md:flex w-1/2 bg-black rounded-[48px] relative overflow-hidden flex-col justify-between p-12 lg:p-16 text-white shadow-2xl">
@@ -222,7 +220,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                 </button>
             </div>
 
-             {/* Demo Skip (Optional for Development) */}
+             {/* Demo Skip */}
              <div className="text-center pt-4">
                 <button 
                     onClick={onSkip}
