@@ -36,20 +36,29 @@ interface BibleResponse {
     text: string;
   }[];
   translation_id: string;
+  translation_name: string;
 }
 
-export const fetchBiblePassage = async (query: string, versionId: string = 'kjv'): Promise<BibleResponse | null> => {
+export const fetchBiblePassage = async (query: string, versionId: string = 'kjv', language: 'en' | 'es' = 'en'): Promise<BibleResponse | null> => {
   try {
-    // 1. Check if query looks like a reference (e.g., "John 3:16")
-    const referenceRegex = /^\d?\s?[a-zA-Z]+\s\d+(:(\d+([-\u2013\u2014]\d+)?)?)?$/;
+    // 1. Check if query looks like a specific reference (e.g., "John 3:16" or "Juan 3:16")
+    // Simple regex for Number(optional) Name Chapter:Verse
+    const referenceRegex = /^\d?\s?[a-zA-Z\u00C0-\u00FF]+\s\d+(:(\d+([-\u2013\u2014]\d+)?)?)?$/;
     let reference = query;
 
-    // 2. If it's a keyword search (e.g., "verses about hope"), use Gemini to get a reference first
-    if (!referenceRegex.test(query)) {
+    // 2. If it's a keyword search (e.g., "verses about hope", "versiculos de amor"), use Gemini to get a reference first
+    // We also use Gemini to normalize book names from Spanish to English standard if needed by the API,
+    // though bible-api.com handles many languages well, standardization helps.
+    if (!referenceRegex.test(query) || language === 'es') {
         const ai = getAiClient();
         const prompt = `User query: "${query}". 
-        Identify the single most relevant Bible chapter or verse reference for this query. 
-        Return ONLY the reference string (e.g., "Jeremiah 29:11" or "Psalm 23"). 
+        Target Language Context: ${language === 'es' ? 'Spanish' : 'English'}.
+        
+        Task: Identify the single most relevant Bible chapter or verse reference for this query.
+        - If the user asks for a topic (e.g. "love", "paz"), find the best verse.
+        - If the user provides a book name in Spanish (e.g. "Salmos"), map it to the standard reference (e.g. "Psalms 23").
+        
+        Return ONLY the standard reference string (e.g., "Jeremiah 29:11" or "Psalms 23"). 
         Do not add any other text.`;
         
         const result = await ai.models.generateContent({
@@ -62,12 +71,19 @@ export const fetchBiblePassage = async (query: string, versionId: string = 'kjv'
     }
 
     // 3. Fetch from API
-    const response = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=${versionId}`);
+    // Ensure we encode the reference properly
+    const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${versionId}`;
+    console.log("Fetching Bible API:", url);
+
+    const response = await fetch(url);
     
     if (!response.ok) {
-        // Fallback: If exact version fails, try KJV (most supported)
-        if (versionId !== 'kjv') {
-             return fetchBiblePassage(reference, 'kjv');
+        // Fallback: If exact version fails (some rare versions might have issues), try KJV or RVR based on lang
+        if (versionId !== 'kjv' && language === 'en') {
+             return fetchBiblePassage(reference, 'kjv', 'en');
+        }
+        if (versionId !== 'rvr' && language === 'es') {
+             return fetchBiblePassage(reference, 'rvr', 'es');
         }
         return null;
     }

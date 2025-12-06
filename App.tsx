@@ -293,7 +293,9 @@ const App: React.FC = () => {
       } else if (mode === 'bible') {
           // Bible Search
           const preferredVersion = localStorage.getItem('bible_version') || 'kjv';
-          const bibleData = await fetchBiblePassage(query, preferredVersion);
+          const preferredLang = (localStorage.getItem('bible_lang') as 'en' | 'es') || 'en';
+          
+          const bibleData = await fetchBiblePassage(query, preferredVersion, preferredLang);
 
           if (bibleData) {
               setSearchState({
