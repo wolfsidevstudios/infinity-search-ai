@@ -79,7 +79,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl z-50 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-             <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
+             <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
              Infinity
           </div>
           
@@ -373,7 +373,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
                        {/* Central Infinity Hub */}
                        <div className="relative z-20 w-32 h-32 bg-black border-2 border-white/20 rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] animate-pulse">
-                           <img src="https://iili.io/fIDzzRS.png" className="w-16 h-16 rounded-xl" alt="Infinity" />
+                           <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" className="w-16 h-16 rounded-xl" alt="Infinity" />
                            <div className="absolute -bottom-8 text-xs font-mono text-zinc-500">Connecting...</div>
                        </div>
 
@@ -532,7 +532,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
                   <div>
                       <div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-6 text-white">
-                        <img src="https://iili.io/fIDzzRS.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
+                        <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
                         Infinity
                       </div>
                       <p className="text-zinc-500 max-w-sm">

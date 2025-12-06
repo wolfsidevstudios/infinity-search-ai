@@ -83,7 +83,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
         
         <div className="relative z-10">
            <div className="flex items-center gap-3 mb-8">
-              <img src="https://iili.io/fIDzzRS.png" alt="Logo" className="w-10 h-10 rounded-xl" />
+              <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-10 h-10 rounded-xl" />
               <span className="text-2xl font-bold tracking-tight">Infinity</span>
            </div>
         </div>

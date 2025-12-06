@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Link as LinkIcon } from 'lucide-react';
 
@@ -29,7 +30,7 @@ const ConnectNotionModal: React.FC<ConnectNotionModalProps> = ({ onClose, onConn
         <div className="flex items-center gap-6 mb-8 mt-4">
             {/* App Logo */}
             <div className="w-20 h-20 bg-white border border-gray-100 rounded-3xl flex items-center justify-center shadow-lg overflow-hidden">
-                <img src="https://iili.io/fIDzzRS.png" alt="Infinity" className="w-full h-full object-cover" />
+                <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Infinity" className="w-full h-full object-cover" />
             </div>
             
             {/* Link Icon */}

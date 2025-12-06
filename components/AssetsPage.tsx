@@ -17,7 +17,7 @@ const AssetsPage: React.FC<AssetsPageProps> = ({ onBack }) => {
     // Attempting to simulate download of the visible asset
     const link = document.createElement('a');
     if (elementId === 'logo') {
-        link.href = 'https://iili.io/fIDzzRS.png';
+        link.href = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png';
         link.download = 'infinity-logo.png';
     } else {
         // Fallback for demo
@@ -36,7 +36,7 @@ const AssetsPage: React.FC<AssetsPageProps> = ({ onBack }) => {
             <div className="flex items-center gap-4 cursor-pointer hover:opacity-70 transition-opacity" onClick={onBack}>
                 <ArrowLeft className="text-gray-500" />
                 <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                    <img src="https://iili.io/fIDzzRS.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
+                    <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
                     Infinity Media Kit
                 </div>
             </div>
@@ -58,7 +58,7 @@ const AssetsPage: React.FC<AssetsPageProps> = ({ onBack }) => {
             <div className="grid md:grid-cols-3 gap-8">
                 {/* Primary Icon */}
                 <div className="border border-gray-100 rounded-3xl p-10 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-white hover:shadow-xl transition-all group">
-                    <img src="https://iili.io/fIDzzRS.png" alt="Logo" className="w-32 h-32 rounded-2xl shadow-lg mb-8" />
+                    <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-32 h-32 rounded-2xl shadow-lg mb-8" />
                     <div className="flex items-center justify-between w-full px-4">
                         <span className="font-mono text-xs text-gray-400">App Icon (512x512)</span>
                         <button 
@@ -72,7 +72,7 @@ const AssetsPage: React.FC<AssetsPageProps> = ({ onBack }) => {
 
                 {/* Dark Mode Icon */}
                 <div className="border border-gray-100 rounded-3xl p-10 flex flex-col items-center justify-center bg-black hover:shadow-xl transition-all group">
-                    <img src="https://iili.io/fIDzzRS.png" alt="Logo" className="w-32 h-32 rounded-2xl shadow-lg mb-8 border border-white/20" />
+                    <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-32 h-32 rounded-2xl shadow-lg mb-8 border border-white/20" />
                     <div className="flex items-center justify-between w-full px-4">
                         <span className="font-mono text-xs text-gray-500">Dark Variant</span>
                          <button 
