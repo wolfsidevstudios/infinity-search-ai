@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, TrendingUp, TrendingDown, Newspaper, MapPin, Bone, Utensils, Trophy, PlayCircle, ArrowRight } from 'lucide-react';
 import { fetchWeather, getWeatherIcon, WeatherData } from '../services/weatherService';
@@ -87,8 +88,8 @@ const DashboardWidgets: React.FC = () => {
   const currentRecipe = recipes[currentRecipeIndex];
   const topSport = sportsNews[0];
 
-  // Common Widget Style
-  const widgetClass = "rounded-[32px] overflow-hidden shadow-lg border border-white/20 bg-white/10 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl relative group";
+  // Common Widget Style - Updated for Dark Theme
+  const widgetClass = "rounded-[32px] overflow-hidden shadow-lg border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl relative group";
 
   return (
     <div className="w-full max-w-6xl mx-auto px-2 mt-4 space-y-6 animate-slideUp">
@@ -97,28 +98,28 @@ const DashboardWidgets: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         
         {/* 1. Market Watch (3 cols) */}
-        <div className={`md:col-span-3 ${widgetClass} bg-white/80 p-5 flex flex-col`}>
+        <div className={`md:col-span-3 ${widgetClass} bg-zinc-900/80 p-5 flex flex-col`}>
              <div className="flex items-center justify-between mb-3">
-                 <h3 className="text-gray-500 font-bold text-[10px] uppercase tracking-wider">Markets</h3>
+                 <h3 className="text-zinc-500 font-bold text-[10px] uppercase tracking-wider">Markets</h3>
                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
              </div>
              <div className="flex-1 flex flex-col justify-center gap-3">
                  {stocks.slice(0, 3).map(s => (
                      <div key={s.symbol} className="flex justify-between items-center text-sm">
                          <div className="flex items-center gap-2">
-                             <div className="font-bold text-gray-800">{s.symbol}</div>
-                             <div className={`text-[10px] ${s.change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                             <div className="font-bold text-zinc-300">{s.symbol}</div>
+                             <div className={`text-[10px] ${s.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                  {s.change >= 0 ? '+' : ''}{s.change.toFixed(1)}%
                              </div>
                          </div>
-                         <div className="font-mono text-gray-700">${s.price.toFixed(2)}</div>
+                         <div className="font-mono text-zinc-400">${s.price.toFixed(2)}</div>
                      </div>
                  ))}
              </div>
         </div>
 
         {/* 2. Weather (3 cols) */}
-        <div className={`md:col-span-3 ${widgetClass} bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5`}>
+        <div className={`md:col-span-3 ${widgetClass} bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-5 border-blue-800/30`}>
             <div className="flex justify-between items-start">
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1 opacity-80 text-[10px] font-bold uppercase tracking-wider mb-1">
@@ -135,7 +136,7 @@ const DashboardWidgets: React.FC = () => {
             {dog ? (
                 <>
                     <img src={dog.imageUrl} alt="Dog" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                     <div className="absolute bottom-3 left-3 text-white">
                         <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-200 mb-0.5">
                             <Bone size={10} /> Daily Dog
@@ -144,7 +145,7 @@ const DashboardWidgets: React.FC = () => {
                     </div>
                 </>
             ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-200 animate-pulse" />
+                <div className="w-full h-full flex items-center justify-center bg-zinc-800 animate-pulse" />
             )}
         </div>
 
@@ -163,13 +164,13 @@ const DashboardWidgets: React.FC = () => {
                             style={{ backgroundImage: `url(${r.thumbnail})` }}
                         />
                     ))}
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
+                    <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors" />
                     
-                    <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border border-white/20">
+                    <div className="absolute top-4 left-4 bg-white/10 backdrop-blur-md px-2 py-1 rounded-lg text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 border border-white/10">
                         <Utensils size={10} /> Featured Recipe
                     </div>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent">
                         <h3 className="text-white text-lg font-bold leading-tight mb-1">{currentRecipe.title}</h3>
                         <div className="flex items-center gap-2 text-white/70 text-xs">
                             <span>{currentRecipe.category}</span>
@@ -179,7 +180,7 @@ const DashboardWidgets: React.FC = () => {
                     </div>
                 </>
             ) : (
-                <div className="w-full h-full bg-gray-200 animate-pulse" />
+                <div className="w-full h-full bg-zinc-800 animate-pulse" />
             )}
         </div>
       </div>
@@ -197,10 +198,10 @@ const DashboardWidgets: React.FC = () => {
                     style={{ backgroundImage: `url(${article.urlToImage})` }}
                 />
             ))}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent" />
             
             <div className="relative z-10 p-8 h-full flex flex-col justify-between items-start max-w-2xl">
-                 <div className="flex items-center gap-2 text-blue-200 bg-blue-900/30 backdrop-blur-md px-3 py-1 rounded-full border border-blue-500/30">
+                 <div className="flex items-center gap-2 text-blue-200 bg-blue-900/50 backdrop-blur-md px-3 py-1 rounded-full border border-blue-500/30">
                     <Newspaper size={14} />
                     <span className="text-xs font-bold uppercase tracking-widest">Global Briefing</span>
                 </div>
@@ -240,13 +241,13 @@ const DashboardWidgets: React.FC = () => {
             {topSport ? (
                 <>
                     {/* Background Top Sport */}
-                    <div className="absolute inset-0 bg-gray-900">
+                    <div className="absolute inset-0 bg-zinc-900">
                         <img 
                             src={topSport.urlToImage || 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1000&auto=format&fit=crop'} 
                             alt="Sport" 
                             className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" 
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
                     </div>
 
                     {/* Content Top Half */}

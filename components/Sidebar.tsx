@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Home, Plus, Compass, Clock, User, Image as ImageIcon } from 'lucide-react';
 
@@ -15,14 +16,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
       <div>
         <button 
           onClick={() => onTabChange('settings')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group shadow-sm border ${
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group shadow-sm border border-white/10 ${
               activeTab === 'settings' 
-              ? 'bg-black border-black scale-110' 
-              : 'bg-gray-100 border-gray-200 hover:scale-105'
+              ? 'bg-white border-white scale-110' 
+              : 'bg-zinc-900 border-zinc-800 hover:scale-105 hover:bg-zinc-800'
           }`}
           title="Settings"
         >
-          <User size={20} className={activeTab === 'settings' ? 'text-white' : 'text-gray-600 group-hover:text-black'} />
+          <User size={20} className={activeTab === 'settings' ? 'text-black' : 'text-zinc-400 group-hover:text-white'} />
         </button>
       </div>
 
@@ -31,20 +32,20 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             {/* New Chat (Reset) */}
             <button 
             onClick={onReset}
-            className="w-12 h-12 mb-4 rounded-full bg-black flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group"
+            className="w-12 h-12 mb-4 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group"
             title="New Chat"
             >
-            <Plus size={24} className="text-white group-hover:rotate-90 transition-transform duration-300" />
+            <Plus size={24} className="text-black group-hover:rotate-90 transition-transform duration-300" />
             </button>
 
-            <div className="w-8 h-[1px] bg-gray-300 rounded-full mb-2"></div>
+            <div className="w-8 h-[1px] bg-zinc-800 rounded-full mb-2"></div>
 
             <button 
                 onClick={() => onTabChange('home')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'home' 
-                    ? 'text-black' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Home"
             >
@@ -55,8 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 onClick={() => onTabChange('discover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'discover' 
-                    ? 'text-black' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Discover"
             >
@@ -67,8 +68,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 onClick={() => onTabChange('history')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'history' 
-                    ? 'text-black' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Recent Chats"
             >
@@ -82,8 +83,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             onClick={() => onTabChange('images')}
             className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:scale-105 shadow-sm border ${
                 activeTab === 'images' 
-                ? 'bg-blue-600 text-white border-blue-600 shadow-blue-200' 
-                : 'bg-white text-gray-400 border-gray-200 hover:text-blue-500 hover:border-blue-200'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20' 
+                : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-blue-500 hover:border-blue-500/30'
             }`}
             title="Images"
         >

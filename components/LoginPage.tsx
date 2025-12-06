@@ -70,13 +70,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 flex p-4 md:p-6 lg:p-8 overflow-y-auto">
+    <div className="min-h-screen w-full bg-black flex p-4 md:p-6 lg:p-8 overflow-y-auto">
       
       {/* Left Panel - Floating Curved Edge */}
-      <div className="hidden md:flex w-1/2 bg-black rounded-[48px] relative overflow-hidden flex-col justify-between p-12 lg:p-16 text-white shadow-2xl">
+      <div className="hidden md:flex w-1/2 bg-[#050505] rounded-[48px] relative overflow-hidden flex-col justify-between p-12 lg:p-16 text-white shadow-2xl border border-white/5">
         {/* Abstract Background */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-900/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
         
         {/* Grid Overlay */}
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
@@ -97,27 +97,27 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
             </p>
         </div>
 
-        <div className="relative z-10 text-sm text-gray-500 font-mono">
+        <div className="relative z-10 text-sm text-gray-600 font-mono">
            © 2025 Infinity Search Inc.
         </div>
       </div>
 
       {/* Right Panel - Login Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 relative">
-        <div className="w-full max-w-md space-y-8 animate-fadeIn">
+        <div className="w-full max-w-md space-y-8 animate-fadeIn text-white">
             
             <div className="text-center md:text-left">
-                <h2 className="text-3xl font-bold text-slate-900 mb-3">
+                <h2 className="text-3xl font-bold text-white mb-3">
                   {mode === 'signin' ? 'Welcome back' : 'Create an account'}
                 </h2>
-                <p className="text-slate-500">
+                <p className="text-zinc-500">
                   {mode === 'signin' ? 'Sign in to continue to your workspace.' : 'Enter your details to get started.'}
                 </p>
             </div>
 
             {error && (
-                <div className={`p-4 rounded-2xl text-sm font-medium border flex items-center gap-2 ${error.includes('created') ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                   <div className={`w-1.5 h-1.5 rounded-full ${error.includes('created') ? 'bg-green-600' : 'bg-red-600'}`} />
+                <div className={`p-4 rounded-2xl text-sm font-medium border flex items-center gap-2 ${error.includes('created') ? 'bg-green-900/20 text-green-400 border-green-900/50' : 'bg-red-900/20 text-red-400 border-red-900/50'}`}>
+                   <div className={`w-1.5 h-1.5 rounded-full ${error.includes('created') ? 'bg-green-500' : 'bg-red-500'}`} />
                    {error}
                 </div>
             )}
@@ -126,47 +126,47 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
             <form onSubmit={handleEmailAuth} className="space-y-4">
                {mode === 'signup' && (
                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Full Name</label>
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Full Name</label>
                     <div className="relative">
-                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                         <input 
                           type="text" 
                           required
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="John Doe"
-                          className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                          className="w-full h-14 pl-12 pr-4 bg-zinc-900 border border-zinc-800 rounded-2xl focus:ring-4 focus:ring-white/10 focus:border-white/20 outline-none transition-all text-white placeholder-zinc-600"
                         />
                     </div>
                  </div>
                )}
 
                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Email</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Email</label>
                   <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                       <input 
                         type="email" 
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com"
-                        className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                        className="w-full h-14 pl-12 pr-4 bg-zinc-900 border border-zinc-800 rounded-2xl focus:ring-4 focus:ring-white/10 focus:border-white/20 outline-none transition-all text-white placeholder-zinc-600"
                       />
                   </div>
                </div>
 
                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Password</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Password</label>
                   <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                       <input 
                         type="password" 
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full h-14 pl-12 pr-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:border-blue-300 outline-none transition-all"
+                        className="w-full h-14 pl-12 pr-4 bg-zinc-900 border border-zinc-800 rounded-2xl focus:ring-4 focus:ring-white/10 focus:border-white/20 outline-none transition-all text-white placeholder-zinc-600"
                       />
                   </div>
                </div>
@@ -174,26 +174,26 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                <button 
                   type="submit"
                   disabled={!!loading}
-                  className="w-full h-14 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
+                  className="w-full h-14 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
                >
                   {loading === 'email' ? <Loader2 className="animate-spin" /> : (mode === 'signin' ? 'Sign In' : 'Sign Up')}
                </button>
             </form>
 
             {/* Toggle Mode */}
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm text-zinc-500">
                {mode === 'signin' ? "Don't have an account?" : "Already have an account?"}
                <button 
                  type="button"
                  onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); }}
-                 className="ml-2 font-bold text-blue-600 hover:underline"
+                 className="ml-2 font-bold text-white hover:underline"
                >
                  {mode === 'signin' ? 'Sign up' : 'Sign in'}
                </button>
             </div>
 
-            <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-gray-200 after:h-px after:flex-1 after:bg-gray-200">
-                <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Or continue with</span>
+            <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-zinc-800 after:h-px after:flex-1 after:bg-zinc-800">
+                <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Or continue with</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -201,7 +201,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                 <button 
                   onClick={() => handleOAuthLogin('spotify')}
                   disabled={!!loading}
-                  className="h-14 bg-white border border-gray-200 hover:bg-gray-50 text-slate-900 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group"
+                  className="h-14 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group"
                 >
                     <Music size={20} className="text-[#1DB954]" />
                     <span>Spotify</span>
@@ -211,7 +211,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                 <button 
                   onClick={() => handleOAuthLogin('notion')}
                   disabled={!!loading}
-                  className="h-14 bg-white border border-gray-200 hover:bg-gray-50 text-slate-900 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                  className="h-14 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
                 >
                      <svg viewBox="0 0 122.88 128.1" fill="currentColor" className="w-5 h-5">
                         <path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/>
@@ -224,7 +224,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
              <div className="text-center pt-4">
                 <button 
                     onClick={onSkip}
-                    className="text-xs font-medium text-gray-400 hover:text-black transition-colors flex items-center justify-center gap-1 mx-auto"
+                    className="text-xs font-medium text-zinc-500 hover:text-white transition-colors flex items-center justify-center gap-1 mx-auto"
                 >
                     Skip login for demo <ArrowRight size={12} />
                 </button>

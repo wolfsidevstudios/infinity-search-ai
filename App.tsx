@@ -490,7 +490,7 @@ const App: React.FC = () => {
       if (activeTab === 'settings' || searchMode === 'notion' || searchMode === 'bible') {
           return {
               backgroundImage: 'none',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#000000' // Dark background for settings
           };
       }
       
@@ -507,7 +507,7 @@ const App: React.FC = () => {
           if (searchState.status === 'idle') {
               return {
                   backgroundImage: 'none',
-                  backgroundColor: '#ffffff'
+                  backgroundColor: '#000000'
               };
           }
       }
@@ -535,7 +535,7 @@ const App: React.FC = () => {
 
   if (view === 'landing') {
       return (
-        <div className="h-screen w-full overflow-y-auto bg-white">
+        <div className="h-screen w-full overflow-y-auto bg-black">
              <MarketingPage 
                 onGetStarted={() => setView('login')} 
                 onViewAssets={() => setView('assets')}
@@ -545,10 +545,10 @@ const App: React.FC = () => {
   }
 
   if (view === 'login' && !sessionUser) {
-      if (isAuthChecking) return <div className="h-screen w-full bg-white flex items-center justify-center"><LoadingAnimation/></div>;
+      if (isAuthChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><LoadingAnimation/></div>;
       
       return (
-        <div className="h-screen w-full bg-white">
+        <div className="h-screen w-full bg-black">
             <LoginPage onSkip={() => {
                 // Demo fallback user
                 setSessionUser({ 
@@ -566,7 +566,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="relative h-screen w-full bg-[#f2f4f6] text-slate-800 flex overflow-hidden">
+    <div className="relative h-screen w-full bg-black text-white flex overflow-hidden">
       
       <Sidebar 
         activeTab={activeTab} 
@@ -574,7 +574,7 @@ const App: React.FC = () => {
         onReset={handleReset} 
       />
 
-      <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500">
+      <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10">
         
         <div 
             className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out"
@@ -594,18 +594,18 @@ const App: React.FC = () => {
             <div className="pointer-events-auto">
                 {activeTab === 'home' && searchState.status === 'results' && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform ${searchMode === 'notion' || searchMode === 'bible' ? 'bg-black' : 'bg-white'}`}/>
-                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 ${searchMode === 'notion' || searchMode === 'bible' ? 'text-black' : 'text-white'}`}>Back to Search</span>
+                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform bg-white`}/>
+                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 text-white`}>Back to Search</span>
                     </div>
                 )}
             </div>
             
             {!(activeTab === 'home' && searchState.status === 'idle') && (
-                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 ${searchMode === 'notion' || searchMode === 'bible' ? 'text-black' : 'text-white'}`}>
+                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 text-white`}>
                     Infinity
                     {searchMode === 'spotify' && <span className="text-[#1DB954] text-xs uppercase tracking-widest border border-[#1DB954] px-1 rounded">Music</span>}
-                    {searchMode === 'notion' && <span className="text-black text-xs uppercase tracking-widest border border-black px-1 rounded">Workspace</span>}
-                    {searchMode === 'bible' && <span className="text-[#8c7b66] text-xs uppercase tracking-widest border border-[#8c7b66] px-1 rounded">Scripture</span>}
+                    {searchMode === 'notion' && <span className="text-white text-xs uppercase tracking-widest border border-white px-1 rounded">Workspace</span>}
+                    {searchMode === 'bible' && <span className="text-[#e8dccb] text-xs uppercase tracking-widest border border-[#e8dccb] px-1 rounded">Scripture</span>}
                 </div>
             )}
         </div>
