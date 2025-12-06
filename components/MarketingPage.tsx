@@ -107,11 +107,11 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </nav>
 
       {/* 2. Hero Section - Split Screen with Animation */}
-      <section className="pt-32 pb-20 px-4 relative bg-black min-h-screen flex items-center overflow-hidden">
-        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center relative z-10">
+      <section className="pt-32 pb-20 relative bg-black min-h-screen flex items-center overflow-hidden">
+        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-0 md:gap-12 items-center relative z-10 px-6">
             
             {/* Left Content */}
-            <div className="text-left animate-fadeIn order-2 md:order-1 relative z-20">
+            <div className="text-left animate-fadeIn order-2 md:order-1 relative z-20 pt-10 md:pt-0">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-wider mb-6 text-blue-300">
                     <Sparkles size={12} /> New: Gemini 2.5 Integration
                 </div>
@@ -151,8 +151,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
             </div>
 
             {/* Right Animation - The Black Hole */}
-            <div className="relative h-[500px] md:h-[800px] w-full order-1 md:order-2 flex items-center justify-center">
-                <div className="absolute inset-0 md:-inset-20">
+            <div className="relative h-[600px] md:h-[900px] w-full order-1 md:order-2 flex items-center justify-center">
+                <div className="absolute inset-0 w-full h-full">
                     <BlackHoleAnimation />
                 </div>
                 

@@ -10,22 +10,40 @@ const BlackHoleAnimation: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let width = canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
-    let height = canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
-    
-    const centerX = width / 2;
-    const centerY = height / 2;
+    let animationFrameId: number;
+    let width = 0;
+    let height = 0;
+    let centerX = 0;
+    let centerY = 0;
+
+    // Function to update dimensions and center point
+    const updateDimensions = () => {
+        const parent = canvas.parentElement;
+        if (parent) {
+            width = canvas.width = parent.clientWidth;
+            height = canvas.height = parent.clientHeight;
+        } else {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        centerX = width / 2;
+        centerY = height / 2;
+    };
+
+    // Initial sizing
+    updateDimensions();
+
     const particles: Particle[] = [];
-    const particleCount = 4000; // Increased for dense "millions" feel
+    const particleCount = 3000;
 
     class Particle {
-      x: number;
-      y: number;
-      radius: number;
-      angle: number;
-      speed: number;
-      size: number;
-      opacity: number;
+      x: number = 0;
+      y: number = 0;
+      radius: number = 0;
+      angle: number = 0;
+      speed: number = 0;
+      size: number = 0;
+      opacity: number = 0;
 
       constructor() {
         this.reset(true);
@@ -33,15 +51,18 @@ const BlackHoleAnimation: React.FC = () => {
 
       reset(initial = false) {
         // Start from random distance, spread out further
+        // Use current width/height for placement
+        const maxDist = Math.max(width, height) / 1.5;
+        
         this.radius = initial 
-            ? Math.random() * (width * 1.5) 
-            : width / 2 + Math.random() * 400;
+            ? Math.random() * maxDist 
+            : maxDist + Math.random() * 100;
             
         this.angle = Math.random() * Math.PI * 2;
         
         // Closer particles move faster
         this.speed = 0.5 + Math.random() * 2;
-        this.size = Math.random() * 1.2;
+        this.size = Math.random() * 1.5;
         this.opacity = Math.random() * 0.8 + 0.2;
         
         // Calculate initial cartesian
@@ -51,42 +72,43 @@ const BlackHoleAnimation: React.FC = () => {
 
       update() {
         // Spiral in
-        this.radius -= this.speed * (this.radius / 600); // Accelerate as they get closer
-        this.angle += (this.speed / this.radius) * 8; // Higher angular velocity near center
+        this.radius -= this.speed * (this.radius / 500); // Accelerate as they get closer
+        this.angle += (this.speed / Math.max(1, this.radius)) * 5; // Higher angular velocity near center
 
-        // Update Position
+        // Update Position using current center
         this.x = centerX + Math.cos(this.angle) * this.radius;
         this.y = centerY + Math.sin(this.angle) * this.radius;
 
         // Reset if sucked in (event horizon)
-        if (this.radius < 15) {
+        if (this.radius < 10) {
           this.reset();
         }
       }
 
       draw() {
-        ctx!.beginPath();
-        // Create trail effect by drawing lines or just dots
-        ctx!.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        // Fade logic: bright near center, fade out at edges
-        const distRatio = 1 - (this.radius / (width / 1.5));
-        const alpha = Math.max(0, this.opacity * distRatio);
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         
-        ctx!.fillStyle = `rgba(255, 255, 255, ${alpha})`; 
-        ctx!.fill();
+        // Fade logic
+        const maxDist = Math.max(width, height) / 2;
+        const distRatio = Math.max(0, 1 - (this.radius / maxDist));
+        const alpha = this.opacity * distRatio;
+        
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`; 
+        ctx.fill();
       }
     }
 
-    // Initialize
+    // Initialize particles
     for (let i = 0; i < particleCount; i++) {
       particles.push(new Particle());
     }
 
-    let animationFrameId: number;
-
     const animate = () => {
-      // Trail effect: clear with black opacity to create trails, blends with black bg
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.15)'; // Slightly higher opacity to clean trails faster for high particle count
+      if (!ctx) return;
+      // Trail effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
       ctx.fillRect(0, 0, width, height);
 
       particles.forEach(p => {
@@ -94,20 +116,20 @@ const BlackHoleAnimation: React.FC = () => {
         p.draw();
       });
 
-      // Draw the "Black Hole" center - pure black void
+      // Draw the "Black Hole" center
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 20, 0, Math.PI * 2);
       ctx.fillStyle = '#000000';
       ctx.fill();
       
       // Accretion disk glow
-      const gradient = ctx.createRadialGradient(centerX, centerY, 25, centerX, centerY, 150);
+      const gradient = ctx.createRadialGradient(centerX, centerY, 20, centerX, centerY, 120);
       gradient.addColorStop(0, 'rgba(0,0,0,1)');
-      gradient.addColorStop(0.15, 'rgba(255,255,255,0.05)'); // subtle rim
+      gradient.addColorStop(0.2, 'rgba(255,255,255,0.05)');
       gradient.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, 120, 0, Math.PI * 2);
       ctx.fill();
 
       animationFrameId = requestAnimationFrame(animate);
@@ -115,16 +137,20 @@ const BlackHoleAnimation: React.FC = () => {
 
     animate();
 
-    const handleResize = () => {
-      if (!canvas || !canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight;
-    };
+    // Use ResizeObserver for robust sizing
+    const resizeObserver = new ResizeObserver(() => {
+        updateDimensions();
+    });
 
-    window.addEventListener('resize', handleResize);
+    if (canvas.parentElement) {
+        resizeObserver.observe(canvas.parentElement);
+    }
+
+    window.addEventListener('resize', updateDimensions);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', updateDimensions);
+      resizeObserver.disconnect();
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
