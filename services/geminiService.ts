@@ -133,3 +133,25 @@ export const getMusicInsights = async (track: string, artist: string): Promise<s
         return `Enjoy listening to ${track} by ${artist}.`;
     }
 }
+
+export const getBibleInsight = async (reference: string, passageText: string): Promise<string> => {
+    try {
+        const ai = getAiClient();
+        const prompt = `You are a theology assistant. Analyze this Bible passage (${reference}): "${passageText}".
+        
+        Provide a brief, insightful 3-4 sentence commentary. Include:
+        1. Historical context or author's intent.
+        2. A key theological takeaway or practical application for today.
+        
+        Keep the tone reverent, intelligent, and accessible. Do not use markdown.`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+
+        return response.text || "Reflect on these words and their meaning in your life.";
+    } catch (error) {
+        return "Unable to generate AI insight at this time.";
+    }
+}

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -14,6 +13,7 @@ interface SettingsViewProps {
   onWallpaperChange: (url: string | null) => void;
   currentWallpaper: string | null;
   user: SupabaseUser | null;
+  onLogout: () => void;
 }
 
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'bible' | 'connected';
@@ -34,7 +34,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onConnectFigma,
     onWallpaperChange,
     currentWallpaper,
-    user
+    user,
+    onLogout
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -149,9 +150,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
               </div>
 
-               <div className="pt-4">
+               <div className="pt-8 flex gap-4">
                   <button className="h-14 px-10 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform shadow-xl hover:shadow-2xl hover:bg-gray-200">
                       Update Profile
+                  </button>
+                  <button 
+                    onClick={onLogout}
+                    className="h-14 px-10 bg-red-900/20 border border-red-900/50 text-red-500 rounded-full font-bold hover:bg-red-900/40 transition-all flex items-center gap-2"
+                  >
+                      <LogOut size={18} /> Sign Out
                   </button>
                </div>
             </div>

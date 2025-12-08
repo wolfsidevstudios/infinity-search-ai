@@ -1,7 +1,7 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MediaItem } from '../types';
-import { BookOpen, Copy, Check, Share2, Info } from 'lucide-react';
+import { BookOpen, Copy, Check, Share2, Info, Sparkles } from 'lucide-react';
+import { getBibleInsight } from '../services/geminiService';
 
 interface BibleResultsViewProps {
   items: MediaItem[];
@@ -9,7 +9,23 @@ interface BibleResultsViewProps {
 }
 
 const BibleResultsView: React.FC<BibleResultsViewProps> = ({ items, query }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [insight, setInsight] = useState<string>('');
+  const [loadingInsight, setLoadingInsight] = useState(false);
+  
+  const result = items[0]?.data;
+
+  useEffect(() => {
+    const fetchInsight = async () => {
+      if (result) {
+        setLoadingInsight(true);
+        const text = await getBibleInsight(result.reference, result.text);
+        setInsight(text);
+        setLoadingInsight(false);
+      }
+    };
+    fetchInsight();
+  }, [result]);
   
   if (!items.length) {
        return (
@@ -20,8 +36,6 @@ const BibleResultsView: React.FC<BibleResultsViewProps> = ({ items, query }) => 
        );
   }
 
-  const result = items[0].data; // We usually get one main passage result
-
   const handleCopy = () => {
       const textToCopy = `${result.reference}\n\n${result.text}`;
       navigator.clipboard.writeText(textToCopy);
@@ -30,7 +44,7 @@ const BibleResultsView: React.FC<BibleResultsViewProps> = ({ items, query }) => 
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-20 animate-slideUp px-4">
+    <div className="w-full max-w-5xl mx-auto pb-20 animate-slideUp px-4">
       
       {/* Header */}
       <div className="mb-8 pl-2 flex items-center justify-between">
@@ -59,43 +73,70 @@ const BibleResultsView: React.FC<BibleResultsViewProps> = ({ items, query }) => 
          </div>
       </div>
 
-      {/* Scripture Card (Dark Mode Paper) */}
-      <div className="bg-[#1c1917] border border-[#292524] rounded-[10px] p-8 md:p-12 shadow-sm relative">
-          
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-8 bg-[#292524] rounded-b-full flex items-center justify-center border-b border-x border-[#44403c]">
-              <span className="text-[#a8a29e]">✝</span>
-          </div>
+      <div className="grid lg:grid-cols-3 gap-8">
+          {/* Scripture Card (Dark Mode Paper) - Spans 2 cols */}
+          <div className="lg:col-span-2 bg-[#1c1917] border border-[#292524] rounded-[10px] p-8 md:p-12 shadow-sm relative flex flex-col h-full">
+              
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-8 bg-[#292524] rounded-b-full flex items-center justify-center border-b border-x border-[#44403c]">
+                  <span className="text-[#a8a29e]">✝</span>
+              </div>
 
-          <div className="prose prose-lg max-w-none font-serif leading-loose text-[#e7e5e4]">
-             {result.verses.map((verse: any) => (
-                 <span key={verse.verse} className="relative group">
-                     <sup className="text-[10px] text-zinc-500 font-sans mr-1 select-none">{verse.verse}</sup>
-                     <span className="hover:bg-white/10 rounded transition-colors">{verse.text}</span>
-                     {' '}
-                 </span>
-             ))}
-          </div>
+              <div className="prose prose-lg max-w-none font-serif leading-loose text-[#e7e5e4] flex-1">
+                 {result.verses.map((verse: any) => (
+                     <span key={verse.verse} className="relative group">
+                         <sup className="text-[10px] text-zinc-500 font-sans mr-1 select-none">{verse.verse}</sup>
+                         <span className="hover:bg-white/10 rounded transition-colors">{verse.text}</span>
+                         {' '}
+                     </span>
+                 ))}
+              </div>
 
-          <div className="mt-8 pt-8 border-t border-[#292524] flex items-center justify-between text-sm text-[#78716c] font-medium">
-              <span>{result.translation_name}</span>
-              <div className="flex items-center gap-1">
-                  <Info size={14} />
-                  <span>Public Domain / Open License</span>
+              <div className="mt-8 pt-8 border-t border-[#292524] flex items-center justify-between text-sm text-[#78716c] font-medium">
+                  <span>{result.translation_name}</span>
+                  <div className="flex items-center gap-1">
+                      <Info size={14} />
+                      <span>Public Domain / Open License</span>
+                  </div>
               </div>
           </div>
-      </div>
 
-      {/* Related/Context (Placeholder logic for future expansion) */}
-      <div className="mt-12 flex gap-4 overflow-x-auto pb-4">
-         <button className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full text-sm font-bold text-white hover:bg-zinc-800 whitespace-nowrap">
-             Read Full Chapter
-         </button>
-         <button className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full text-sm font-bold text-white hover:bg-zinc-800 whitespace-nowrap">
-             See Commentaries
-         </button>
-         <button className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full text-sm font-bold text-white hover:bg-zinc-800 whitespace-nowrap">
-             Compare Versions
-         </button>
+          {/* AI Insight Sidebar - Spans 1 col */}
+          <div className="lg:col-span-1 space-y-4">
+              <div className="bg-[#2a2725] rounded-[20px] p-6 border border-[#3e3a36] relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[50px] rounded-full pointer-events-none"></div>
+                  
+                  <div className="flex items-center gap-2 mb-4 text-orange-200">
+                      <Sparkles size={18} className={loadingInsight ? 'animate-spin' : ''} />
+                      <span className="text-xs font-bold uppercase tracking-widest">Divine Insight</span>
+                  </div>
+
+                  {loadingInsight ? (
+                      <div className="space-y-3 animate-pulse">
+                          <div className="h-4 bg-[#3e3a36] rounded w-full"></div>
+                          <div className="h-4 bg-[#3e3a36] rounded w-5/6"></div>
+                          <div className="h-4 bg-[#3e3a36] rounded w-full"></div>
+                          <div className="h-4 bg-[#3e3a36] rounded w-4/6"></div>
+                      </div>
+                  ) : (
+                      <p className="text-[#d6d3d1] font-light leading-relaxed text-sm">
+                          {insight}
+                      </p>
+                  )}
+                  
+                  <div className="mt-6 pt-4 border-t border-[#3e3a36] text-[10px] text-[#78716c] flex justify-between items-center">
+                      <span>Powered by Gemini</span>
+                  </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                 <button className="w-full py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-sm font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all text-left px-4 flex justify-between group">
+                     Read Full Chapter <span className="text-zinc-600 group-hover:text-white transition-colors">→</span>
+                 </button>
+                 <button className="w-full py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-sm font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all text-left px-4 flex justify-between group">
+                     Compare Versions <span className="text-zinc-600 group-hover:text-white transition-colors">→</span>
+                 </button>
+              </div>
+          </div>
       </div>
 
     </div>

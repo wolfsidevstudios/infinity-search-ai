@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star } from 'lucide-react';
 import BlackHoleAnimation from './BlackHoleAnimation';
@@ -173,33 +172,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         </div>
       </section>
 
-      {/* 3. Infinite Marquee */}
-      <section className="py-12 border-y border-white/10 bg-black overflow-hidden relative z-20">
-        <p className="text-center text-sm font-bold text-zinc-600 uppercase tracking-widest mb-8">Trusted by teams at</p>
-        <div className="relative w-full overflow-hidden">
-            <div className="flex w-[200%] animate-scroll">
-                <div className="flex justify-around min-w-[50%] px-10 gap-12 opacity-40 grayscale transition-all text-white">
-                    <div className="text-xl font-bold flex items-center gap-2"><Globe size={24}/> Acme Corp</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Layers size={24}/> StackFlow</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Cpu size={24}/> AI Labs</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Zap size={24}/> Bolt Inc</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Shield size={24}/> SecureNet</div>
-                     <div className="text-xl font-bold flex items-center gap-2"><Activity size={24}/> HealthPlus</div>
-                </div>
-                <div className="flex justify-around min-w-[50%] px-10 gap-12 opacity-40 grayscale transition-all text-white">
-                    <div className="text-xl font-bold flex items-center gap-2"><Globe size={24}/> Acme Corp</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Layers size={24}/> StackFlow</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Cpu size={24}/> AI Labs</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Zap size={24}/> Bolt Inc</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Shield size={24}/> SecureNet</div>
-                    <div className="text-xl font-bold flex items-center gap-2"><Activity size={24}/> HealthPlus</div>
-                </div>
-            </div>
-        </div>
-      </section>
-
       {/* 4. Problem Statement */}
-      <section className="py-24 px-6 bg-black relative z-20">
+      <section className="py-24 px-6 bg-black relative z-20 border-t border-white/5">
           <ScrollReveal>
           <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Problem</h2>
@@ -409,9 +383,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                <h2 className="text-3xl font-bold text-center mb-16 text-white">Loved by productive people</h2>
                <div className="grid md:grid-cols-3 gap-8">
                    {[
-                       { name: "Alex Chen", role: "Product Designer", text: "Finally, I don't have to open Figma just to check one comment. Infinity saves me hours every week." },
-                       { name: "Sarah Miller", role: "Content Creator", text: "The visual search is a game changer. Being able to see results from Pexels and my Notion docs side-by-side is magic." },
-                       { name: "James Wilson", role: "Developer", text: "I love that I can bring my own API key. It feels secure and the responses are incredibly fast." }
+                       { name: "David K.", role: "Product Manager at Stripe", text: "Finally, I don't have to open Figma just to check one comment. Infinity saves me hours every week." },
+                       { name: "Elena R.", role: "Senior Designer at Figma", text: "The visual search is a game changer. Being able to see results from Pexels and my Notion docs side-by-side is magic." },
+                       { name: "Marcus J.", role: "Developer at Vercel", text: "I love that I can bring my own API key. It feels secure and the responses are incredibly fast." }
                    ].map((t, i) => (
                        <div key={i} className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 hover:-translate-y-2 transition-transform duration-300 shadow-sm hover:shadow-lg hover:border-zinc-700">
                            <div className="flex gap-1 mb-4 text-yellow-500">

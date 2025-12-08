@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
@@ -130,6 +129,24 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+      await supabase.auth.signOut();
+      setSessionUser(null);
+      setView('landing');
+      setActiveTab('home');
+      setSearchState({
+          status: 'idle',
+          query: '',
+          summary: '',
+          sources: [],
+          media: [],
+      });
+      // Clear legacy tokens if needed
+      setSpotifyToken(null);
+      setNotionToken(null);
+      setIsFigmaConnected(false);
+  };
 
   const initiateSpotifyLogin = async () => {
       try {
@@ -694,6 +711,7 @@ const App: React.FC = () => {
                         currentWallpaper={currentWallpaper}
                         onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser}
+                        onLogout={handleLogout}
                     />
                 </div>
             )}
