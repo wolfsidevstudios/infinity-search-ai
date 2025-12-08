@@ -191,7 +191,9 @@ const App: React.FC = () => {
               syncHistoryToDrive(history, googleAccessToken)
                   .then(res => {
                       if (!res.success && res.message === "Token expired") {
-                          console.warn("Drive token expired");
+                          console.warn("Drive token expired. Disconnecting.");
+                          setGoogleAccessToken(null);
+                          localStorage.removeItem('google_drive_token');
                       } else {
                           console.log("History synced:", res.success);
                       }
