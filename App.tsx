@@ -113,14 +113,11 @@ const App: React.FC = () => {
         
         if (session) {
             setSessionUser(session.user);
-            if (session.provider_token) {
-               if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
-               if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
-               if (session.user.app_metadata.provider === 'google') setGoogleAccessToken(session.provider_token);
-            }
             setView('app');
-        } else {
-            // Keep default view as landing
+            
+            // Restore persistent tokens if available
+            const savedDriveToken = localStorage.getItem('google_drive_token');
+            if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
         }
         setIsAuthChecking(false);
     };
@@ -131,11 +128,23 @@ const App: React.FC = () => {
     if (savedAutoSave === 'true') setIsAutoSaveEnabled(true);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSessionUser(session?.user || null);
-        if (session && session.provider_token) {
-           if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
-           if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
-           if (session.user.app_metadata.provider === 'google') setGoogleAccessToken(session.provider_token);
+        if (session) {
+            setSessionUser(session.user);
+            setView('app'); // Fix: Force view update on auth change (e.g., redirect)
+            
+            // Capture and persist provider token if available (only available on initial login/redirect)
+            if (session.provider_token) {
+               if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
+               if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+               
+               if (session.user.app_metadata.provider === 'google') {
+                   setGoogleAccessToken(session.provider_token);
+                   localStorage.setItem('google_drive_token', session.provider_token);
+               }
+            }
+        } else {
+            setSessionUser(null);
+            // Optionally redirect to landing if signed out
         }
     });
 
@@ -147,7 +156,14 @@ const App: React.FC = () => {
       if (isAutoSaveEnabled && googleAccessToken && history.length > 0) {
           const timeout = setTimeout(() => {
               syncHistoryToDrive(history, googleAccessToken)
-                  .then(res => console.log("History synced:", res.success))
+                  .then(res => {
+                      if (!res.success && res.message === "Token expired") {
+                          // Handle token expiry if possible, or warn user
+                          console.warn("Drive token expired");
+                      } else {
+                          console.log("History synced:", res.success);
+                      }
+                  })
                   .catch(err => console.error("Sync failed", err));
           }, 5000); // Debounce sync by 5s to avoid too many requests
           return () => clearTimeout(timeout);
@@ -171,11 +187,12 @@ const App: React.FC = () => {
           sources: [],
           media: [],
       });
-      // Clear legacy tokens if needed
+      // Clear legacy tokens
       setSpotifyToken(null);
       setNotionToken(null);
       setGoogleAccessToken(null);
       setIsFigmaConnected(false);
+      localStorage.removeItem('google_drive_token');
   };
 
   const initiateSpotifyLogin = async () => {
@@ -190,8 +207,7 @@ const App: React.FC = () => {
           
           if (error) throw error;
       } catch (e) {
-          console.warn("Spotify Auth flow encountered an issue (likely Redirect URL config). Activating Demo Mode.");
-          // Fallback for demo: Simulate successful connection
+          console.warn("Spotify Auth flow encountered an issue. Activating Demo Mode.");
           setSpotifyToken("mock-spotify-token-demo");
           setShowSpotifyModal(false);
       }
@@ -208,7 +224,6 @@ const App: React.FC = () => {
           if (error) throw error;
       } catch (e) {
           console.warn("Notion Auth flow encountered an issue. Activating Demo Mode.");
-          // Fallback for demo
           setNotionToken('mock-notion-token-demo');
           setShowNotionModal(false);
       }
@@ -235,8 +250,6 @@ const App: React.FC = () => {
   };
 
   const initiateFigmaConnection = () => {
-      // Figma usually requires custom Enterprise Auth in Supabase or manual OAuth flow.
-      // For this app, we simulate the connection immediately.
       setTimeout(() => {
         setIsFigmaConnected(true);
         setShowFigmaModal(false);
@@ -392,13 +405,13 @@ const App: React.FC = () => {
              setSearchState(prev => ({ 
                  ...prev, 
                  status: 'results', 
-                 media: [], // Empty media signals no results found
+                 media: [],
                  summary: "No results found." 
              }));
           }
 
       } else {
-          // Standard Web Search (with optional file context)
+          // Standard Web Search
           const fileContext = attachedFile ? {
               content: attachedFile.content,
               mimeType: attachedFile.mimeType
@@ -434,7 +447,6 @@ const App: React.FC = () => {
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
           
-          // Clear file after search
           setAttachedFile(null);
       }
       
@@ -496,7 +508,7 @@ const App: React.FC = () => {
     setAttachedFile(null);
   };
 
-  const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'images' | 'settings') => {
+  const handleTabChange = (tab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings') => {
     setActiveTab(tab);
     if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
          handleMediaSearch(searchState.query, mediaType);
@@ -559,7 +571,7 @@ const App: React.FC = () => {
       if (activeTab === 'settings' || searchMode === 'notion' || searchMode === 'bible') {
           return {
               backgroundImage: 'none',
-              backgroundColor: '#000000' // Dark background for settings
+              backgroundColor: '#000000'
           };
       }
       
@@ -619,7 +631,6 @@ const App: React.FC = () => {
       return (
         <div className="h-screen w-full bg-black">
             <LoginPage onSkip={() => {
-                // Demo fallback user
                 setSessionUser({ 
                     id: 'demo-user', 
                     email: 'demo@infinity.ai',
