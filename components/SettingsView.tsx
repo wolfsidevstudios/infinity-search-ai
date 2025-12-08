@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -7,16 +8,20 @@ interface SettingsViewProps {
   isSpotifyConnected: boolean;
   isNotionConnected: boolean;
   isFigmaConnected: boolean;
+  isGoogleDriveConnected: boolean;
   onConnectNotion: () => void;
   onConnectSpotify: () => void;
   onConnectFigma: () => void;
+  onConnectGoogleDrive: () => void;
+  isAutoSaveEnabled: boolean;
+  onToggleAutoSave: (enabled: boolean) => void;
   onWallpaperChange: (url: string | null) => void;
   currentWallpaper: string | null;
   user: SupabaseUser | null;
   onLogout: () => void;
 }
 
-type Tab = 'profile' | 'customization' | 'wallpapers' | 'ai' | 'bible' | 'connected';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected';
 
 const WALLPAPERS = [
   { id: 'default', url: null, name: 'Default Black' },
@@ -29,9 +34,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     isSpotifyConnected, 
     isNotionConnected, 
     isFigmaConnected,
+    isGoogleDriveConnected,
     onConnectNotion, 
     onConnectSpotify, 
     onConnectFigma,
+    onConnectGoogleDrive,
+    isAutoSaveEnabled,
+    onToggleAutoSave,
     onWallpaperChange,
     currentWallpaper,
     user,
@@ -101,6 +110,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
              <div onClick={() => setActiveTab('wallpapers')} className={navItemClass('wallpapers')}>
                 <ImageIcon size={20} /> Wallpapers
             </div>
+            <div onClick={() => setActiveTab('cloud')} className={navItemClass('cloud')}>
+                <Cloud size={20} /> Cloud Storage
+            </div>
             <div onClick={() => setActiveTab('bible')} className={navItemClass('bible')}>
                 <BookOpen size={20} /> Bible Preferences
             </div>
@@ -113,7 +125,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="mt-auto pl-4 text-xs text-zinc-500 font-medium">
-            Infinity v2.1.0
+            Infinity v2.2.0
         </div>
       </div>
 
@@ -235,6 +247,58 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         </div>
                     </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CLOUD STORAGE */}
+          {activeTab === 'cloud' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
+              <p className="text-zinc-500">Connect to Google Drive to automatically back up your search history and notes.</p>
+              
+              <div className="space-y-6">
+                <div className={`flex items-center justify-between p-6 bg-zinc-900 border rounded-[32px] shadow-sm transition-all ${isGoogleDriveConnected ? 'border-green-500/30' : 'border-zinc-800'}`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md">
+                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white">Google Drive</h4>
+                            <p className="text-sm text-zinc-400">{isGoogleDriveConnected ? 'Connected via OAuth' : 'Not connected'}</p>
+                        </div>
+                    </div>
+                    <div>
+                        {isGoogleDriveConnected ? (
+                             <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
+                                 <Check size={16} /> Connected
+                             </div>
+                        ) : (
+                             <button onClick={onConnectGoogleDrive} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect Drive</button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Auto-Save Toggle */}
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isAutoSaveEnabled ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}>
+                            <RefreshCw size={20} className={isAutoSaveEnabled && isGoogleDriveConnected ? 'animate-spin-slow' : ''} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white">Auto-backup History</h4>
+                            <p className="text-sm text-zinc-400">Sync search history to 'infinity_search_history.json'</p>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={() => onToggleAutoSave(!isAutoSaveEnabled)}
+                        disabled={!isGoogleDriveConnected}
+                        className={`w-16 h-9 rounded-full relative transition-colors ${!isGoogleDriveConnected ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
+                    >
+                        <div className={`absolute top-1 w-7 h-7 bg-white rounded-full shadow-md transition-all ${isAutoSaveEnabled ? 'left-[calc(100%-32px)]' : 'left-1'}`}></div>
+                    </button>
+                </div>
               </div>
             </div>
           )}

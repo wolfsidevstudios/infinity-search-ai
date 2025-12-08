@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
@@ -26,6 +27,7 @@ import { supabase } from './services/supabaseClient';
 import { searchSpotify } from './services/spotifyService';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
+import { syncHistoryToDrive } from './services/googleDriveService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem } from './types';
 import { User } from '@supabase/supabase-js';
 
@@ -85,6 +87,10 @@ const App: React.FC = () => {
   const [isFigmaConnected, setIsFigmaConnected] = useState(false);
   const [showFigmaModal, setShowFigmaModal] = useState(false);
 
+  // Google Drive
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
+  const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
+
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
     items: [],
@@ -110,6 +116,7 @@ const App: React.FC = () => {
             if (session.provider_token) {
                if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
                if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+               if (session.user.app_metadata.provider === 'google') setGoogleAccessToken(session.provider_token);
             }
             setView('app');
         } else {
@@ -119,16 +126,38 @@ const App: React.FC = () => {
     };
     checkSession();
 
+    // Load auto-save pref
+    const savedAutoSave = localStorage.getItem('autosave_history');
+    if (savedAutoSave === 'true') setIsAutoSaveEnabled(true);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         setSessionUser(session?.user || null);
         if (session && session.provider_token) {
            if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
            if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+           if (session.user.app_metadata.provider === 'google') setGoogleAccessToken(session.provider_token);
         }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // History Sync Logic
+  useEffect(() => {
+      if (isAutoSaveEnabled && googleAccessToken && history.length > 0) {
+          const timeout = setTimeout(() => {
+              syncHistoryToDrive(history, googleAccessToken)
+                  .then(res => console.log("History synced:", res.success))
+                  .catch(err => console.error("Sync failed", err));
+          }, 5000); // Debounce sync by 5s to avoid too many requests
+          return () => clearTimeout(timeout);
+      }
+  }, [history, isAutoSaveEnabled, googleAccessToken]);
+
+  const handleToggleAutoSave = (enabled: boolean) => {
+      setIsAutoSaveEnabled(enabled);
+      localStorage.setItem('autosave_history', String(enabled));
+  };
 
   const handleLogout = async () => {
       await supabase.auth.signOut();
@@ -145,6 +174,7 @@ const App: React.FC = () => {
       // Clear legacy tokens if needed
       setSpotifyToken(null);
       setNotionToken(null);
+      setGoogleAccessToken(null);
       setIsFigmaConnected(false);
   };
 
@@ -181,6 +211,26 @@ const App: React.FC = () => {
           // Fallback for demo
           setNotionToken('mock-notion-token-demo');
           setShowNotionModal(false);
+      }
+  };
+
+  const initiateGoogleLogin = async () => {
+      try {
+          const { error } = await supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                  redirectTo: window.location.origin,
+                  scopes: 'https://www.googleapis.com/auth/drive.file',
+                  queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                  }
+              }
+          });
+          if (error) throw error;
+      } catch (e) {
+          console.warn("Google Auth flow issue. Demo mode active.");
+          setGoogleAccessToken("mock-google-token-demo");
       }
   };
 
@@ -705,9 +755,13 @@ const App: React.FC = () => {
                         isSpotifyConnected={!!spotifyToken} 
                         isNotionConnected={!!notionToken}
                         isFigmaConnected={isFigmaConnected}
+                        isGoogleDriveConnected={!!googleAccessToken}
                         onConnectNotion={() => setShowNotionModal(true)}
                         onConnectSpotify={() => setShowSpotifyModal(true)}
                         onConnectFigma={() => setShowFigmaModal(true)}
+                        onConnectGoogleDrive={initiateGoogleLogin}
+                        isAutoSaveEnabled={isAutoSaveEnabled}
+                        onToggleAutoSave={handleToggleAutoSave}
                         currentWallpaper={currentWallpaper}
                         onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser}

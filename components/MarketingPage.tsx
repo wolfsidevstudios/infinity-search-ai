@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star } from 'lucide-react';
+import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal } from 'lucide-react';
 import BlackHoleAnimation from './BlackHoleAnimation';
 
 interface MarketingPageProps {
@@ -139,13 +140,15 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                     </button>
                 </div>
 
-                <div className="mt-12 flex items-center gap-4 text-sm text-gray-500 font-mono">
-                    <div className="flex -space-x-2">
-                         <div className="w-8 h-8 rounded-full bg-zinc-800 border border-black flex items-center justify-center text-[10px]">JD</div>
-                         <div className="w-8 h-8 rounded-full bg-zinc-700 border border-black flex items-center justify-center text-[10px]">AS</div>
-                         <div className="w-8 h-8 rounded-full bg-zinc-600 border border-black flex items-center justify-center text-[10px]">+2k</div>
-                    </div>
-                    <div>Joined by 2,000+ early adopters</div>
+                {/* Badge Section - Replaced "Joined by..." */}
+                <div className="mt-12 flex items-center gap-4">
+                    <a href="https://startupslab.site" target="_blank" rel="noopener" className="transition-opacity hover:opacity-80">
+                        <img 
+                            src="https://cdn.startupslab.site/site-images/badge-light.png" 
+                            alt="Featured on Startups Lab" 
+                            className="h-10 w-auto rounded-xl shadow-lg border border-white/5"
+                        />
+                    </a>
                 </div>
             </div>
 
@@ -212,7 +215,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           </div>
                           <h3 className="text-3xl font-bold mb-3 text-white">Visual First Search</h3>
                           <p className="text-zinc-400 max-w-sm text-lg leading-relaxed">
-                              Browse results in a stunning gallery view. Designed for visual thinkers who need inspiration fast.
+                              Browse results in a stunning gallery view. Perfect for designers, photographers, and visual thinkers.
                           </p>
                       </div>
                       
@@ -247,7 +250,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           </div>
                           <h3 className="text-2xl font-bold mb-2 text-white">Powered by Gemini</h3>
                           <p className="text-zinc-300 text-sm leading-relaxed">
-                              Advanced reasoning across documents and web sources. Capable of understanding complex context.
+                              Advanced reasoning across documents and web sources. Context-aware and secure.
                           </p>
                       </div>
                   </div>
@@ -262,7 +265,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           </div>
                           <h3 className="text-2xl font-bold mb-2 text-white">Privacy Built-in</h3>
                           <p className="text-zinc-400 text-sm leading-relaxed">
-                              Your API keys are stored locally on your device. We never train on your personal data.
+                              Your API keys are stored locally on your device. We never train on your data.
                           </p>
                       </div>
                   </div>
@@ -376,25 +379,30 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
            </ScrollReveal>
       </section>
 
-      {/* 8. Testimonials */}
+      {/* 8. Testimonials - Solo Developers / Indie Hackers */}
       <section className="py-24 px-6 bg-black relative z-20">
           <ScrollReveal>
           <div className="max-w-7xl mx-auto">
-               <h2 className="text-3xl font-bold text-center mb-16 text-white">Loved by productive people</h2>
+               <h2 className="text-3xl font-bold text-center mb-16 text-white">Loved by solo developers</h2>
                <div className="grid md:grid-cols-3 gap-8">
                    {[
-                       { name: "David K.", role: "Product Manager at Stripe", text: "Finally, I don't have to open Figma just to check one comment. Infinity saves me hours every week." },
-                       { name: "Elena R.", role: "Senior Designer at Figma", text: "The visual search is a game changer. Being able to see results from Pexels and my Notion docs side-by-side is magic." },
-                       { name: "Marcus J.", role: "Developer at Vercel", text: "I love that I can bring my own API key. It feels secure and the responses are incredibly fast." }
+                       { name: "Alex T.", role: "Indie Hacker", text: "Finally, I don't have to context switch between Notion and Figma. Infinity saves me hours of searching every week." },
+                       { name: "Sarah J.", role: "Solo Founder", text: "The visual search is amazing for gathering inspiration. Being able to see results from multiple sources side-by-side helps me ship faster." },
+                       { name: "Mike R.", role: "Freelance Dev", text: "I love that I can bring my own API key. It feels secure, fast, and I don't have to worry about another subscription." }
                    ].map((t, i) => (
                        <div key={i} className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 hover:-translate-y-2 transition-transform duration-300 shadow-sm hover:shadow-lg hover:border-zinc-700">
                            <div className="flex gap-1 mb-4 text-yellow-500">
                                <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
                            </div>
                            <p className="text-zinc-300 mb-6 leading-relaxed">"{t.text}"</p>
-                           <div>
-                               <div className="font-bold text-white">{t.name}</div>
-                               <div className="text-sm text-zinc-500">{t.role}</div>
+                           <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold border border-zinc-700">
+                                   {t.name.split(' ').map(n => n[0]).join('')}
+                               </div>
+                               <div>
+                                   <div className="font-bold text-white">{t.name}</div>
+                                   <div className="text-sm text-zinc-500">{t.role}</div>
+                               </div>
                            </div>
                        </div>
                    ))}

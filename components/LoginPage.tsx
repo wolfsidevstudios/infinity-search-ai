@@ -17,18 +17,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
 
-  const handleOAuthLogin = async (provider: 'spotify' | 'notion') => {
+  const handleOAuthLogin = async (provider: 'spotify' | 'notion' | 'google') => {
     setLoading(provider);
     setError(null);
     try {
+      const options: any = {
+          redirectTo: window.location.origin,
+      };
+
+      if (provider === 'spotify') {
+          options.scopes = 'user-read-email user-top-read user-library-read streaming';
+      } else if (provider === 'google') {
+          // Request access to create/edit files created by this app
+          options.scopes = 'https://www.googleapis.com/auth/drive.file';
+          options.queryParams = {
+            access_type: 'offline',
+            prompt: 'consent',
+          };
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
-        options: {
-          redirectTo: window.location.origin,
-          scopes: provider === 'spotify' 
-            ? 'user-read-email user-top-read user-library-read streaming' 
-            : undefined
-        },
+        options: options,
       });
       if (error) throw error;
     } catch (e: any) {
@@ -122,6 +132,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                 </div>
             )}
 
+            {/* Google Sign In (Primary) */}
+             <button 
+                  onClick={() => handleOAuthLogin('google')}
+                  disabled={!!loading}
+                  className="w-full h-14 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all shadow-lg flex items-center justify-center gap-3 mb-6"
+               >
+                   <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                   Continue with Google
+             </button>
+
+             <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-zinc-800 after:h-px after:flex-1 after:bg-zinc-800">
+                <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Or with email</span>
+             </div>
+
             {/* Email/Pass Form */}
             <form onSubmit={handleEmailAuth} className="space-y-4">
                {mode === 'signup' && (
@@ -174,7 +198,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
                <button 
                   type="submit"
                   disabled={!!loading}
-                  className="w-full h-14 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all shadow-lg flex items-center justify-center gap-2 mt-2"
+                  className="w-full h-14 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-white rounded-2xl font-bold text-lg transition-all shadow-sm flex items-center justify-center gap-2"
                >
                   {loading === 'email' ? <Loader2 className="animate-spin" /> : (mode === 'signin' ? 'Sign In' : 'Sign Up')}
                </button>
@@ -193,7 +217,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
             </div>
 
             <div className="flex items-center gap-4 before:h-px before:flex-1 before:bg-zinc-800 after:h-px after:flex-1 after:bg-zinc-800">
-                <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Or continue with</span>
+                <span className="text-zinc-500 text-xs font-medium uppercase tracking-wider">Other apps</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
