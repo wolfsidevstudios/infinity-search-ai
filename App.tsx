@@ -19,6 +19,7 @@ import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
 import AssetsPage from './components/AssetsPage';
+import SuccessPage from './components/SuccessPage'; // New Component
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -53,7 +54,7 @@ interface AttachedFile {
 
 const App: React.FC = () => {
   // App Logic State
-  const [view, setView] = useState<'landing' | 'login' | 'app' | 'assets'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'app' | 'assets' | 'success'>('landing');
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
@@ -91,6 +92,9 @@ const App: React.FC = () => {
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
 
+  // Connection Success State
+  const [connectedProvider, setConnectedProvider] = useState<string>('');
+
   // State for Images/Media Tab
   const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
     items: [],
@@ -113,11 +117,22 @@ const App: React.FC = () => {
         
         if (session) {
             setSessionUser(session.user);
-            setView('app');
+            // Default to app, but onAuthStateChange below handles the redirect logic better
+            // We just ensure persistent tokens are loaded here
             
             // Restore persistent tokens if available
             const savedDriveToken = localStorage.getItem('google_drive_token');
             if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
+            
+            const savedSpotifyToken = localStorage.getItem('spotify_token');
+            if (savedSpotifyToken) setSpotifyToken(savedSpotifyToken);
+
+            const savedNotionToken = localStorage.getItem('notion_token');
+            if (savedNotionToken) setNotionToken(savedNotionToken);
+
+            if (view !== 'success') setView('app');
+        } else {
+             setView('landing');
         }
         setIsAuthChecking(false);
     };
@@ -127,24 +142,42 @@ const App: React.FC = () => {
     const savedAutoSave = localStorage.getItem('autosave_history');
     if (savedAutoSave === 'true') setIsAutoSaveEnabled(true);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
             setSessionUser(session.user);
-            setView('app'); // Fix: Force view update on auth change (e.g., redirect)
             
             // Capture and persist provider token if available (only available on initial login/redirect)
             if (session.provider_token) {
-               if (session.user.app_metadata.provider === 'spotify') setSpotifyToken(session.provider_token);
-               if (session.user.app_metadata.provider === 'notion') setNotionToken(session.provider_token);
+               const provider = session.user.app_metadata.provider;
                
-               if (session.user.app_metadata.provider === 'google') {
+               if (provider === 'spotify') {
+                   setSpotifyToken(session.provider_token);
+                   localStorage.setItem('spotify_token', session.provider_token);
+               }
+               if (provider === 'notion') {
+                   setNotionToken(session.provider_token);
+                   localStorage.setItem('notion_token', session.provider_token);
+               }
+               if (provider === 'google') {
                    setGoogleAccessToken(session.provider_token);
                    localStorage.setItem('google_drive_token', session.provider_token);
                }
             }
+
+            // CHECK IF WE CAME FROM A "CONNECT" ACTION
+            const connectingProvider = localStorage.getItem('connecting_provider');
+            if (connectingProvider) {
+                // If we were trying to connect a service, show success page
+                setConnectedProvider(connectingProvider);
+                setView('success');
+                localStorage.removeItem('connecting_provider'); // Clear flag
+            } else {
+                // Normal login or refresh
+                setView('app');
+            }
         } else {
             setSessionUser(null);
-            // Optionally redirect to landing if signed out
+            setView('landing');
         }
     });
 
@@ -158,14 +191,13 @@ const App: React.FC = () => {
               syncHistoryToDrive(history, googleAccessToken)
                   .then(res => {
                       if (!res.success && res.message === "Token expired") {
-                          // Handle token expiry if possible, or warn user
                           console.warn("Drive token expired");
                       } else {
                           console.log("History synced:", res.success);
                       }
                   })
                   .catch(err => console.error("Sync failed", err));
-          }, 5000); // Debounce sync by 5s to avoid too many requests
+          }, 5000); 
           return () => clearTimeout(timeout);
       }
   }, [history, isAutoSaveEnabled, googleAccessToken]);
@@ -187,15 +219,20 @@ const App: React.FC = () => {
           sources: [],
           media: [],
       });
-      // Clear legacy tokens
+      // Clear tokens
       setSpotifyToken(null);
       setNotionToken(null);
       setGoogleAccessToken(null);
       setIsFigmaConnected(false);
       localStorage.removeItem('google_drive_token');
+      localStorage.removeItem('spotify_token');
+      localStorage.removeItem('notion_token');
+      localStorage.removeItem('connecting_provider');
   };
 
   const initiateSpotifyLogin = async () => {
+      // Set flag so we know to show success page on return
+      localStorage.setItem('connecting_provider', 'spotify');
       try {
           const { error } = await supabase.auth.signInWithOAuth({
               provider: 'spotify',
@@ -204,16 +241,19 @@ const App: React.FC = () => {
                   redirectTo: window.location.origin,
               }
           });
-          
           if (error) throw error;
       } catch (e) {
           console.warn("Spotify Auth flow encountered an issue. Activating Demo Mode.");
           setSpotifyToken("mock-spotify-token-demo");
+          setConnectedProvider('spotify');
+          setView('success');
+          localStorage.removeItem('connecting_provider');
           setShowSpotifyModal(false);
       }
   };
 
   const initiateNotionLogin = async () => {
+      localStorage.setItem('connecting_provider', 'notion');
       try {
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'notion',
@@ -225,11 +265,15 @@ const App: React.FC = () => {
       } catch (e) {
           console.warn("Notion Auth flow encountered an issue. Activating Demo Mode.");
           setNotionToken('mock-notion-token-demo');
+          setConnectedProvider('notion');
+          setView('success');
+          localStorage.removeItem('connecting_provider');
           setShowNotionModal(false);
       }
   };
 
   const initiateGoogleLogin = async () => {
+      localStorage.setItem('connecting_provider', 'google');
       try {
           const { error } = await supabase.auth.signInWithOAuth({
               provider: 'google',
@@ -246,14 +290,25 @@ const App: React.FC = () => {
       } catch (e) {
           console.warn("Google Auth flow issue. Demo mode active.");
           setGoogleAccessToken("mock-google-token-demo");
+          setConnectedProvider('google');
+          setView('success');
+          localStorage.removeItem('connecting_provider');
       }
   };
 
   const initiateFigmaConnection = () => {
       setTimeout(() => {
         setIsFigmaConnected(true);
+        setConnectedProvider('figma');
+        setView('success');
         setShowFigmaModal(false);
       }, 500);
+  };
+
+  const handleSuccessContinue = () => {
+      setView('app');
+      // If we just connected a service, go to settings -> connected apps
+      setActiveTab('settings');
   };
 
   const handleModeChange = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
@@ -614,6 +669,10 @@ const App: React.FC = () => {
       return <AssetsPage onBack={() => setView('landing')} />;
   }
 
+  if (view === 'success') {
+      return <SuccessPage provider={connectedProvider} onContinue={handleSuccessContinue} />;
+  }
+
   if (view === 'landing') {
       return (
         <div className="h-screen w-full overflow-y-auto bg-black">
@@ -767,9 +826,9 @@ const App: React.FC = () => {
                         isNotionConnected={!!notionToken}
                         isFigmaConnected={isFigmaConnected}
                         isGoogleDriveConnected={!!googleAccessToken}
-                        onConnectNotion={() => setShowNotionModal(true)}
-                        onConnectSpotify={() => setShowSpotifyModal(true)}
-                        onConnectFigma={() => setShowFigmaModal(true)}
+                        onConnectNotion={initiateNotionLogin}
+                        onConnectSpotify={initiateSpotifyLogin}
+                        onConnectFigma={initiateFigmaConnection}
                         onConnectGoogleDrive={initiateGoogleLogin}
                         isAutoSaveEnabled={isAutoSaveEnabled}
                         onToggleAutoSave={handleToggleAutoSave}

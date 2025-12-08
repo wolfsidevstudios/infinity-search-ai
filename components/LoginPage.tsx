@@ -20,6 +20,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
   const handleOAuthLogin = async (provider: 'spotify' | 'notion' | 'google') => {
     setLoading(provider);
     setError(null);
+    localStorage.setItem('connecting_provider', provider); // Set flag
+
     try {
       const options: any = {
           redirectTo: window.location.origin,
@@ -45,6 +47,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSkip }) => {
       console.error('Login error:', e);
       setError(e.message || 'Failed to login');
       setLoading(null);
+      localStorage.removeItem('connecting_provider');
     }
   };
 
