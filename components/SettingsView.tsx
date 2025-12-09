@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -268,11 +268,21 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                             <p className="text-sm text-zinc-400">{isGoogleDriveConnected ? 'Connected via OAuth' : 'Not connected'}</p>
                         </div>
                     </div>
-                    <div>
+                    <div className="flex gap-2">
                         {isGoogleDriveConnected ? (
-                             <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
-                                 <Check size={16} /> Connected
-                             </div>
+                             <>
+                                <a 
+                                    href="https://drive.google.com/drive/u/0/my-drive" 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="flex items-center gap-2 text-white font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                                >
+                                    Open Drive <ExternalLink size={14} />
+                                </a>
+                                <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
+                                    <Check size={16} /> Connected
+                                </div>
+                             </>
                         ) : (
                              <button onClick={onConnectGoogleDrive} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect Drive</button>
                         )}

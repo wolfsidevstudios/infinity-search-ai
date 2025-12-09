@@ -1,8 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, RotateCw, Lock, Search, Plus, Send, Mic, Bot, MousePointer2, ExternalLink, Globe, Eye, MoreHorizontal, Keyboard, Cpu, ScanLine } from 'lucide-react';
-import { getAiClient, searchWithGemini } from '../services/geminiService';
+import { ArrowLeft, ArrowRight, RotateCw, Lock, Search, Plus, Send, Mic, Bot, MousePointer2, ExternalLink, Globe, Eye, MoreHorizontal, Keyboard, Cpu, ScanLine, Link as LinkIcon, BarChart2, Settings, User } from 'lucide-react';
+import { getAiClient, searchWithGemini, getAgentVisioPlan } from '../services/geminiService';
 import { Source } from '../types';
+// @ts-ignore
+import html2canvas from 'html2canvas'; // Ensure this is available in environment
 
 interface ChatMessage {
   role: 'user' | 'ai';
@@ -20,6 +22,7 @@ const AgentView: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [statusText, setStatusText] = useState('');
   
   // Cursor & Interaction State
   const [cursorPos, setCursorPos] = useState({ x: 50, y: 50 }); // Percentage 0-100
@@ -30,14 +33,23 @@ const AgentView: React.FC = () => {
   
   // Browser Content State
   const [searchResults, setSearchResults] = useState<Source[]>([]);
-  const [browserMode, setBrowserMode] = useState<'home' | 'search_results' | 'iframe' | 'reading'>('home');
+  const [browserMode, setBrowserMode] = useState<'home' | 'search_results' | 'iframe' | 'reading' | 'maxilinks'>('home');
   const [pageContentSummary, setPageContentSummary] = useState<string>('');
+
+  // Maxilinks State
+  const [maxilinksView, setMaxilinksView] = useState<'dashboard' | 'create'>('dashboard');
+  const [maxilinksUrlInput, setMaxilinksUrlInput] = useState('');
+  const [maxilinksKeyInput, setMaxilinksKeyInput] = useState('');
+  const [maxiLinks, setMaxiLinks] = useState<{url: string, key: string, clicks: number}[]>([
+      { url: 'https://twitter.com/user', key: 'twitter', clicks: 245 },
+      { url: 'https://instagram.com/user', key: 'insta', clicks: 120 }
+  ]);
 
   const browserRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const SITES: Record<string, string> = {
-      'maxilinks': 'https://maxilinks.vercel.app/',
+      'maxilinks': 'maxilinks_simulated',
       'infinity': 'https://infinitysearch-ai.vercel.app/',
       'emanuel': 'https://emanuelmartinez.vercel.app/',
       'hotel': 'https://hotelnochistlan.vercel.app/',
@@ -64,12 +76,12 @@ const AgentView: React.FC = () => {
       await new Promise(r => setTimeout(r, 400));
   };
 
-  const simulateTyping = async (text: string) => {
+  const simulateTyping = async (text: string, onType?: (char: string) => void) => {
       setTypingOverlay('');
-      
       for (let i = 0; i < text.length; i++) {
           const char = text[i];
           setTypingOverlay(prev => (prev || '') + char);
+          if (onType) onType(char);
           await new Promise(r => setTimeout(r, 50 + Math.random() * 50)); 
       }
       await new Promise(r => setTimeout(r, 500));
@@ -82,165 +94,225 @@ const AgentView: React.FC = () => {
       setIsScanning(false);
   }
 
-  // --- AGENT INTELLIGENCE ---
-
-  const handleAgentAction = async (query: string) => {
-      setIsThinking(true);
-      
-      const ai = getAiClient();
-      const prompt = `
-        You are a highly advanced autonomous web agent. You control a simulated browser.
-        User Query: "${query}"
-        
-        Current State:
-        - URL: "${url}"
-        - Mode: "${browserMode}"
-        - Known Apps: ${Object.keys(SITES).join(', ')}
-        
-        Your Goal: Break down the user's request into a sequence of browser interactions.
-        
-        Capabilities:
-        1. NAVIGATE(url/app_name): Go to a website.
-        2. SEARCH_GOOGLE(term): Use the search engine.
-        3. CLICK(x, y, description): Move cursor to percentage coordinates (0-100) and click. Guess the position based on standard UI layouts.
-           - Top Left (10, 10): Logo/Home
-           - Top Right (90, 10): Login/Profile/Menu
-           - Center (50, 50): Main Content/Search Bar
-           - Bottom (50, 90): Footer/CTA
-        4. TYPE(text): Simulate typing.
-        5. SCROLL(direction): 'up' or 'down'.
-        6. ANALYZE(): Read the page content.
-        
-        Response Format (JSON ONLY):
-        {
-            "actions": [
-                { "type": "NAVIGATE", "payload": "target" },
-                { "type": "CLICK", "x": 50, "y": 50, "desc": "clicking center" },
-                { "type": "TYPE", "text": "hello" },
-                { "type": "WAIT", "ms": 1000 },
-                { "type": "RESPOND", "text": "I have done X." }
-            ]
-        }
-        
-        Example: "Search maxilinks"
-        -> NAVIGATE(google) -> CLICK(50, 50, "search bar") -> TYPE(maxilinks) -> CLICK(50, 60, "search btn")
-      `;
-
-      try {
-          const result = await ai.models.generateContent({
-              model: "gemini-2.5-flash",
-              contents: prompt
-          });
-          
-          const text = result.text?.replace(/```json/g, '').replace(/```/g, '').trim() || '{}';
-          const response = JSON.parse(text);
-
-          // Execute Sequence
-          for (const action of response.actions) {
-              
-              if (action.type === 'RESPOND') {
-                  setMessages(prev => [...prev, { role: 'ai', text: action.text }]);
-              }
-
-              else if (action.type === 'NAVIGATE') {
-                  const target = action.payload.toLowerCase();
-                  let targetUrl = target;
-                  
-                  if (SITES[target]) {
-                      targetUrl = SITES[target];
-                      // Special handling for simulated google
-                      if (target === 'google') {
-                          setBrowserMode('home');
-                          setUrl('google.com');
-                      } else {
-                          setBrowserMode('iframe');
-                          setIframeSrc(targetUrl);
-                          setUrl(targetUrl);
-                      }
-                  } else {
-                      // Generic URL navigation
-                      if (!target.includes('.')) targetUrl = target + '.com';
-                      setUrl(targetUrl);
-                      // If we can't embed it, use Reading Mode
-                      setBrowserMode('reading');
-                      setPageContentSummary("Loading content from external source...");
-                  }
-                  
-                  // Visuals
-                  await simulateCursorMove(20, 5, 600); // Address bar
-                  await simulateClick();
-                  await simulateTyping(targetUrl);
-                  await new Promise(r => setTimeout(r, 1000)); // Load
-              }
-
-              else if (action.type === 'SEARCH_GOOGLE') {
-                  const term = action.payload;
-                  if (browserMode !== 'home') {
-                      setBrowserMode('home');
-                      setUrl('google.com');
-                      await new Promise(r => setTimeout(r, 500));
-                  }
-                  await simulateCursorMove(50, 45, 800);
-                  await simulateClick();
-                  await simulateTyping(term);
-                  await simulateCursorMove(50, 60, 500);
-                  await simulateClick();
-                  
-                  // Perform real search
-                  const searchData = await searchWithGemini(term);
-                  setSearchResults(searchData.sources);
-                  setBrowserMode('search_results');
-                  setUrl(`google.com/search?q=${encodeURIComponent(term)}`);
-              }
-
-              else if (action.type === 'CLICK') {
-                  await simulateCursorMove(action.x, action.y, 800);
-                  await simulateClick();
-              }
-
-              else if (action.type === 'TYPE') {
-                  await simulateTyping(action.text);
-              }
-
-              else if (action.type === 'SCROLL') {
-                  // Visual scroll
-                  if (browserRef.current) {
-                      browserRef.current.scrollBy({ top: action.payload === 'down' ? 300 : -300, behavior: 'smooth' });
-                  }
-                  await new Promise(r => setTimeout(r, 500));
-              }
-              
-              else if (action.type === 'ANALYZE') {
-                  await simulateScan();
-                  const summary = await searchWithGemini(`Summarize the website: ${url}`);
-                  setPageContentSummary(summary.text);
-                  setMessages(prev => [...prev, { role: 'ai', text: `I've analyzed the page. ${summary.text.substring(0, 100)}...` }]);
-              }
-
-              else if (action.type === 'WAIT') {
-                  await new Promise(r => setTimeout(r, action.ms));
-              }
+  // --- VISION & SCREENSHOT ---
+  const captureScreen = async (): Promise<string> => {
+      if (browserRef.current) {
+          try {
+              const canvas = await html2canvas(browserRef.current, {
+                  useCORS: true,
+                  logging: false,
+                  allowTaint: true,
+                  backgroundColor: '#1a1a1a'
+              });
+              return canvas.toDataURL('image/png').split(',')[1];
+          } catch (e) {
+              console.error("Screenshot failed", e);
+              return "";
           }
-
-      } catch (e) {
-          console.error(e);
-          setMessages(prev => [...prev, { role: 'ai', text: "I encountered a processing error. Please try a simpler command." }]);
       }
-      setIsThinking(false);
+      return "";
   };
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  // --- AGENT INTELLIGENCE LOOP ---
+
+  const executeActionLoop = async (query: string, history: any[] = [], steps = 0) => {
+      if (steps > 15) { // Safety break
+          setMessages(prev => [...prev, { role: 'ai', text: "I reached the step limit for this task." }]);
+          setIsThinking(false);
+          setStatusText('');
+          return;
+      }
+
+      setStatusText('Analyzing screen...');
+      // 1. Capture State
+      const screenshot = await captureScreen();
+      
+      // 2. Ask Gemini for NEXT step
+      const plan = await getAgentVisioPlan(query, screenshot, history);
+      
+      if (plan.action?.type === 'RESPOND' || plan.done) {
+          if (plan.action?.text) {
+              setMessages(prev => [...prev, { role: 'ai', text: plan.action.text }]);
+          }
+          if (plan.done) {
+              setIsThinking(false);
+              setStatusText('');
+              return;
+          }
+      }
+
+      // 3. Execute Step
+      setStatusText(plan.thought || 'Executing...');
+      const act = plan.action;
+      const newHistory = [...history, { step: steps, action: act.type, thought: plan.thought }];
+
+      if (act.type === 'NAVIGATE') {
+          const target = act.payload.toLowerCase();
+          if (target.includes('maxilink') || target.includes('maxi links')) {
+              setBrowserMode('maxilinks');
+              setUrl('maxilinks.app/dashboard');
+          } else if (target.includes('google')) {
+              setBrowserMode('home');
+              setUrl('google.com');
+          } else {
+              setBrowserMode('iframe');
+              setIframeSrc('https://' + target);
+              setUrl(target);
+          }
+          await simulateCursorMove(20, 5);
+          await simulateTyping(act.payload);
+      } 
+      else if (act.type === 'CLICK') {
+          await simulateCursorMove(act.x, act.y);
+          await simulateClick();
+          
+          // Maxilinks State Handling Simulation
+          if (browserMode === 'maxilinks') {
+              // Create Button Area (Approx top right)
+              if (act.x > 70 && act.y < 25 && maxilinksView === 'dashboard') {
+                  setMaxilinksView('create');
+                  setUrl('maxilinks.app/create');
+              }
+              // Save Button Area (Bottom right in Create mode)
+              if (act.x > 70 && act.y > 60 && maxilinksView === 'create') {
+                  setMaxiLinks(prev => [...prev, { url: maxilinksUrlInput || 'https://new-link.com', key: maxilinksKeyInput || 'new', clicks: 0 }]);
+                  setMaxilinksView('dashboard');
+                  setUrl('maxilinks.app/dashboard');
+                  setMessages(prev => [...prev, { role: 'ai', text: "Link created successfully." }]);
+              }
+          }
+      }
+      else if (act.type === 'TYPE') {
+          // If we are in Maxilinks create mode, simple logic to fill inputs based on cursor pos
+          if (browserMode === 'maxilinks' && maxilinksView === 'create') {
+              if (cursorPos.y < 45) {
+                  await simulateTyping(act.text, (c) => setMaxilinksUrlInput(prev => prev + c));
+              } else {
+                  await simulateTyping(act.text, (c) => setMaxilinksKeyInput(prev => prev + c));
+              }
+          } else {
+              await simulateTyping(act.text);
+          }
+      }
+      else if (act.type === 'WAIT') {
+          await new Promise(r => setTimeout(r, 2000));
+      }
+
+      // 4. Loop
+      await new Promise(r => setTimeout(r, 1000)); // Pause for effect
+      executeActionLoop(query, newHistory, steps + 1);
+  };
+
+  const handleSendMessage = (e?: React.FormEvent, overrideText?: string) => {
       e?.preventDefault();
-      if (!input.trim()) return;
-      const userMsg = input;
-      setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+      const textToSend = overrideText || input;
+      if (!textToSend.trim()) return;
+      
+      setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
       setInput('');
-      handleAgentAction(userMsg);
+      setIsThinking(true);
+      executeActionLoop(textToSend);
   };
 
   // --- RENDERERS ---
 
+  const renderMaxilinksContent = () => {
+      return (
+          <div className="w-full h-full bg-[#0F172A] text-white overflow-y-auto font-sans">
+              {/* Navbar */}
+              <div className="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-[#1E293B]">
+                  <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><LinkIcon size={18}/></div>
+                      MaxiLinks
+                  </div>
+                  <div className="flex items-center gap-4 text-slate-400">
+                      <BarChart2 size={20} />
+                      <Settings size={20} />
+                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-xs">JD</div>
+                  </div>
+              </div>
+
+              <div className="p-8 max-w-5xl mx-auto">
+                  {maxilinksView === 'dashboard' ? (
+                      <>
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-bold">My Links</h2>
+                            <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-colors">
+                                <Plus size={20} /> Create New
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {maxiLinks.map((link, idx) => (
+                                <div key={idx} className="bg-[#1E293B] border border-slate-700 p-6 rounded-2xl flex items-center justify-between group hover:border-slate-500 transition-all">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-blue-400">
+                                            <Globe size={24} />
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-lg mb-1">/{link.key}</div>
+                                            <div className="text-slate-400 text-sm">{link.url}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-8">
+                                        <div className="text-right">
+                                            <div className="font-bold text-xl">{link.clicks}</div>
+                                            <div className="text-xs text-slate-500 uppercase font-bold">Clicks</div>
+                                        </div>
+                                        <MoreHorizontal className="text-slate-500" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                      </>
+                  ) : (
+                      <div className="max-w-xl mx-auto bg-[#1E293B] border border-slate-700 rounded-3xl p-8 shadow-2xl">
+                          <h2 className="text-2xl font-bold mb-6">Create New Link</h2>
+                          
+                          <div className="space-y-6">
+                              <div>
+                                  <label className="block text-sm font-bold text-slate-400 mb-2">Destination URL</label>
+                                  <div className="relative">
+                                      <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                      <input 
+                                        type="text" 
+                                        value={maxilinksUrlInput}
+                                        readOnly
+                                        placeholder="https://example.com"
+                                        className="w-full h-12 bg-slate-900 border border-slate-700 rounded-xl pl-12 pr-4 text-white outline-none focus:border-blue-500"
+                                      />
+                                  </div>
+                              </div>
+
+                              <div>
+                                  <label className="block text-sm font-bold text-slate-400 mb-2">Short Key</label>
+                                  <div className="relative">
+                                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-mono text-sm">maxi.link/</span>
+                                      <input 
+                                        type="text" 
+                                        value={maxilinksKeyInput}
+                                        readOnly
+                                        placeholder="custom-key"
+                                        className="w-full h-12 bg-slate-900 border border-slate-700 rounded-xl pl-24 pr-4 text-white outline-none focus:border-blue-500"
+                                      />
+                                  </div>
+                              </div>
+
+                              <div className="pt-4 flex gap-4">
+                                  <button onClick={() => setMaxilinksView('dashboard')} className="flex-1 py-3 rounded-xl font-bold text-slate-400 hover:bg-slate-800 transition-colors">Cancel</button>
+                                  <button className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-colors">Create Link</button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+              </div>
+          </div>
+      );
+  }
+
   const renderBrowserContent = () => {
+      if (browserMode === 'maxilinks') return renderMaxilinksContent();
+
       if (browserMode === 'home') {
           return (
               <div className="w-full h-full bg-[#202124] text-white flex flex-col items-center justify-center p-8">
@@ -434,12 +506,13 @@ const AgentView: React.FC = () => {
                   </div>
               ))}
               {isThinking && (
-                  <div className="flex justify-start animate-fadeIn">
-                      <div className="bg-zinc-900 rounded-2xl p-4 flex gap-2 items-center border border-zinc-800">
+                  <div className="flex justify-start animate-fadeIn flex-col gap-2">
+                      <div className="bg-zinc-900 rounded-2xl p-4 flex gap-2 items-center border border-zinc-800 w-fit">
                           <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce"></div>
                           <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-100"></div>
                           <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-200"></div>
                       </div>
+                      {statusText && <span className="text-xs text-zinc-500 ml-2 font-mono animate-pulse">{statusText}</span>}
                   </div>
               )}
               <div ref={chatEndRef} />
@@ -471,22 +544,16 @@ const AgentView: React.FC = () => {
               {/* Quick Actions */}
               <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
                   <button 
-                    onClick={() => handleAgentAction("Go to Maxilinks and search for 'Bio'")}
+                    onClick={() => handleSendMessage({ preventDefault: () => {} } as any, "Create a new link for https://openai.com called 'gpt' in Maxilinks")}
                     className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-medium text-zinc-300 border border-zinc-700 whitespace-nowrap transition-colors"
                   >
-                      Browse Maxilinks
+                      Create Maxilink
                   </button>
                   <button 
-                    onClick={() => handleAgentAction("Search Google for 'Latest AI News'")}
+                    onClick={() => handleSendMessage({ preventDefault: () => {} } as any, "Search Google for 'Latest AI News'")}
                     className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-medium text-zinc-300 border border-zinc-700 whitespace-nowrap transition-colors"
                   >
                       Search Google
-                  </button>
-                  <button 
-                    onClick={() => handleAgentAction("Analyze the content of infinitysearch-ai.vercel.app")}
-                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-medium text-zinc-300 border border-zinc-700 whitespace-nowrap transition-colors"
-                  >
-                      Analyze Site
                   </button>
               </div>
           </div>

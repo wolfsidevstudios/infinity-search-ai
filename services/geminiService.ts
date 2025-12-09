@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Source } from "../types";
 
@@ -165,3 +166,58 @@ export const getBibleInsight = async (reference: string, passageText: string): P
         return "Unable to generate AI insight at this time.";
     }
 }
+
+// AGENT VISION API
+export const getAgentVisioPlan = async (query: string, screenshotBase64: string, history: any[]): Promise<any> => {
+    try {
+        const ai = getAiClient();
+        const systemInstruction = `You are an autonomous GUI agent. You have eyes.
+        Analyze the provided screenshot of the browser window.
+        Your goal is to complete the user's request by interacting with the UI.
+        
+        Return ONLY valid JSON. No markdown.
+        Format:
+        {
+            "thought": "I see a 'Create Link' button in the top right. I should click it.",
+            "done": boolean, // true if task is complete
+            "action": {
+                "type": "CLICK" | "TYPE" | "NAVIGATE" | "RESPOND" | "WAIT",
+                "x": number (0-100), // percent coordinates
+                "y": number (0-100), // percent coordinates
+                "text": "string to type or respond",
+                "payload": "url for navigate"
+            }
+        }`;
+
+        const contents = [
+            {
+                role: 'user',
+                parts: [
+                    { text: `User Goal: ${query}. History of actions: ${JSON.stringify(history)}. What is the NEXT SINGLE STEP?` },
+                    {
+                        inlineData: {
+                            mimeType: 'image/png',
+                            data: screenshotBase64
+                        }
+                    }
+                ]
+            }
+        ];
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: contents,
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: "application/json"
+            }
+        });
+
+        const text = response.text || '{}';
+        return JSON.parse(text);
+
+    } catch (error) {
+        console.error("Agent Vision Error:", error);
+        return { thought: "Error processing vision.", done: true, action: { type: "RESPOND", text: "I had trouble seeing the screen." } };
+    }
+};
