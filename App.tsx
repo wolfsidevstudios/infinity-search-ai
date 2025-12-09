@@ -14,6 +14,7 @@ import PodcastResultsView from './components/PodcastResultsView';
 import CommunityView from './components/CommunityView';
 import RecipeResultsView from './components/RecipeResultsView';
 import ShoppingResultsView from './components/ShoppingResultsView';
+import FlightResultsView from './components/FlightResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -22,7 +23,7 @@ import SuccessPage from './components/SuccessPage';
 import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
-import { searchWithGemini } from './services/geminiService';
+import { searchWithGemini, getProductRecommendations } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
@@ -31,11 +32,12 @@ import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
 import { searchPodcasts } from './services/podcastService';
 import { searchRecipes } from './services/recipeService';
-import { searchShopping } from './services/shoppingService';
+import { searchShopping, fetchGoogleImages } from './services/shoppingService';
+import { searchFlights } from './services/flightService';
 import { searchTwitter } from './services/twitterService';
 import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
-import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct } from './types';
+import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
 import { ChevronDown } from 'lucide-react';
 
@@ -81,11 +83,14 @@ const App: React.FC = () => {
     sources: [],
     media: [],
     shopping: [],
+    aiProductPicks: [],
+    productImages: [],
+    flights: [],
     isDeepSearch: false,
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -340,7 +345,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -393,7 +398,7 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
      try {
       if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
@@ -423,9 +428,35 @@ const App: React.FC = () => {
           setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
           addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
       } else if (mode === 'shopping') {
-          const results = await searchShopping(query);
-          setSearchState({ status: 'results', query, summary: `Found ${results.length} products.`, sources: [], media: [], shopping: results });
+          // 1. Parallel Fetch: Multi-source products + Google Images
+          const [products, images] = await Promise.all([
+              searchShopping(query),
+              fetchGoogleImages(query)
+          ]);
+          
+          setSearchState({ 
+              status: 'results', 
+              query, 
+              summary: `Found ${products.length} products.`, 
+              sources: [], 
+              media: [], 
+              shopping: products,
+              productImages: images,
+              aiProductPicks: [] // Temporary empty
+          });
+
+          // 2. AI Post-Processing (Async)
+          if (products.length > 0) {
+              getProductRecommendations(products, query).then(picks => {
+                  setSearchState(prev => ({ ...prev, aiProductPicks: picks }));
+              });
+          }
+
           addToHistory({ type: 'search', title: `Shopping: ${query}`, summary: `Product search for ${query}`, sources: [] });
+      } else if (mode === 'flight') {
+          const flights = await searchFlights(query);
+          setSearchState({ status: 'results', query, summary: `Found ${flights.length} flights.`, sources: [], media: [], flights: flights });
+          addToHistory({ type: 'search', title: `Flight: ${query}`, summary: `Travel search for ${query}`, sources: [] });
       } else {
           // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
@@ -457,7 +488,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -522,6 +553,7 @@ const App: React.FC = () => {
           else if (item.title.startsWith("Podcast: ")) { setSearchMode('podcast'); handleSearch(item.title.replace("Podcast: ", ""), 'podcast'); }
           else if (item.title.startsWith("Recipe: ")) { setSearchMode('recipe'); handleSearch(item.title.replace("Recipe: ", ""), 'recipe'); }
           else if (item.title.startsWith("Shopping: ")) { setSearchMode('shopping'); handleSearch(item.title.replace("Shopping: ", ""), 'shopping'); }
+          else if (item.title.startsWith("Flight: ")) { setSearchMode('flight'); handleSearch(item.title.replace("Flight: ", ""), 'flight'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
@@ -653,7 +685,15 @@ const App: React.FC = () => {
                         ) : searchMode === 'recipe' ? (
                             <RecipeResultsView recipes={recipes} query={searchState.query} />
                         ) : searchMode === 'shopping' ? (
-                            <ShoppingResultsView products={searchState.shopping || []} query={searchState.query} />
+                            <ShoppingResultsView 
+                                products={searchState.shopping || []} 
+                                aiPicks={searchState.aiProductPicks || []}
+                                productImages={searchState.productImages || []}
+                                query={searchState.query} 
+                                onSave={handleSaveToCollections}
+                            />
+                        ) : searchMode === 'flight' ? (
+                            <FlightResultsView flights={searchState.flights || []} query={searchState.query} onSave={handleSaveToCollections} />
                         ) : (
                             <>
                                 <div className="max-w-4xl mx-auto mb-6">

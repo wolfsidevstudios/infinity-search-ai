@@ -6,6 +6,7 @@ import { NewsArticle } from '../types';
 import { Sparkles, Eye, LayoutGrid, Newspaper, Sun } from 'lucide-react';
 import DashboardWidgets from './DashboardWidgets';
 import ExploreWidgets from './ExploreWidgets';
+import AppStoreView from './AppStoreView';
 
 interface DiscoverViewProps {
   onOpenArticle: (article: NewsArticle) => void;
@@ -159,7 +160,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                 className={`rounded-full flex items-center justify-center transition-all ${
                     isScrolled ? 'w-10 h-8' : 'w-12 h-10'
                 } ${activeSubTab === 'whats_new' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                title="What's New"
+                title="App Store"
               >
                   <Sparkles size={isScrolled ? 16 : 20} />
               </button>
@@ -322,14 +323,10 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
           </div>
       )}
 
-      {/* --- WHATS NEW TAB --- */}
+      {/* --- WHATS NEW TAB (App Store) --- */}
       {activeSubTab === 'whats_new' && (
-          <div className="w-full flex flex-col items-center justify-center h-[50vh] text-zinc-500 animate-fadeIn">
-              <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
-                  <Sparkles size={32} className="opacity-50" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Coming Soon</h2>
-              <p className="max-w-md text-center">We're working on exciting new features. Check back later!</p>
+          <div className="w-full animate-fadeIn">
+              <AppStoreView />
           </div>
       )}
       

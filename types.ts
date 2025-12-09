@@ -21,7 +21,7 @@ export interface MediaItem {
 
 export interface CollectionItem {
   id: string;
-  type: 'web' | 'image' | 'audio' | 'note' | 'product';
+  type: 'web' | 'image' | 'audio' | 'note' | 'product' | 'flight' | 'app';
   content: any; // Flexible payload based on type
   dateAdded: number;
 }
@@ -33,6 +33,9 @@ export interface SearchState {
   sources: Source[];
   media: MediaItem[];
   shopping?: ShoppingProduct[];
+  aiProductPicks?: ShoppingProduct[];
+  productImages?: MediaItem[];
+  flights?: Flight[];
   error?: string;
   isDeepSearch?: boolean;
 }
@@ -138,4 +141,27 @@ export interface ShoppingProduct {
   reviews?: number;
   delivery?: string; // e.g. "Free delivery"
   badge?: string; // e.g. "Sale" or "Top Rated"
+  aiReason?: string; // For AI picks
+}
+
+export interface Flight {
+  id: string;
+  airline: string;
+  airline_logo: string;
+  departure: string;
+  arrival: string;
+  duration: string;
+  price: string;
+  stops: string;
+  link: string;
+}
+
+export interface AppStoreApp {
+  id: string;
+  title: string;
+  category: string;
+  image: string;
+  rank: number;
+  link: string;
+  rating?: number;
 }

@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Source } from "../types";
+import { Source, ShoppingProduct } from "../types";
 
 // Helper to get the AI client, prioritizing Local Storage key if set
 export const getAiClient = () => {
@@ -225,3 +225,56 @@ export const getAgentVisioPlan = async (query: string, screenshotBase64: string,
         return { thought: "Error processing vision.", done: true, action: { type: "RESPOND", text: "I had trouble seeing the screen." } };
     }
 };
+
+// AI SHOPPING SUGGESTION
+export const getProductRecommendations = async (products: ShoppingProduct[], query: string): Promise<ShoppingProduct[]> => {
+    try {
+        if (products.length === 0) return [];
+        
+        const ai = getAiClient();
+        
+        // Take top 15 products to analyze to save context window
+        const inputList = products.slice(0, 15).map((p, i) => ({
+            id: i,
+            title: p.title,
+            price: p.price,
+            rating: p.rating,
+            source: p.source
+        }));
+
+        const prompt = `User Query: "${query}"
+        
+        Here is a list of products found:
+        ${JSON.stringify(inputList)}
+        
+        Task: Pick the top 2 BEST products that offer the best value, relevance, and quality.
+        Return valid JSON only. Format:
+        [
+            { "id": number, "reason": "Why this is a good pick (max 1 sentence)" },
+            ...
+        ]`;
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: { responseMimeType: "application/json" }
+        });
+
+        if (!response.text) return [];
+        
+        const picks = JSON.parse(response.text);
+        
+        // Map back to original product objects
+        return picks.map((pick: any) => {
+            const original = products[pick.id];
+            if (original) {
+                return { ...original, aiReason: pick.reason };
+            }
+            return null;
+        }).filter(Boolean);
+
+    } catch (error) {
+        console.error("Gemini Shopping Pick Error:", error);
+        return [];
+    }
+}
