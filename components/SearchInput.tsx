@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Plus, Upload, Music, Globe, FileText, X, BookOpen } from 'lucide-react';
+import { ArrowRight, Plus, Upload, Music, Globe, FileText, X, BookOpen, Mic, BrainCircuit } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -18,6 +18,8 @@ interface SearchInputProps {
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
+  isDeepSearchEnabled: boolean;
+  onToggleDeepSearch: (enabled: boolean) => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ 
@@ -28,12 +30,18 @@ const SearchInput: React.FC<SearchInputProps> = ({
     onModeChange,
     onFileSelect,
     attachedFile, 
-    onRemoveFile
+    onRemoveFile,
+    isDeepSearchEnabled,
+    onToggleDeepSearch
 }) => {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Speech Recognition Ref
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -66,11 +74,51 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (e.target.files && e.target.files[0] && onFileSelect) {
           onFileSelect(e.target.files[0]);
       }
-      // Reset input so same file can be selected again if needed
       if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const toggleListening = () => {
+      if (isListening) {
+          recognitionRef.current?.stop();
+          setIsListening(false);
+      } else {
+          startListening();
+      }
+  };
+
+  const startListening = () => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+          alert("Speech recognition is not supported in this browser.");
+          return;
+      }
+
+      // @ts-ignore
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => {
+          setIsListening(false);
+          // Auto submit if query populated
+      };
+      
+      recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setQuery(transcript);
+          // Optional: Auto submit after voice
+          // onSearch(transcript, activeMode);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+  };
+
   const getPlaceholder = () => {
+      if (isListening) return "Listening...";
       if (activeMode === 'spotify') return "Search for songs, artists, albums...";
       if (activeMode === 'notion') return "Search your workspace docs...";
       if (activeMode === 'bible') return "Search verse (e.g., John 3:16) or topic...";
@@ -115,6 +163,25 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     </button>
                 </div>
             </div>
+        )}
+        
+        {/* Deep Search Toggle (Top Right) */}
+        {activeMode === 'web' && (
+             <div className="absolute top-[-44px] right-0 animate-slideUp z-20 flex items-center gap-2">
+                 <button
+                    type="button"
+                    onClick={() => onToggleDeepSearch(!isDeepSearchEnabled)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
+                        isDeepSearchEnabled 
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-white/20 shadow-lg' 
+                        : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-zinc-300'
+                    }`}
+                 >
+                     <BrainCircuit size={14} />
+                     Deep Search
+                     <div className={`w-2 h-2 rounded-full ${isDeepSearchEnabled ? 'bg-white animate-pulse' : 'bg-zinc-600'}`}></div>
+                 </button>
+             </div>
         )}
 
         <div className="relative flex items-center">
@@ -203,26 +270,39 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={getPlaceholder()}
                 disabled={isSearching}
-                className={`w-full h-[72px] pl-16 pr-20 rounded-full border border-white/10 text-white placeholder-zinc-500 shadow-[0_4px_20px_rgba(0,0,0,0.2)] focus:outline-none focus:ring-4 transition-all text-xl backdrop-blur-md ${
+                className={`w-full h-[72px] pl-16 pr-32 rounded-full border border-white/10 text-white placeholder-zinc-500 shadow-[0_4px_20px_rgba(0,0,0,0.2)] focus:outline-none focus:ring-4 transition-all text-xl backdrop-blur-md ${
                     activeMode === 'spotify' 
                     ? 'bg-zinc-900/80 focus:ring-green-900/30' 
                     : activeMode === 'notion'
                     ? 'bg-zinc-900/80 focus:ring-zinc-700/30'
                     : activeMode === 'bible'
                     ? 'bg-[#1e1b18]/90 focus:ring-orange-900/20 border-[#3c3022]'
-                    : 'bg-zinc-900/80 focus:ring-blue-900/30'
+                    : isDeepSearchEnabled 
+                        ? 'bg-zinc-900/90 focus:ring-purple-900/40 border-purple-500/30'
+                        : 'bg-zinc-900/80 focus:ring-blue-900/30'
                 }`}
             />
             
-            <button
-                type="submit"
-                disabled={(!query.trim() && !attachedFile) || isSearching}
-                className={`absolute right-3 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 text-white disabled:opacity-30 disabled:hover:scale-100 ${
-                    activeMode === 'spotify' ? 'bg-[#1DB954]' : activeMode === 'bible' ? 'bg-[#5c4b37]' : 'bg-white text-black'
-                }`}
-            >
-                <ArrowRight size={24} />
-            </button>
+            <div className="absolute right-3 flex items-center gap-2">
+                 {/* Mic Button */}
+                <button
+                    type="button"
+                    onClick={toggleListening}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'hover:bg-zinc-800 text-zinc-400'}`}
+                >
+                    <Mic size={20} />
+                </button>
+
+                <button
+                    type="submit"
+                    disabled={(!query.trim() && !attachedFile) || isSearching}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 text-white disabled:opacity-30 disabled:hover:scale-100 ${
+                        activeMode === 'spotify' ? 'bg-[#1DB954]' : activeMode === 'bible' ? 'bg-[#5c4b37]' : isDeepSearchEnabled ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-white text-black'
+                    }`}
+                >
+                    {isDeepSearchEnabled ? <BrainCircuit size={20} /> : <ArrowRight size={24} />}
+                </button>
+            </div>
         </div>
       </form>
     </div>

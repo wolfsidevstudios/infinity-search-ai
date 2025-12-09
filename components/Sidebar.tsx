@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections') => void;
   onReset: () => void;
 }
 
@@ -63,6 +63,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             >
                 <Compass size={activeTab === 'discover' ? 28 : 24} strokeWidth={activeTab === 'discover' ? 2.5 : 2} />
             </button>
+
+            <button 
+                onClick={() => onTabChange('collections')}
+                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                  activeTab === 'collections' 
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
+                }`}
+                title="Collections"
+            >
+                <Bookmark size={activeTab === 'collections' ? 28 : 24} strokeWidth={activeTab === 'collections' ? 2.5 : 2} fill={activeTab === 'collections' ? 'currentColor' : 'none'} />
+            </button>
             
              <button 
                 onClick={() => onTabChange('history')}
@@ -71,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                     ? 'text-white' 
                     : 'text-zinc-500 hover:text-white'
                 }`}
-                title="Recent Chats"
+                title="History"
             >
                 <Clock size={activeTab === 'history' ? 28 : 24} strokeWidth={activeTab === 'history' ? 2.5 : 2} />
             </button>

@@ -19,13 +19,21 @@ export interface MediaItem {
   data?: any; // For additional metadata (e.g. Notion page details, Bible verses)
 }
 
+export interface CollectionItem {
+  id: string;
+  type: 'web' | 'image' | 'audio' | 'note';
+  content: any; // Flexible payload based on type
+  dateAdded: number;
+}
+
 export interface SearchState {
-  status: 'idle' | 'searching' | 'results';
+  status: 'idle' | 'searching' | 'thinking' | 'results';
   query: string;
   summary: string;
   sources: Source[];
   media: MediaItem[];
   error?: string;
+  isDeepSearch?: boolean;
 }
 
 export interface PixabayImage {

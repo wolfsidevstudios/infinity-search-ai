@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal } from 'lucide-react';
+import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit } from 'lucide-react';
 import BlackHoleAnimation from './BlackHoleAnimation';
 
 interface MarketingPageProps {
@@ -80,13 +80,13 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
              <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
-             Infinity
+             Infinity 2.0
           </div>
           
           <div className="hidden md:flex items-center gap-8">
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Features</button>
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Solutions</button>
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Resources</button>
+            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Deep Think</button>
+            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Collections</button>
+            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -112,31 +112,31 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
             
             {/* Left Content */}
             <div className="text-left animate-fadeIn order-2 md:order-1 relative z-20 pt-10 md:pt-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-wider mb-6 text-blue-300">
-                    <Sparkles size={12} /> New: Gemini 2.5 Integration
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-wider mb-6 text-purple-300">
+                    <Cpu size={12} /> Introducing 2.0: Deep Think Engine
                 </div>
 
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1] text-white">
-                    Singularity <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">for your search.</span>
+                    More than <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">just search.</span>
                 </h1>
                 
                 <p className="text-xl text-gray-400 max-w-xl mb-10 font-light leading-relaxed">
-                    Pull everything into one place. Infinity acts as a gravitational center for your digital life, merging web, apps, and files into a single intelligence.
+                    Now with Voice Command and multi-step AI reasoning. Infinity connects your world and helps you understand it deeply.
                 </p>
 
                 <div className="flex flex-wrap gap-4">
                     <button 
                         onClick={onGetStarted}
-                        className="px-8 py-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all shadow-xl hover:shadow-white/20 hover:scale-105"
+                        className="px-8 py-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all shadow-xl hover:shadow-white/20 hover:scale-105 flex items-center gap-2"
                     >
-                        Start Searching Free
+                        Try Deep Think <BrainCircuit size={18} />
                     </button>
                     <button 
                          onClick={onViewAssets}
                         className="px-8 py-4 bg-transparent border border-white/20 text-white text-lg font-semibold rounded-full hover:bg-white/10 transition-all"
                     >
-                        View Media Kit
+                        Media Kit
                     </button>
                 </div>
 
@@ -161,13 +161,13 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                 {/* Floating UI Elements inside the void */}
                 <div className="absolute inset-0 pointer-events-none z-10">
                     <div className="absolute top-[20%] right-[20%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse">
-                         <img src="https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg" className="w-8 h-8 opacity-80" alt="Notion"/>
+                         <BrainCircuit className="w-8 h-8 opacity-80 text-purple-400" />
                     </div>
                      <div className="absolute bottom-[30%] left-[15%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse delay-700">
-                         <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" className="w-8 h-8 opacity-80" alt="Spotify"/>
+                         <Mic className="w-8 h-8 opacity-80 text-red-400" />
                     </div>
                     <div className="absolute top-[40%] left-[10%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse delay-300">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg" className="w-6 h-8 opacity-80" alt="Figma"/>
+                        <Bookmark className="w-6 h-8 opacity-80 text-blue-400" />
                     </div>
                 </div>
             </div>
@@ -179,12 +179,10 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       <section className="py-24 px-6 bg-black relative z-20 border-t border-white/5">
           <ScrollReveal>
           <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Problem</h2>
-              <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Stop drowning in tabs.</h3>
+              <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Evolution</h2>
+              <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Search needed a brain upgrade.</h3>
               <p className="text-xl text-zinc-400 leading-relaxed">
-                  Your work is scattered across Notion, Figma, Spotify, and the web. 
-                  Searching for "that one file" shouldn't take 20 minutes and 15 open tabs. 
-                  Infinity brings it all together in one beautiful, intelligent command center.
+                  Basic keywords aren't enough for complex problems. Infinity 2.0 introduces "Deep Think"—an agentic workflow that reads, verifies, and synthesizes answers before you even see the first link.
               </p>
           </div>
           </ScrollReveal>
@@ -199,10 +197,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           <ScrollReveal>
           <div className="max-w-7xl mx-auto">
               <div className="mb-20 text-center">
-                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Everything you need, <span className="text-zinc-500">instantly.</span></h2>
-                   <p className="text-zinc-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                       Our AI engine connects the dots between your apps and the open web, wrapping it all in a beautiful interface.
-                   </p>
+                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">The 2.0 Experience.</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-6 min-h-[600px]">
@@ -211,202 +206,53 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   <div className="md:col-span-2 row-span-2 bg-zinc-900/40 backdrop-blur-2xl rounded-[40px] border border-white/10 p-10 hover:border-white/20 transition-all duration-500 relative overflow-hidden group">
                       <div className="relative z-20">
                           <div className="w-14 h-14 bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-2xl flex items-center justify-center mb-6 shadow-inner">
-                              <LayoutGrid size={28} />
+                              <BrainCircuit size={28} />
                           </div>
-                          <h3 className="text-3xl font-bold mb-3 text-white">Visual First Search</h3>
+                          <h3 className="text-3xl font-bold mb-3 text-white">Deep Think Engine</h3>
                           <p className="text-zinc-400 max-w-sm text-lg leading-relaxed">
-                              Browse results in a stunning gallery view. Perfect for designers, photographers, and visual thinkers.
+                              Toggle "Deep Search" to unleash multi-step reasoning. Watch the AI break down complex queries in real-time.
                           </p>
                       </div>
                       
                       {/* Abstract UI Representation */}
-                      <div className="absolute top-1/2 right-[-5%] w-[60%] h-[120%] bg-black/40 backdrop-blur-md rounded-l-[40px] border-l border-t border-white/10 p-6 grid grid-cols-2 gap-4 transform rotate-[-6deg] group-hover:rotate-0 transition-all duration-700 ease-out shadow-2xl">
-                          <div className="bg-zinc-800/50 rounded-2xl overflow-hidden border border-white/5 relative group/img">
-                              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:scale-110 transition-transform duration-700" alt="Abstract" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                          </div>
-                          <div className="bg-zinc-800/50 rounded-2xl overflow-hidden border border-white/5 relative group/img mt-8">
-                               <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:scale-110 transition-transform duration-700" alt="Neon" />
-                          </div>
-                          <div className="bg-zinc-800/50 rounded-2xl overflow-hidden border border-white/5 relative group/img -mt-8">
-                               <img src="https://images.unsplash.com/photo-1542202229-7d93c33f5d07?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:scale-110 transition-transform duration-700" alt="Forest" />
-                          </div>
-                          <div className="bg-zinc-800/50 rounded-2xl overflow-hidden border border-white/5 relative group/img">
-                               <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover opacity-80 group-hover/img:scale-110 transition-transform duration-700" alt="City" />
-                          </div>
+                      <div className="absolute top-1/2 right-[-5%] w-[60%] h-[120%] bg-black/40 backdrop-blur-md rounded-l-[40px] border-l border-t border-white/10 p-6 flex flex-col gap-4 transform rotate-[-6deg] group-hover:rotate-0 transition-all duration-700 ease-out shadow-2xl">
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Analyzing sources...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Cross-referencing data...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Synthesizing output...</div>
                       </div>
-                      
-                      {/* Gradient Overlay for depth */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
                   </div>
 
-                  {/* Card 2: AI Brain (Frosted Light) */}
+                  {/* Card 2: Voice */}
                   <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl rounded-[40px] border border-white/20 p-8 shadow-lg relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
-                      <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/20 blur-[60px] rounded-full pointer-events-none"></div>
                       
                       <div className="relative z-10 h-full flex flex-col">
                           <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/30 text-white shadow-inner">
-                              <Sparkles size={24} />
+                              <Mic size={24} />
                           </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">Powered by Gemini</h3>
+                          <h3 className="text-2xl font-bold mb-2 text-white">Voice Command</h3>
                           <p className="text-zinc-300 text-sm leading-relaxed">
-                              Advanced reasoning across documents and web sources. Context-aware and secure.
+                              Speak naturally. Infinity listens and responds with spoken audio summaries.
                           </p>
                       </div>
                   </div>
 
-                  {/* Card 3: Privacy (Frosted Dark with Green) */}
+                  {/* Card 3: Collections */}
                   <div className="bg-zinc-900/60 backdrop-blur-2xl rounded-[40px] border border-white/10 p-8 shadow-lg relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
-                       <div className="absolute bottom-0 right-0 w-48 h-48 bg-green-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-green-500/20 transition-colors duration-500"></div>
+                       <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-colors duration-500"></div>
                        
                        <div className="relative z-10 h-full flex flex-col">
-                          <div className="w-12 h-12 bg-green-500/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-green-500/30 text-green-400 shadow-inner">
-                              <Lock size={24} />
+                          <div className="w-12 h-12 bg-blue-500/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 text-blue-400 shadow-inner">
+                              <Bookmark size={24} />
                           </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">Privacy Built-in</h3>
+                          <h3 className="text-2xl font-bold mb-2 text-white">Collections</h3>
                           <p className="text-zinc-400 text-sm leading-relaxed">
-                              Your API keys are stored locally on your device. We never train on your data.
+                              Save images, links, and songs to your personal library. Build your knowledge base.
                           </p>
                       </div>
                   </div>
 
               </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 6. How It Works */}
-      <section className="py-24 px-6 bg-black relative z-20">
-          <ScrollReveal>
-          <div className="max-w-7xl mx-auto">
-               <div className="text-center mb-16">
-                   <h2 className="text-3xl font-bold text-white">How Infinity Works</h2>
-               </div>
-               
-               <div className="grid md:grid-cols-3 gap-12">
-                   <div className="text-center group">
-                       <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-zinc-800 shadow-sm group-hover:scale-110 transition-transform text-white">1</div>
-                       <h3 className="text-xl font-bold mb-3 text-white">Connect Apps</h3>
-                       <p className="text-zinc-500">Securely link your Spotify, Notion, and Figma accounts via OAuth.</p>
-                   </div>
-                   <div className="text-center group">
-                       <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-zinc-800 shadow-sm group-hover:scale-110 transition-transform delay-100 text-white">2</div>
-                       <h3 className="text-xl font-bold mb-3 text-white">Ask Anything</h3>
-                       <p className="text-zinc-500">Use natural language to search across all connected sources at once.</p>
-                   </div>
-                   <div className="text-center group">
-                       <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto mb-6 text-xl font-bold border border-zinc-800 shadow-sm group-hover:scale-110 transition-transform delay-200 text-white">3</div>
-                       <h3 className="text-xl font-bold mb-3 text-white">Get Results</h3>
-                       <p className="text-zinc-500">See visualized answers, summaries, and direct file links instantly.</p>
-                   </div>
-               </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 7. Integrations Detail - ANIMATED REDESIGN */}
-      <section className="py-24 px-6 bg-zinc-900 text-white relative overflow-hidden border-y border-white/5 z-20">
-           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-800 to-black opacity-50"></div>
-           <ScrollReveal>
-           <div className="max-w-7xl mx-auto relative z-10">
-               <div className="grid md:grid-cols-2 gap-20 items-center">
-                   <div>
-                       <h2 className="text-4xl md:text-5xl font-bold mb-6">Deep integrations <br/>with tools you love.</h2>
-                       <p className="text-xl text-gray-400 mb-8">
-                           We don't just index titles. Infinity understands context, content, and metadata within your favorite apps.
-                       </p>
-                       <ul className="space-y-4">
-                           <li className="flex items-center gap-3 text-zinc-300">
-                               <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-black"><Check size={14}/></div>
-                               <span>Spotify: Search lyrics, audio features, and playlists.</span>
-                           </li>
-                           <li className="flex items-center gap-3 text-zinc-300">
-                               <div className="w-6 h-6 rounded-full bg-white text-black flex items-center justify-center"><Check size={14}/></div>
-                               <span>Notion: Find nested pages and database properties.</span>
-                           </li>
-                           <li className="flex items-center gap-3 text-zinc-300">
-                               <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white"><Check size={14}/></div>
-                               <span>Figma: Locate specific frames and comments.</span>
-                           </li>
-                       </ul>
-                   </div>
-                   
-                   {/* Animated Hub Visual */}
-                   <div className="relative h-[400px] w-full flex items-center justify-center">
-                       {/* Connection Lines Layer */}
-                       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.2))' }}>
-                           {/* Center to Top (Notion) */}
-                           <path d="M50% 50% L50% 20%" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" />
-                           <path d="M50% 50% L50% 20%" stroke="white" strokeWidth="2" strokeDasharray="5 5" fill="none" className="animate-flow opacity-60" />
-
-                           {/* Center to Bottom Left (Spotify) */}
-                           <path d="M50% 50% L20% 80%" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" />
-                           <path d="M50% 50% L20% 80%" stroke="#1DB954" strokeWidth="2" strokeDasharray="5 5" fill="none" className="animate-flow opacity-60" style={{ animationDelay: '1s' }} />
-
-                           {/* Center to Bottom Right (Figma) */}
-                           <path d="M50% 50% L80% 80%" stroke="rgba(255,255,255,0.1)" strokeWidth="2" fill="none" />
-                           <path d="M50% 50% L80% 80%" stroke="#A259FF" strokeWidth="2" strokeDasharray="5 5" fill="none" className="animate-flow opacity-60" style={{ animationDelay: '0.5s' }} />
-                       </svg>
-
-                       {/* Central Infinity Hub */}
-                       <div className="relative z-20 w-32 h-32 bg-black border-2 border-white/20 rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] animate-pulse">
-                           <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" className="w-16 h-16 rounded-xl" alt="Infinity" />
-                           <div className="absolute -bottom-8 text-xs font-mono text-zinc-500">Connecting...</div>
-                       </div>
-
-                       {/* Floating Nodes */}
-                       {/* Notion Node */}
-                       <div className="absolute top-[10%] left-[50%] -translate-x-1/2 w-20 h-20 bg-zinc-900 border border-white/20 rounded-2xl flex items-center justify-center shadow-xl animate-float-icon" style={{ animationDelay: '0s' }}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/e/e9/Notion-logo.svg" className="w-10 h-10" alt="Notion" />
-                           <div className="absolute -right-2 -top-2 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900"></div>
-                       </div>
-
-                       {/* Spotify Node */}
-                       <div className="absolute bottom-[10%] left-[15%] w-20 h-20 bg-zinc-900 border border-white/20 rounded-2xl flex items-center justify-center shadow-xl animate-float-icon" style={{ animationDelay: '2s' }}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_without_text.svg" className="w-10 h-10" alt="Spotify" />
-                           <div className="absolute -right-2 -top-2 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900"></div>
-                       </div>
-
-                       {/* Figma Node */}
-                       <div className="absolute bottom-[10%] right-[15%] w-20 h-20 bg-zinc-900 border border-white/20 rounded-2xl flex items-center justify-center shadow-xl animate-float-icon" style={{ animationDelay: '1s' }}>
-                           <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg" className="w-8 h-10" alt="Figma" />
-                           <div className="absolute -right-2 -top-2 w-4 h-4 bg-green-500 rounded-full border-2 border-zinc-900"></div>
-                       </div>
-
-                   </div>
-               </div>
-           </div>
-           </ScrollReveal>
-      </section>
-
-      {/* 8. Testimonials - Solo Developers / Indie Hackers */}
-      <section className="py-24 px-6 bg-black relative z-20">
-          <ScrollReveal>
-          <div className="max-w-7xl mx-auto">
-               <h2 className="text-3xl font-bold text-center mb-16 text-white">Loved by solo developers</h2>
-               <div className="grid md:grid-cols-3 gap-8">
-                   {[
-                       { name: "Alex T.", role: "Indie Hacker", text: "Finally, I don't have to context switch between Notion and Figma. Infinity saves me hours of searching every week." },
-                       { name: "Sarah J.", role: "Solo Founder", text: "The visual search is amazing for gathering inspiration. Being able to see results from multiple sources side-by-side helps me ship faster." },
-                       { name: "Mike R.", role: "Freelance Dev", text: "I love that I can bring my own API key. It feels secure, fast, and I don't have to worry about another subscription." }
-                   ].map((t, i) => (
-                       <div key={i} className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 hover:-translate-y-2 transition-transform duration-300 shadow-sm hover:shadow-lg hover:border-zinc-700">
-                           <div className="flex gap-1 mb-4 text-yellow-500">
-                               <Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" /><Star size={16} fill="currentColor" />
-                           </div>
-                           <p className="text-zinc-300 mb-6 leading-relaxed">"{t.text}"</p>
-                           <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold border border-zinc-700">
-                                   {t.name.split(' ').map(n => n[0]).join('')}
-                               </div>
-                               <div>
-                                   <div className="font-bold text-white">{t.name}</div>
-                                   <div className="text-sm text-zinc-500">{t.role}</div>
-                               </div>
-                           </div>
-                       </div>
-                   ))}
-               </div>
           </div>
           </ScrollReveal>
       </section>
@@ -436,7 +282,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-4 text-left mb-10">
-                          {['Unlimited Web Search', 'Unlimited Connected Apps', 'Visual Results Gallery', 'Notion Integration', 'Spotify Integration', 'Figma Integration', 'Local-First Privacy', 'Community Support'].map(f => (
+                          {['Deep Think Engine', 'Voice Commands', 'Unlimited Collections', 'Notion Integration', 'Spotify Integration', 'Figma Integration', 'Local-First Privacy', 'Community Support'].map(f => (
                               <div key={f} className="flex items-center gap-3">
                                   <CheckCircle size={20} className="text-green-500 shrink-0" />
                                   <span className="text-zinc-300 font-medium">{f}</span>
@@ -455,38 +301,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               </div>
           </div>
           </ScrollReveal>
-      </section>
-
-      {/* 10. FAQ */}
-      <section className="py-24 px-6 bg-black relative z-20">
-           <ScrollReveal>
-           <div className="max-w-3xl mx-auto">
-               <h2 className="text-3xl font-bold text-center mb-12 text-white">Frequently Asked Questions</h2>
-               <div className="space-y-4">
-                   {[
-                       { q: "Is my data secure?", a: "Yes. Infinity operates on a 'local-first' principle for API keys. Your Gemini API key is stored in your browser's local storage and is never sent to our servers." },
-                       { q: "Why is it free?", a: "We believe in democratizing access to intelligent search. We cover basic costs, and power users provide their own API keys for heavy lifting." },
-                       { q: "Can I connect custom apps?", a: "Currently we support Notion, Spotify, and Figma. We are working on a developer API to allow custom integrations soon." },
-                       { q: "Is there a mobile app?", a: "Infinity is a Progressive Web App (PWA). You can add it to your home screen on iOS and Android for a native-like experience." }
-                   ].map((item, index) => (
-                       <div key={index} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
-                           <button 
-                                onClick={() => toggleFaq(index)}
-                                className="w-full p-6 text-left flex justify-between items-center font-bold text-white hover:bg-zinc-800 transition-colors"
-                           >
-                               {item.q}
-                               <ChevronDown size={20} className={`transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
-                           </button>
-                           {openFaq === index && (
-                               <div className="px-6 pb-6 text-zinc-400 leading-relaxed animate-fadeIn">
-                                   {item.a}
-                               </div>
-                           )}
-                       </div>
-                   ))}
-               </div>
-           </div>
-           </ScrollReveal>
       </section>
 
       {/* 11. Final CTA */}
@@ -515,37 +329,15 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   <div>
                       <div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-6 text-white">
                         <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
-                        Infinity
+                        Infinity 2.0
                       </div>
                       <p className="text-zinc-500 max-w-sm">
                           The intelligent search workspace for the modern internet.
                       </p>
                   </div>
-                  <div className="flex gap-20">
-                      <div>
-                          <h4 className="font-bold mb-6 text-white">Product</h4>
-                          <ul className="space-y-4 text-zinc-500 text-sm">
-                              <li className="hover:text-white cursor-pointer transition-colors">Features</li>
-                              <li className="hover:text-white cursor-pointer transition-colors">Pricing</li>
-                              <li className="hover:text-white cursor-pointer transition-colors">Changelog</li>
-                          </ul>
-                      </div>
-                      <div>
-                          <h4 className="font-bold mb-6 text-white">Resources</h4>
-                          <ul className="space-y-4 text-zinc-500 text-sm">
-                              <li className="hover:text-white cursor-pointer transition-colors" onClick={onViewAssets}>Media Kit</li>
-                              <li className="hover:text-white cursor-pointer transition-colors">Careers</li>
-                              <li className="hover:text-white cursor-pointer transition-colors">Contact</li>
-                          </ul>
-                      </div>
-                  </div>
               </div>
               <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
                   <p className="text-zinc-600 text-sm">© 2025 Infinity Search Inc.</p>
-                  <div className="flex gap-6 text-zinc-500">
-                      <Globe size={20} className="hover:text-white cursor-pointer transition-colors" />
-                      <MessageSquare size={20} className="hover:text-white cursor-pointer transition-colors" />
-                  </div>
               </div>
           </div>
       </footer>

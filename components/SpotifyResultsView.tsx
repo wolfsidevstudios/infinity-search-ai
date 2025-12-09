@@ -1,17 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { MediaItem } from '../types';
-import { Sparkles, Play, Music, ExternalLink } from 'lucide-react';
+import { Sparkles, Play, Music, ExternalLink, Bookmark, Check } from 'lucide-react';
 import { getMusicInsights } from '../services/geminiService';
 
 interface SpotifyResultsViewProps {
   items: MediaItem[];
   query: string;
+  onSave: (item: any) => void;
 }
 
-const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query }) => {
+const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query, onSave }) => {
   const [insight, setInsight] = useState<string>('');
   const [loadingInsight, setLoadingInsight] = useState<boolean>(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const topResult = items[0];
 
   useEffect(() => {
@@ -26,6 +28,18 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
     fetchInsight();
   }, [topResult]);
 
+  const handleSave = (item: MediaItem) => {
+      onSave({ type: 'audio', content: item });
+      setSavedIds(prev => new Set(prev).add(String(item.id)));
+      setTimeout(() => {
+          setSavedIds(prev => {
+              const next = new Set(prev);
+              next.delete(String(item.id));
+              return next;
+          });
+      }, 2000);
+  };
+
   if (!items.length) return null;
 
   return (
@@ -38,6 +52,13 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
         <div className="flex-1 bg-zinc-900/50 backdrop-blur-xl border border-white/10 rounded-[40px] p-6 shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#1DB954] blur-[100px] opacity-10 pointer-events-none"></div>
             
+            <button 
+                onClick={() => handleSave(topResult)}
+                className="absolute top-6 right-6 w-10 h-10 bg-black/40 hover:bg-[#1DB954] rounded-full flex items-center justify-center text-white transition-colors z-20"
+            >
+                {savedIds.has(String(topResult.id)) ? <Check size={18} /> : <Bookmark size={18} />}
+            </button>
+
             <div className="flex flex-col md:flex-row gap-6 items-center md:items-start relative z-10">
                 {/* Album Art */}
                 <div className="w-48 h-48 md:w-56 md:h-56 shrink-0 rounded-[32px] overflow-hidden shadow-2xl border-4 border-white/5 rotate-3 group-hover:rotate-0 transition-transform duration-500">
@@ -100,30 +121,42 @@ const SpotifyResultsView: React.FC<SpotifyResultsViewProps> = ({ items, query })
       <h2 className="text-2xl font-bold text-white mb-6 pl-2">More Results</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.slice(1).map((item) => (
-              <a 
+              <div 
                 key={item.id}
-                href={item.pageUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-[24px] p-3 transition-all duration-300 hover:-translate-y-1 group shadow-sm hover:shadow-md"
+                className="relative flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-[24px] p-3 transition-all duration-300 hover:-translate-y-1 group shadow-sm hover:shadow-md"
               >
-                  <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden shadow-sm relative">
-                      <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Play size={16} className="text-white fill-white" />
+                  <a 
+                    href={item.pageUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 flex items-center gap-4 min-w-0"
+                  >
+                      <div className="w-16 h-16 shrink-0 rounded-2xl overflow-hidden shadow-sm relative">
+                          <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play size={16} className="text-white fill-white" />
+                          </div>
                       </div>
-                  </div>
-                  
-                  <div className="min-w-0 flex-1">
-                      <h3 className="text-white font-bold truncate group-hover:text-[#1DB954] transition-colors">{item.title}</h3>
-                      <p className="text-zinc-400 text-sm truncate">{item.artist}</p>
-                      <p className="text-zinc-500 text-xs mt-1">{item.album}</p>
-                  </div>
+                      
+                      <div className="min-w-0 flex-1">
+                          <h3 className="text-white font-bold truncate group-hover:text-[#1DB954] transition-colors">{item.title}</h3>
+                          <p className="text-zinc-400 text-sm truncate">{item.artist}</p>
+                          <p className="text-zinc-500 text-xs mt-1">{item.album}</p>
+                      </div>
+                  </a>
 
-                  <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 group-hover:text-[#1DB954] group-hover:border-[#1DB954]/50 transition-all">
-                      <ExternalLink size={14} />
+                  <div className="flex flex-col gap-2">
+                      <a href={item.pageUrl} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all">
+                          <ExternalLink size={14} />
+                      </a>
+                      <button 
+                        onClick={() => handleSave(item)}
+                        className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-zinc-500 hover:text-[#1DB954] hover:bg-white/10 transition-all"
+                      >
+                         {savedIds.has(String(item.id)) ? <Check size={14} /> : <Bookmark size={14} />}
+                      </button>
                   </div>
-              </a>
+              </div>
           ))}
       </div>
     </div>
