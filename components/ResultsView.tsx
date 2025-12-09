@@ -171,7 +171,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
 
       {/* 4. YouTube Results */}
       {query && (
-          <YoutubeResults query={query} />
+          <YoutubeResults query={query} onSave={onSave} />
       )}
     </div>
   );

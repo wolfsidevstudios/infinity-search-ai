@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Twitter } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -9,11 +9,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'notion' | 'bible' | 'podcast';
-  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast') => void;
+  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter';
+  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -64,7 +64,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -142,6 +142,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (activeMode === 'notion') return "Search your workspace...";
       if (activeMode === 'bible') return "Search verse or topic...";
       if (activeMode === 'podcast') return "Search for podcasts...";
+      if (activeMode === 'twitter') return "Search Twitter trends or users...";
       if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
       return "Ask anything...";
   };
@@ -151,6 +152,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           case 'notion': return 'Notion';
           case 'bible': return 'Scripture';
           case 'podcast': return 'Podcast';
+          case 'twitter': return 'Twitter';
           default: return 'Web';
       }
   };
@@ -164,9 +166,32 @@ const SearchInput: React.FC<SearchInputProps> = ({
           );
           case 'bible': return <BookOpen size={16} />;
           case 'podcast': return <Mic size={16} />;
+          case 'twitter': return <Twitter size={16} />;
           default: return <Globe size={16} />;
       }
   };
+
+  const renderDropdownItem = (
+      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter', 
+      icon: React.ReactNode, 
+      label: string,
+      colorClass: string,
+      borderClass: string = 'border-transparent'
+  ) => (
+      <button 
+          type="button"
+          onClick={() => handleModeSelect(mode)}
+          className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-sm ${
+              activeMode === mode 
+              ? `${colorClass} ${borderClass} shadow-sm` 
+              : 'hover:bg-white/10 text-gray-300'
+          }`}
+      >
+          {icon}
+          <span className="font-medium">{label}</span>
+          {activeMode === mode && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-current" />}
+      </button>
+  );
 
   return (
     <div 
@@ -191,68 +216,37 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onClick={() => setShowDropdown(!showDropdown)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
-                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'podcast' ? 'text-red-400' : 'text-orange-400'}`}>
+                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'twitter' ? 'text-sky-400' : 'text-orange-400'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
                       <ChevronDown size={12} className={`opacity-50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* Dropdown Menu */}
+                  {/* Dropdown Menu (Compact) */}
                   {showDropdown && (
-                    <div className="absolute top-10 left-0 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl p-2 animate-slideUp flex flex-col gap-1 overflow-hidden z-50">
-                        <button 
-                            type="button"
-                            onClick={() => handleModeSelect('web')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'web' ? 'bg-white text-black' : 'hover:bg-white/10 text-gray-300'}`}
-                        >
-                            <Globe size={18} />
-                            <span className="font-medium">Web Search</span>
-                        </button>
+                    <div className="absolute top-10 left-0 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-1.5 animate-slideUp flex flex-col gap-0.5 overflow-hidden z-50">
+                        {renderDropdownItem('web', <Globe size={16} />, 'Web Search', 'bg-white text-black')}
+                        {renderDropdownItem('twitter', <Twitter size={16} />, 'Twitter', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
+                        {renderDropdownItem('bible', <BookOpen size={16} />, 'Scripture', 'bg-[#3c3022] text-[#e8dccb] border border-[#5c4b37]')}
+                        {renderDropdownItem('podcast', <Mic size={16} />, 'Podcast', 'bg-red-900/20 text-red-200 border border-red-900/50')}
                         
-                        <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
-
-                        <button 
-                            type="button"
-                            onClick={() => handleModeSelect('bible')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'bible' ? 'bg-[#3c3022] text-[#e8dccb] border border-[#5c4b37]' : 'hover:bg-white/10 text-gray-300'}`}
-                        >
-                            <BookOpen size={18} />
-                            <span className="font-medium">Bible Search</span>
-                        </button>
-
-                        <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
-
-                        <button 
-                            type="button"
-                            onClick={() => handleModeSelect('podcast')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'podcast' ? 'bg-red-900/20 text-red-200 border border-red-900/50' : 'hover:bg-white/10 text-gray-300'}`}
-                        >
-                            <Mic size={18} />
-                            <span className="font-medium">Podcast</span>
-                        </button>
-
-                        <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
-
-                         <button 
-                            type="button"
-                            onClick={() => handleModeSelect('notion')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'notion' ? 'bg-white text-black shadow-lg' : 'hover:bg-white/10 text-gray-300'}`}
-                        >
+                        <div className="h-[1px] bg-white/10 mx-1 my-1"></div>
+                        
+                        {renderDropdownItem('notion', 
                             <div className="w-4 h-4 flex items-center justify-center">
                                 <svg viewBox="0 0 122.88 128.1" fill="currentColor"><path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/></svg>
-                            </div>
-                            <span className="font-medium">Notion</span>
-                        </button>
-
-                        <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
+                            </div>, 
+                            'Notion', 
+                            'bg-white text-black shadow-lg'
+                        )}
 
                         <button 
                             type="button"
-                            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl hover:bg-white/10 text-gray-300 transition-all text-left"
+                            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-white/10 text-gray-300 transition-all text-left text-sm"
                             onClick={handleFileUploadClick}
                         >
-                            <Upload size={18} />
+                            <Upload size={16} />
                             <span className="font-medium">File Upload</span>
                         </button>
                     </div>
