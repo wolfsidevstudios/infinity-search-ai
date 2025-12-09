@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database } from 'lucide-react';
+import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, HelpCircle } from 'lucide-react';
 import BlackHoleAnimation from './BlackHoleAnimation';
 
 interface MarketingPageProps {
@@ -43,6 +43,29 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
   };
+
+  const faqs = [
+    {
+        question: "Is Infinity really free?",
+        answer: "Yes! Infinity is a community-supported project. We don't charge subscription fees. You simply bring your own API keys for the services you use."
+    },
+    {
+        question: "Where is my data stored?",
+        answer: "Privacy is our priority. Your search history, API keys, and app tokens are stored locally on your device using encrypted LocalStorage. We do not have servers that store your personal data."
+    },
+    {
+        question: "Do I need a Gemini API Key?",
+        answer: "For the 'Deep Think' reasoning features and unlimited searches, yes. Google offers a generous free tier for the Gemini API that covers most personal use cases."
+    },
+    {
+        question: "How does the 'Deep Think' engine work?",
+        answer: "It uses an agentic workflow. Instead of just guessing the next word, it breaks your query into steps: researching multiple sources, cross-referencing facts, and then synthesizing a final answer."
+    },
+    {
+        question: "Can I connect other apps besides Notion and Spotify?",
+        answer: "Currently we support Notion, Spotify, Figma, and Google Drive. We are actively working on integrations for Slack, GitHub, and Linear."
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black overflow-x-hidden">
@@ -215,9 +238,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                       
                       {/* Abstract UI Representation */}
                       <div className="absolute top-1/2 right-[-5%] w-[60%] h-[120%] bg-black/40 backdrop-blur-md rounded-l-[40px] border-l border-t border-white/10 p-6 flex flex-col gap-4 transform rotate-[-6deg] group-hover:rotate-0 transition-all duration-700 ease-out shadow-2xl">
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Analyzing sources...</div>
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Cross-referencing data...</div>
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">> Synthesizing output...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Analyzing sources...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Cross-referencing data...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Synthesizing output...</div>
                       </div>
                   </div>
 
@@ -327,10 +350,10 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                           <Activity size={12} /> Analyzing conflict...
                                       </div>
                                       <div className="text-zinc-500 pl-6">
-                                          {">"} Checking reliability score...
+                                          &gt; Checking reliability score...
                                       </div>
                                       <div className="text-zinc-500 pl-6">
-                                          {">"} Filtering bias...
+                                          &gt; Filtering bias...
                                       </div>
                                   </div>
                               </div>
@@ -532,6 +555,35 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               </div>
           </div>
           </ScrollReveal>
+      </section>
+
+      {/* 10. FAQ Section */}
+      <section className="py-24 px-6 bg-black relative z-20">
+         <ScrollReveal>
+         <div className="max-w-3xl mx-auto">
+             <div className="text-center mb-16">
+                 <h2 className="text-4xl font-bold mb-4">Common Questions</h2>
+                 <p className="text-zinc-500">Everything you need to know about Infinity.</p>
+             </div>
+
+             <div className="space-y-4">
+                 {faqs.map((faq, index) => (
+                     <div key={index} className="border border-white/10 rounded-2xl bg-zinc-900/30 overflow-hidden">
+                         <button 
+                            onClick={() => toggleFaq(index)}
+                            className="w-full flex items-center justify-between p-6 text-left hover:bg-white/5 transition-colors"
+                         >
+                             <span className="font-bold text-white text-lg">{faq.question}</span>
+                             <ChevronDown size={20} className={`text-zinc-500 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
+                         </button>
+                         <div className={`px-6 text-zinc-400 overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-48 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+                             {faq.answer}
+                         </div>
+                     </div>
+                 ))}
+             </div>
+         </div>
+         </ScrollReveal>
       </section>
 
       {/* 11. Final CTA */}
