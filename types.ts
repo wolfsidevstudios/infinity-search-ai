@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast';
+  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast' | 'post';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
@@ -111,4 +111,16 @@ export interface SpotifyTrack {
   };
   artists: { name: string }[];
   duration_ms: number;
+}
+
+export interface CommunityPost {
+  id: string;
+  user_id: string;
+  content: string;
+  image_url?: string;
+  hashtags: string[];
+  created_at: string;
+  likes_count: number;
+  author_name?: string;
+  author_avatar?: string;
 }

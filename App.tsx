@@ -11,7 +11,7 @@ import ConnectNotionModal from './components/ConnectNotionModal';
 import NotionResultsView from './components/NotionResultsView';
 import BibleResultsView from './components/BibleResultsView';
 import PodcastResultsView from './components/PodcastResultsView';
-import TwitterResultsView from './components/TwitterResultsView';
+import CommunityView from './components/CommunityView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -61,7 +61,7 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community'>('home');
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   
   // Appearance
@@ -78,7 +78,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'twitter'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -133,7 +133,7 @@ const App: React.FC = () => {
                  // handled in auth listener
             } else {
                  setView('app');
-                 if (['home', 'discover', 'history', 'images', 'settings', 'collections'].includes(path)) {
+                 if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -309,7 +309,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -362,7 +362,7 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
      try {
       if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
@@ -383,10 +383,9 @@ const App: React.FC = () => {
           const podcasts = await searchPodcasts(query);
           setSearchState({ status: 'results', query, summary: `Found ${podcasts.length} podcasts.`, sources: [], media: podcasts });
           addToHistory({ type: 'search', title: `Podcast: ${query}`, summary: `Audio search for ${query}`, sources: [] });
-      } else if (mode === 'twitter') {
-          const tweets = await searchTwitter(query);
-          setSearchState({ status: 'results', query, summary: `Found ${tweets.length} tweets.`, sources: [], media: tweets });
-          addToHistory({ type: 'search', title: `Twitter: ${query}`, summary: `Social search for ${query}`, sources: [] });
+      } else if (mode === 'community') {
+          // Just set state to results, the view will handle the fetching
+          setSearchState({ status: 'results', query, summary: `Searching community...`, sources: [], media: [] });
       } else {
           // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
@@ -418,7 +417,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'twitter') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -477,7 +476,6 @@ const App: React.FC = () => {
           if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
           else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
           else if (item.title.startsWith("Podcast: ")) { setSearchMode('podcast'); handleSearch(item.title.replace("Podcast: ", ""), 'podcast'); }
-          else if (item.title.startsWith("Twitter: ")) { setSearchMode('twitter'); handleSearch(item.title.replace("Twitter: ", ""), 'twitter'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
@@ -601,8 +599,8 @@ const App: React.FC = () => {
                             <BibleResultsView items={searchState.media} query={searchState.query} />
                         ) : searchMode === 'podcast' ? (
                             <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} />
-                        ) : searchMode === 'twitter' ? (
-                            <TwitterResultsView items={searchState.media} query={searchState.query} />
+                        ) : searchMode === 'community' ? (
+                            <CommunityView user={sessionUser} initialQuery={searchState.query} />
                         ) : (
                             <>
                                 <div className="max-w-4xl mx-auto mb-6">
@@ -625,6 +623,7 @@ const App: React.FC = () => {
 
             {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} initialTab={discoverViewTab} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
+            {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}

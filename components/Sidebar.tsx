@@ -1,9 +1,9 @@
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community') => void;
   onReset: () => void;
 }
 
@@ -61,6 +61,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="Discover"
             >
                 <Compass size={activeTab === 'discover' ? 28 : 24} strokeWidth={activeTab === 'discover' ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('community')}
+                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                  activeTab === 'community' 
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
+                }`}
+                title="Community"
+            >
+                <Users size={activeTab === 'community' ? 28 : 24} strokeWidth={activeTab === 'community' ? 2.5 : 2} />
             </button>
 
             <button 
