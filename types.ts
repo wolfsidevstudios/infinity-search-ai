@@ -21,7 +21,7 @@ export interface MediaItem {
 
 export interface CollectionItem {
   id: string;
-  type: 'web' | 'image' | 'audio' | 'note';
+  type: 'web' | 'image' | 'audio' | 'note' | 'product';
   content: any; // Flexible payload based on type
   dateAdded: number;
 }
@@ -32,6 +32,7 @@ export interface SearchState {
   summary: string;
   sources: Source[];
   media: MediaItem[];
+  shopping?: ShoppingProduct[];
   error?: string;
   isDeepSearch?: boolean;
 }
@@ -123,4 +124,18 @@ export interface CommunityPost {
   likes_count: number;
   author_name?: string;
   author_avatar?: string;
+}
+
+export interface ShoppingProduct {
+  position: number;
+  title: string;
+  link: string;
+  source: string; // Merchant
+  price: string;
+  extracted_price?: number;
+  thumbnail: string;
+  rating?: number;
+  reviews?: number;
+  delivery?: string; // e.g. "Free delivery"
+  badge?: string; // e.g. "Sale" or "Top Rated"
 }
