@@ -22,6 +22,7 @@ import AssetsPage from './components/AssetsPage';
 import SuccessPage from './components/SuccessPage';
 import AgenticProcessView from './components/AgenticProcessView';
 import CollectionsView from './components/CollectionsView';
+import AgentView from './components/AgentView';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -60,7 +61,7 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'agent'>('home');
   
   // Appearance
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
@@ -134,7 +135,7 @@ const App: React.FC = () => {
                  // handled in auth listener
             } else {
                  setView('app');
-                 if (['home', 'discover', 'history', 'images', 'settings', 'collections'].includes(path)) {
+                 if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'agent'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -499,7 +500,7 @@ const App: React.FC = () => {
   };
 
   const bgStyle = () => {
-      if (activeTab === 'settings' || activeTab === 'collections' || searchMode === 'notion' || searchMode === 'bible') return { backgroundImage: 'none', backgroundColor: '#000000' };
+      if (activeTab === 'settings' || activeTab === 'collections' || activeTab === 'agent' || searchMode === 'notion' || searchMode === 'bible') return { backgroundImage: 'none', backgroundColor: '#000000' };
       if (activeTab === 'home') {
           if (currentWallpaper) return { backgroundImage: `url('${currentWallpaper}')`, backgroundColor: '#000000', backgroundSize: 'cover', backgroundPosition: 'center' };
           if (searchState.status === 'idle') return { backgroundImage: 'none', backgroundColor: '#000000' };
@@ -522,10 +523,10 @@ const App: React.FC = () => {
 
       <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10">
         <div className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out" style={{ ...bgStyle(), transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' }}>
-            <div className={`absolute inset-0 transition-all duration-1000 ${ (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || activeTab === 'collections' || searchMode === 'notion' || searchMode === 'bible' ? 'bg-transparent' : 'bg-black/40 backdrop-blur-sm' }`} />
+            <div className={`absolute inset-0 transition-all duration-1000 ${ (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || activeTab === 'collections' || activeTab === 'agent' || searchMode === 'notion' || searchMode === 'bible' ? 'bg-transparent' : 'bg-black/40 backdrop-blur-sm' }`} />
         </div>
 
-        <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' ? 'hidden' : ''}`}>
+        <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' || activeTab === 'agent' ? 'hidden' : ''}`}>
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
@@ -542,7 +543,7 @@ const App: React.FC = () => {
             )}
         </div>
 
-        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
+        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'agent' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
             
             {activeTab === 'home' && (
               <>
@@ -605,6 +606,7 @@ const App: React.FC = () => {
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
+            {activeTab === 'agent' && <div className="w-full h-full"><AgentView /></div>}
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 
@@ -618,10 +620,6 @@ const App: React.FC = () => {
             )}
         </div>
       </main>
-
-      {showSpotifyModal && <ConnectSpotifyModal onClose={() => setShowSpotifyModal(false)} onConnect={initiateSpotifyLogin} />}
-      {showNotionModal && <ConnectNotionModal onClose={() => setShowNotionModal(false)} onConnect={initiateNotionLogin} />}
-      {showFigmaModal && <ConnectFigmaModal onClose={() => setShowFigmaModal(false)} onConnect={initiateFigmaConnection} />}
     </div>
   );
 };

@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Bot } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'agent';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'agent') => void;
   onReset: () => void;
 }
 
@@ -50,6 +50,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="Home"
             >
                 <Home size={activeTab === 'home' ? 28 : 24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('agent')}
+                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                  activeTab === 'agent' 
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
+                }`}
+                title="Agent"
+            >
+                <Bot size={activeTab === 'agent' ? 28 : 24} strokeWidth={activeTab === 'agent' ? 2.5 : 2} />
             </button>
             
             <button 
