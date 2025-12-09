@@ -47,7 +47,14 @@ const SearchInput: React.FC<SearchInputProps> = ({
           }
       };
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      
+      return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+          // Stop mic if component unmounts
+          if (recognitionRef.current) {
+              recognitionRef.current.stop();
+          }
+      };
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

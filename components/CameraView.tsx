@@ -9,18 +9,23 @@ interface CameraViewProps {
 const CameraView: React.FC<CameraViewProps> = ({ onCapture, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null); // Use ref for reliable cleanup
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
 
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+  };
+
   const startCamera = async () => {
+    stopCamera(); // Ensure any previous stream is stopped
     try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: facingMode }
       });
-      setStream(newStream);
+      streamRef.current = newStream;
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
       }
@@ -33,10 +38,10 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, onClose }) => {
 
   useEffect(() => {
     startCamera();
+    
+    // Cleanup function runs on unmount or before re-running effect
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopCamera();
     };
   }, [facingMode]);
 
@@ -56,6 +61,10 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, onClose }) => {
         
         // Get base64 string (remove prefix for consistency with app logic)
         const imageSrc = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        
+        // Stop camera immediately after capture before unmounting logic kicks in
+        stopCamera();
+        
         onCapture(imageSrc);
       }
     }
