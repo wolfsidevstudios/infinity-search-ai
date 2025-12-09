@@ -65,8 +65,9 @@ const App: React.FC = () => {
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
   
-  // Appearance
+  // Appearance & Settings
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
+  const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
@@ -175,6 +176,9 @@ const App: React.FC = () => {
     const savedAutoSave = localStorage.getItem('autosave_history');
     if (savedAutoSave === 'true') setIsAutoSaveEnabled(true);
 
+    const savedWeatherUnit = localStorage.getItem('weather_unit');
+    if (savedWeatherUnit) setWeatherUnit(savedWeatherUnit as 'c' | 'f');
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
             setSessionUser(session.user);
@@ -258,6 +262,11 @@ const App: React.FC = () => {
   const handleToggleAutoSave = (enabled: boolean) => {
       setIsAutoSaveEnabled(enabled);
       localStorage.setItem('autosave_history', String(enabled));
+  };
+
+  const handleWeatherUnitChange = (unit: 'c' | 'f') => {
+      setWeatherUnit(unit);
+      localStorage.setItem('weather_unit', unit);
   };
 
   const handleLogout = async () => {
@@ -518,7 +527,10 @@ const App: React.FC = () => {
 
   // Greeting Variables
   const userName = sessionUser?.user_metadata?.full_name?.split(' ')[0] || "there";
-  const temp = weather?.temperature ? Math.round(weather.temperature) : '--';
+  const tempVal = weather?.temperature || 0;
+  const tempDisplay = weatherUnit === 'c' ? Math.round(tempVal) : Math.round(tempVal * 9/5 + 32);
+  const tempUnitLabel = weatherUnit === 'c' ? 'C' : 'F';
+  
   const condition = weather?.weathercode !== undefined ? getWeatherDescription(weather.weathercode) : 'clear';
   const city = weather?.city || "your location";
 
@@ -594,7 +606,7 @@ const App: React.FC = () => {
                         {/* Greeting & Brief Link */}
                         <div className="text-center space-y-3 mt-4">
                             <p className="text-xl text-zinc-400 font-light">
-                                Hi, {userName}. Today, there will be <span className="text-white font-medium">{temp}°C</span> and <span className="text-white font-medium">{condition}</span> in {city}.
+                                Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.
                             </p>
                             <button 
                                 onClick={handleViewDailyBrief}
@@ -639,7 +651,16 @@ const App: React.FC = () => {
               </>
             )}
 
-            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} initialTab={discoverViewTab} /></div>}
+            {activeTab === 'discover' && (
+                <div className="w-full h-full pt-4">
+                    <DiscoverView 
+                        onOpenArticle={handleOpenArticle} 
+                        onSummarize={handleSummarizeArticle} 
+                        initialTab={discoverViewTab} 
+                        weatherUnit={weatherUnit} 
+                    />
+                </div>
+            )}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
@@ -653,6 +674,7 @@ const App: React.FC = () => {
                         isAutoSaveEnabled={isAutoSaveEnabled} onToggleAutoSave={handleToggleAutoSave}
                         currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser} onLogout={handleLogout}
+                        weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange}
                     />
                 </div>
             )}

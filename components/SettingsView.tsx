@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -14,6 +14,8 @@ interface SettingsViewProps {
   currentWallpaper: string | null;
   user: SupabaseUser | null;
   onLogout: () => void;
+  weatherUnit: 'c' | 'f';
+  onToggleWeatherUnit: (unit: 'c' | 'f') => void;
 }
 
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected';
@@ -35,7 +37,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onWallpaperChange,
     currentWallpaper,
     user,
-    onLogout
+    onLogout,
+    weatherUnit,
+    onToggleWeatherUnit
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -196,6 +200,30 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                     <div className="w-16 h-9 bg-zinc-800 rounded-full relative cursor-pointer transition-colors hover:bg-zinc-700">
                          <div className="absolute left-1 top-1 w-7 h-7 bg-zinc-500 rounded-full shadow-md transition-transform"></div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-orange-900/30 text-orange-400 flex items-center justify-center"><Thermometer size={20}/></div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white">Weather Unit</h4>
+                            <p className="text-sm text-zinc-400">Choose between Celsius and Fahrenheit</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-zinc-800 p-1 rounded-full border border-zinc-700">
+                        <button 
+                            onClick={() => onToggleWeatherUnit('c')}
+                            className={`w-10 h-8 rounded-full font-bold text-sm transition-all ${weatherUnit === 'c' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            °C
+                        </button>
+                        <button 
+                            onClick={() => onToggleWeatherUnit('f')}
+                            className={`w-10 h-8 rounded-full font-bold text-sm transition-all ${weatherUnit === 'f' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            °F
+                        </button>
                     </div>
                 </div>
               </div>

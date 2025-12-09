@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, TrendingUp, TrendingDown, Newspaper, MapPin, Bone, Utensils, Trophy, PlayCircle, ArrowRight } from 'lucide-react';
 import { fetchWeather, getWeatherIcon, WeatherData } from '../services/weatherService';
@@ -10,7 +9,11 @@ import { fetchRandomRecipes, Recipe } from '../services/recipeService';
 import { NewsArticle } from '../types';
 import RecipeModal from './RecipeModal';
 
-const DashboardWidgets: React.FC = () => {
+interface DashboardWidgetsProps {
+    weatherUnit?: 'c' | 'f';
+}
+
+const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c' }) => {
   // Data State
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [stocks, setStocks] = useState<StockData[]>([]);
@@ -91,6 +94,11 @@ const DashboardWidgets: React.FC = () => {
   // Common Widget Style - Updated for Dark Theme
   const widgetClass = "rounded-[32px] overflow-hidden shadow-lg border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 hover:shadow-2xl relative group";
 
+  // Temperature Calc
+  const tempVal = weather?.temperature || 0;
+  const tempDisplay = weatherUnit === 'c' ? Math.round(tempVal) : Math.round(tempVal * 9/5 + 32);
+  const tempUnitLabel = weatherUnit === 'c' ? 'C' : 'F';
+
   return (
     <div className="w-full max-w-6xl mx-auto px-2 mt-4 space-y-6 animate-slideUp">
       
@@ -125,7 +133,7 @@ const DashboardWidgets: React.FC = () => {
                     <div className="flex items-center gap-1 opacity-80 text-[10px] font-bold uppercase tracking-wider mb-1">
                         <MapPin size={10} /> {weather?.city || 'Locating...'}
                     </div>
-                    <div className="text-4xl font-bold tracking-tighter">{weather?.temperature ? Math.round(weather.temperature) : '--'}°</div>
+                    <div className="text-4xl font-bold tracking-tighter">{weather?.temperature ? `${tempDisplay}°${tempUnitLabel}` : '--'}</div>
                 </div>
                 <div className="transform scale-110">{renderWeatherIcon(weather?.weathercode)}</div>
             </div>

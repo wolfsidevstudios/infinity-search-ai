@@ -11,9 +11,10 @@ interface DiscoverViewProps {
   onOpenArticle: (article: NewsArticle) => void;
   onSummarize: (url: string) => void;
   initialTab?: 'news' | 'widgets' | 'whats_new' | 'brief';
+  weatherUnit: 'c' | 'f';
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize, initialTab }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize, initialTab, weatherUnit }) => {
   const [activeSubTab, setActiveSubTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>(initialTab || 'news');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -243,7 +244,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                     <h2 className="text-4xl font-bold text-white mb-6">Discover</h2>
                     
                     {/* Dashboard Widgets at Top */}
-                    <DashboardWidgets />
+                    <DashboardWidgets weatherUnit={weatherUnit} />
                 </div>
 
                 {/* Grid */}
