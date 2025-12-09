@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Terminal, Globe, Cpu, ShieldCheck } from 'lucide-react';
+import { Sparkles, Globe, ShieldCheck, BrainCircuit, CheckCircle2 } from 'lucide-react';
 
 interface AgenticProcessViewProps {
   onComplete?: () => void;
@@ -8,35 +8,26 @@ interface AgenticProcessViewProps {
 }
 
 const AgenticProcessView: React.FC<AgenticProcessViewProps> = ({ onComplete, query }) => {
-  const [log, setLog] = useState<string[]>([]);
-  const [step, setStep] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
+
+  const steps = [
+    { text: "Understanding your question...", icon: BrainCircuit },
+    { text: "Reading trusted sources...", icon: Globe },
+    { text: "Verifying facts & data...", icon: ShieldCheck },
+    { text: "Writing your answer...", icon: Sparkles },
+  ];
 
   useEffect(() => {
-    const logs = [
-      "Initializing Deep Think v2.5...",
-      `Analyzing intent: "${query.substring(0, 20)}..."`,
-      "Decomposing query into sub-tasks...",
-      "Accessing global knowledge graph...",
-      "Reading source: Academic Papers...",
-      "Reading source: Real-time News...",
-      "Cross-referencing conflicting data...",
-      "Checking factual consistency...",
-      "Synthesizing multi-modal response...",
-      "Finalizing output..."
-    ];
-
+    const stepDuration = 800; // ms per step
+    
     const interval = setInterval(() => {
-      setStep(prev => {
-        if (prev < logs.length) {
-            setLog(curr => [...curr, logs[prev]]);
-            return prev + 1;
-        }
+      setActiveStep(prev => {
+        if (prev < steps.length - 1) return prev + 1;
         return prev;
       });
-    }, 600); // Faster for UX
+    }, stepDuration);
 
-    // Finish after logs are done + small buffer
-    const totalTime = (logs.length * 600) + 800;
+    const totalTime = (steps.length * stepDuration) + 500;
     const timeout = setTimeout(() => {
         if (onComplete) onComplete();
     }, totalTime);
@@ -45,89 +36,76 @@ const AgenticProcessView: React.FC<AgenticProcessViewProps> = ({ onComplete, que
         clearInterval(interval);
         clearTimeout(timeout);
     };
-  }, [onComplete, query]);
+  }, [onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full animate-fadeIn w-full max-w-4xl mx-auto px-6">
+    <div className="flex flex-col items-center justify-center h-full w-full animate-fadeIn relative overflow-hidden">
       
-      <div className="relative w-full max-w-3xl bg-gray-900 rounded-t-xl rounded-b-md border-[1px] border-gray-700 shadow-2xl overflow-hidden flex flex-col transform transition-all hover:scale-[1.01]">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] bg-purple-500/10 blur-[100px] rounded-full animate-pulse"></div>
+      </div>
+
+      <div className="relative z-10 max-w-md w-full flex flex-col items-center">
         
-        {/* Screen Header */}
-        <div className="bg-gray-800 h-10 flex items-center px-4 gap-2 border-b border-gray-700 justify-between">
-            <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+        {/* Central Visual */}
+        <div className="relative w-32 h-32 mb-12 flex items-center justify-center">
+            {/* Spinning Rings */}
+            <div className="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+            <div className="absolute inset-0 border-t-4 border-purple-500 rounded-full animate-spin duration-[2s]"></div>
+            <div className="absolute inset-2 border-r-4 border-blue-400/50 rounded-full animate-spin duration-[3s] direction-reverse"></div>
+            
+            {/* Center Icon */}
+            <div className="bg-white/10 backdrop-blur-md p-4 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+                <BrainCircuit size={40} className="text-white" />
             </div>
-            <div className="text-xs text-gray-400 font-mono flex items-center gap-2">
-                <Cpu size={12} /> deep_think_engine.exe
+        </div>
+
+        {/* Steps */}
+        <div className="w-full space-y-6">
+            <h2 className="text-2xl font-bold text-white text-center mb-8 tracking-tight">
+                Thinking Deeply...
+            </h2>
+            
+            <div className="space-y-4 px-8">
+                {steps.map((step, index) => {
+                    const isActive = index === activeStep;
+                    const isCompleted = index < activeStep;
+                    const Icon = step.icon;
+
+                    return (
+                        <div 
+                            key={index}
+                            className={`flex items-center gap-4 transition-all duration-500 ${
+                                isActive || isCompleted ? 'opacity-100 translate-x-0' : 'opacity-30 translate-x-4'
+                            }`}
+                        >
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                                isCompleted 
+                                    ? 'bg-green-500 border-green-500 text-black scale-100' 
+                                    : isActive 
+                                        ? 'bg-white border-white text-black scale-110 shadow-[0_0_15px_rgba(255,255,255,0.5)]' 
+                                        : 'border-white/20 text-white/20 scale-90'
+                            }`}>
+                                {isCompleted ? <CheckCircle2 size={16} /> : <Icon size={14} />}
+                            </div>
+                            
+                            <span className={`text-lg font-medium transition-colors ${
+                                isActive ? 'text-white' : isCompleted ? 'text-white/60' : 'text-white/20'
+                            }`}>
+                                {step.text}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
 
-        {/* Screen Content */}
-        <div className="h-[400px] bg-black/95 p-8 font-mono text-sm overflow-hidden relative">
-            {/* Background Grid */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,150,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,150,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-
-            <div className="relative z-10 flex gap-10 h-full">
-                {/* Left Panel: Logs */}
-                <div className="w-3/5 flex flex-col border-r border-gray-800 pr-6">
-                    <div className="text-emerald-500 font-bold mb-6 flex items-center gap-2 tracking-wider">
-                        <Terminal size={16} /> REASONING_LOGS
-                    </div>
-                    <div className="flex-1 overflow-hidden flex flex-col gap-3">
-                        {log.map((line, i) => (
-                            <div key={i} className="text-emerald-400/90 animate-slideRight text-xs md:text-sm">
-                                <span className="text-gray-600 mr-3">[{new Date().toLocaleTimeString()}]</span>
-                                {'>'} {line}
-                            </div>
-                        ))}
-                        <div className="w-2 h-5 bg-emerald-500 animate-pulse mt-2"></div>
-                    </div>
-                </div>
-
-                {/* Right Panel: Active Task Visualization */}
-                <div className="w-2/5 flex flex-col items-center justify-center relative">
-                     <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl animate-pulse blur-xl"></div>
-                     
-                     <div className="relative z-10">
-                         <div className="w-32 h-32 rounded-full border border-emerald-500/30 flex items-center justify-center mb-6 relative">
-                            <div className="absolute inset-0 border-t-2 border-emerald-400 rounded-full animate-spin duration-[3s]"></div>
-                            <div className="absolute inset-2 border-r-2 border-blue-500/50 rounded-full animate-spin duration-[2s] direction-reverse"></div>
-                            <Cpu size={48} className="text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-                         </div>
-                     </div>
-                     
-                     <div className="text-emerald-300 font-bold tracking-[0.2em] text-sm mb-6 animate-pulse">PROCESSING</div>
-                     
-                     <div className="grid grid-cols-1 gap-3 w-full">
-                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-center gap-3">
-                            <Globe size={16} className="text-blue-400" />
-                            <div className="flex-1">
-                                <div className="text-[10px] text-gray-400 mb-1">Web Sources</div>
-                                <div className="h-1 bg-blue-400/20 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-400 w-[85%] animate-pulse"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 flex items-center gap-3">
-                            <ShieldCheck size={16} className="text-purple-400" />
-                            <div className="flex-1">
-                                <div className="text-[10px] text-gray-400 mb-1">Fact Verification</div>
-                                <div className="h-1 bg-purple-400/20 rounded-full overflow-hidden">
-                                    <div className="h-full bg-purple-400 w-[100%]"></div>
-                                </div>
-                            </div>
-                        </div>
-                     </div>
-                </div>
-            </div>
-        </div>
       </div>
       
-      <p className="mt-8 text-white/50 font-light tracking-widest uppercase text-sm animate-pulse">
-          Generating comprehensive analysis...
-      </p>
+      <div className="absolute bottom-10 text-white/30 text-sm font-medium tracking-widest uppercase">
+          Powered by Gemini 3.0
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, HelpCircle } from 'lucide-react';
+import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, HelpCircle, ArrowRight, Play, Command } from 'lucide-react';
 import BlackHoleAnimation from './BlackHoleAnimation';
 
 interface MarketingPageProps {
@@ -68,7 +68,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-white selection:text-black overflow-x-hidden">
       
       {/* Custom Styles */}
       <style>{`
@@ -98,30 +98,30 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         }
       `}</style>
 
-      {/* 1. Header (Updated Layout) */}
-      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-xl z-50 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 font-bold text-xl tracking-tight text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-             <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Infinity Logo" className="w-8 h-8 rounded-lg shadow-sm" />
-             Infinity 2.0
+      {/* 1. Header */}
+      <nav className="fixed top-0 w-full z-50 transition-all duration-300 bg-transparent py-6">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-white cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
+             <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm group-hover:scale-105 transition-transform" />
+             <span className="group-hover:opacity-80 transition-opacity">Infinity</span>
           </div>
           
-          <div className="hidden md:flex items-center gap-8">
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Deep Think</button>
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Collections</button>
-            <button className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Pricing</button>
+          <div className="hidden md:flex items-center gap-10">
+            {['Product', 'Solutions', 'Pricing', 'Developers'].map((item) => (
+                <button key={item} className="text-sm font-semibold text-white/70 hover:text-white transition-colors">{item}</button>
+            ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <button 
                 onClick={onGetStarted}
-                className="hidden md:block text-sm font-medium text-gray-400 hover:text-white"
+                className="hidden md:block text-sm font-semibold text-white/90 hover:text-white"
             >
-                Sign in
+                Log in
             </button>
             <button 
               onClick={onGetStarted}
-              className="bg-white text-black border border-white px-5 py-2 rounded-full text-sm font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl"
+              className="bg-white text-black border border-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl"
             >
               Get Started
             </button>
@@ -129,76 +129,82 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         </div>
       </nav>
 
-      {/* 2. Hero Section - Split Screen with Animation */}
-      <section className="pt-32 pb-20 relative bg-black min-h-screen flex items-center overflow-hidden">
-        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-0 md:gap-12 items-center relative z-10 px-6">
-            
-            {/* Left Content */}
-            <div className="text-left animate-fadeIn order-2 md:order-1 relative z-20 pt-10 md:pt-0">
-                
-                {/* Badge Removed per request */}
+      {/* 2. Hero Section - Modernized with Black Hole */}
+      <section className="relative pt-32 pb-20 min-h-screen flex items-center bg-[#0a0a0a] px-6">
+          <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
+              
+              {/* Left Column: Typography & Content */}
+              <div className="flex flex-col items-start relative z-10 animate-slideUp">
+                  
+                  {/* Badge */}
+                  <div className="flex items-center gap-4 mb-8 group cursor-pointer">
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shrink-0 transition-transform group-hover:scale-110">
+                          <Command size={20} />
+                      </div>
+                      <div>
+                          <div className="text-white font-bold text-lg leading-tight">1000+ Searches</div>
+                          <div className="text-white/60 text-sm underline underline-offset-4 decoration-white/30 group-hover:decoration-white transition-all">Read Our Success Stories</div>
+                      </div>
+                  </div>
 
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1] text-white">
-                    More than <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">just search.</span>
-                </h1>
-                
-                <p className="text-xl text-gray-400 max-w-xl mb-10 font-light leading-relaxed">
-                    Now with Voice Command and multi-step AI reasoning. Infinity connects your world and helps you understand it deeply.
-                </p>
+                  {/* Headline */}
+                  <h1 className="text-[5rem] md:text-[7rem] leading-[0.9] font-serif-display font-medium text-white mb-10 tracking-tight">
+                      Infinity<sup className="text-4xl align-top">+</sup>
+                  </h1>
 
-                <div className="flex flex-wrap gap-4">
-                    <button 
+                  {/* Separator Line */}
+                  <div className="w-24 h-[1px] bg-white/30 mb-10"></div>
+
+                  {/* Subheadline */}
+                  <p className="text-xl md:text-2xl text-white/80 font-light max-w-lg mb-12 leading-relaxed">
+                      Drive Knowledge Growth, And Harness AI-Powered Deep Think — Up To 50x Faster.
+                  </p>
+
+                  {/* Review */}
+                  <div className="flex items-center gap-4 mb-12 bg-white/5 pr-6 rounded-full border border-white/10 w-fit backdrop-blur-sm">
+                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop" alt="User" className="w-12 h-12 rounded-full border-2 border-[#0a0a0a]" />
+                      <div className="flex flex-col py-2">
+                          <span className="text-sm font-medium text-white">Loved the performance</span>
+                          <span className="text-xs text-white/50">100% Satisfied <span className="text-white ml-2">★ 5.0</span></span>
+                      </div>
+                  </div>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-wrap items-center gap-6">
+                      <button 
                         onClick={onGetStarted}
-                        className="px-8 py-4 bg-white text-black text-lg font-semibold rounded-full hover:bg-gray-200 transition-all shadow-xl hover:shadow-white/20 hover:scale-105 flex items-center gap-2"
-                    >
-                        Try Deep Think <BrainCircuit size={18} />
-                    </button>
-                    <button 
-                         onClick={onViewAssets}
-                        className="px-8 py-4 bg-transparent border border-white/20 text-white text-lg font-semibold rounded-full hover:bg-white/10 transition-all"
-                    >
-                        Media Kit
-                    </button>
-                </div>
+                        className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                      >
+                          Try Now — It's Free
+                      </button>
+                      <button 
+                        onClick={() => window.scrollTo({ top: 2000, behavior: 'smooth' })}
+                        className="flex items-center gap-2 text-white font-semibold border-b border-transparent hover:border-white transition-all pb-0.5"
+                      >
+                          Our Pricing <ArrowRight size={16} className="-rotate-45" />
+                      </button>
+                  </div>
+              </div>
 
-                {/* Badge Section */}
-                <div className="mt-12 flex items-center gap-4">
-                    <a href="https://startupslab.site" target="_blank" rel="noopener" className="transition-opacity hover:opacity-80">
-                        <img 
-                            src="https://cdn.startupslab.site/site-images/badge-light.png" 
-                            alt="Featured on Startups Lab" 
-                            className="h-10 w-auto rounded-xl shadow-lg border border-white/5"
-                        />
-                    </a>
-                </div>
-            </div>
+              {/* Right Column: Visual Animation */}
+              <div className="relative h-[600px] w-full animate-fadeIn delay-300 rounded-[40px] overflow-hidden border border-white/10 shadow-2xl bg-black">
+                   <BlackHoleAnimation />
+                   
+                   {/* Top Right Floating Badge */}
+                   <div className="absolute top-[10%] right-[10%] w-40 h-40 bg-white/5 backdrop-blur-md rounded-[30px] border border-white/10 p-4 flex flex-col justify-between shadow-2xl animate-pulse">
+                      <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Efficiency</span>
+                      <div>
+                          <span className="text-4xl font-bold text-white">60%</span>
+                          <p className="text-xs text-white/80 leading-tight mt-1">Faster research this week</p>
+                      </div>
+                   </div>
+              </div>
 
-            {/* Right Animation - The Black Hole */}
-            <div className="relative h-[600px] md:h-[900px] w-full order-1 md:order-2 flex items-center justify-center">
-                <div className="absolute inset-0 w-full h-full">
-                    <BlackHoleAnimation />
-                </div>
-                
-                {/* Floating UI Elements inside the void */}
-                <div className="absolute inset-0 pointer-events-none z-10">
-                    <div className="absolute top-[20%] right-[20%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse">
-                         <BrainCircuit className="w-8 h-8 opacity-80 text-purple-400" />
-                    </div>
-                     <div className="absolute bottom-[30%] left-[15%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse delay-700">
-                         <Mic className="w-8 h-8 opacity-80 text-red-400" />
-                    </div>
-                    <div className="absolute top-[40%] left-[10%] bg-zinc-900/40 backdrop-blur-md p-4 rounded-xl border border-white/10 animate-pulse delay-300">
-                        <Bookmark className="w-6 h-8 opacity-80 text-blue-400" />
-                    </div>
-                </div>
-            </div>
-
-        </div>
+          </div>
       </section>
 
       {/* 4. Problem Statement */}
-      <section className="py-24 px-6 bg-black relative z-20 border-t border-white/5">
+      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20 border-t border-white/5">
           <ScrollReveal>
           <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Evolution</h2>
@@ -211,7 +217,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* 5. Features Bento Grid */}
-      <section className="py-32 px-6 bg-black relative z-20">
+      <section className="py-32 px-6 bg-[#0a0a0a] relative z-20">
           {/* Background Ambient Glows */}
           <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] pointer-events-none"></div>
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[128px] pointer-events-none"></div>
@@ -280,7 +286,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* NEW: The Intelligence Engine (How It Works) */}
-      <section className="py-24 px-6 bg-black relative z-20 border-t border-white/10">
+      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20 border-t border-white/10">
            <ScrollReveal>
              <div className="max-w-7xl mx-auto">
                  <div className="flex flex-col lg:flex-row gap-16 items-center">
@@ -424,7 +430,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* NEW: Comparison Table */}
-      <section className="py-24 px-6 bg-black border-t border-white/10 relative z-20">
+      <section className="py-24 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
           <ScrollReveal>
           <div className="max-w-5xl mx-auto">
               <div className="text-center mb-16">
@@ -481,7 +487,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* NEW: Privacy & Security */}
-      <section className="py-24 px-6 bg-black relative z-20">
+      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
           <ScrollReveal>
           <div className="max-w-4xl mx-auto bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[40px] p-12 text-center relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[100px] rounded-full pointer-events-none"></div>
@@ -511,54 +517,70 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           </ScrollReveal>
       </section>
 
-      {/* 9. Pricing (Completely Free) */}
-      <section className="py-24 px-6 bg-black border-t border-white/10 relative z-20">
+      {/* 9. Pricing (Modernized) */}
+      <section className="py-24 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
           <ScrollReveal>
           <div className="max-w-7xl mx-auto text-center">
               <div className="mb-16">
-                  <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Completely Free. Forever.</h2>
+                  <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Simple, Transparent Pricing.</h2>
                   <p className="text-zinc-500 text-xl max-w-2xl mx-auto">
-                      Infinity is a community project supported by user contributions. 
-                      Bring your own API key for unlimited AI power.
+                      Start for free, upgrade for power.
                   </p>
               </div>
               
-              <div className="max-w-3xl mx-auto">
-                  <div className="p-10 rounded-[40px] border border-white/10 bg-zinc-900/50 hover:border-white/20 hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                  
+                  {/* FREE PLAN */}
+                  <div className="p-8 rounded-[40px] border border-white/10 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-300 flex flex-col text-left group hover:border-white/20">
+                      <h3 className="text-2xl font-bold text-white mb-2">Fair Use</h3>
+                      <div className="text-5xl font-bold text-white mb-6">$0<span className="text-lg text-zinc-500 font-normal">/mo</span></div>
+                      <p className="text-zinc-400 mb-8">Perfect for exploring and personal use.</p>
                       
-                      <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10">
-                          <div className="text-left">
-                              <h3 className="text-3xl font-bold mb-2 text-white">Fair Use Plan</h3>
-                              <p className="text-zinc-500">Everything included.</p>
-                          </div>
-                          <div className="text-6xl font-bold tracking-tight text-white">$0</div>
+                      <div className="space-y-4 mb-8 flex-1">
+                          {['Deep Think Engine', 'Voice Commands', 'Basic Collections', '3 Connected Apps', 'Local Privacy'].map(f => (
+                              <div key={f} className="flex items-center gap-3 text-zinc-300">
+                                  <CheckCircle size={18} className="text-white" />
+                                  <span>{f}</span>
+                              </div>
+                          ))}
                       </div>
+                      
+                      <button onClick={onGetStarted} className="w-full py-4 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-colors">
+                          Get Started
+                      </button>
+                  </div>
 
-                      <div className="grid md:grid-cols-2 gap-4 text-left mb-10">
-                          {['Deep Think Engine', 'Voice Commands', 'Unlimited Collections', 'Notion Integration', 'Spotify Integration', 'Figma Integration', 'Local-First Privacy', 'Community Support'].map(f => (
-                              <div key={f} className="flex items-center gap-3">
-                                  <CheckCircle size={20} className="text-green-500 shrink-0" />
-                                  <span className="text-zinc-300 font-medium">{f}</span>
+                  {/* INFINITY+ PLAN */}
+                  <div className="p-8 rounded-[40px] border border-white/10 bg-black relative flex flex-col text-left overflow-hidden">
+                       <div className="absolute top-0 right-0 p-6">
+                           <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Coming Soon</span>
+                       </div>
+                       
+                       <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mb-2">Infinity+</h3>
+                       <div className="text-5xl font-bold text-zinc-700 mb-6">$20<span className="text-lg text-zinc-800 font-normal">/mo</span></div>
+                       <p className="text-zinc-500 mb-8">For power users who need the best models.</p>
+
+                       <div className="space-y-4 mb-8 flex-1">
+                          {['Everything in Free', 'Gemini 3.0 Pro Access', 'Unlimited Collections', 'Unlimited Cloud Backup', 'Priority Support'].map(f => (
+                              <div key={f} className="flex items-center gap-3 text-zinc-500">
+                                  <CheckCircle size={18} className="text-zinc-700" />
+                                  <span>{f}</span>
                               </div>
                           ))}
                       </div>
 
-                      <button 
-                        onClick={onGetStarted} 
-                        className="w-full py-5 rounded-full bg-white text-black text-lg font-bold hover:bg-gray-200 hover:scale-[1.02] transition-all shadow-xl"
-                      >
-                          Get Started for Free
+                      <button disabled className="w-full py-4 bg-zinc-900 text-zinc-500 rounded-full font-bold cursor-not-allowed border border-zinc-800">
+                          Join Waitlist
                       </button>
-                      <p className="mt-4 text-xs text-zinc-600">Open source friendly. No hidden fees.</p>
                   </div>
+
               </div>
           </div>
           </ScrollReveal>
       </section>
 
       {/* 10. FAQ Section */}
-      <section className="py-24 px-6 bg-black relative z-20">
+      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
          <ScrollReveal>
          <div className="max-w-3xl mx-auto">
              <div className="text-center mb-16">
@@ -587,7 +609,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* 11. Final CTA */}
-      <section className="py-32 px-6 bg-black text-center relative overflow-hidden z-20">
+      <section className="py-32 px-6 bg-[#0a0a0a] text-center relative overflow-hidden z-20">
            <div className="absolute inset-0 bg-dot-pattern opacity-50 pointer-events-none"></div>
            <ScrollReveal>
            <div className="relative z-10 max-w-4xl mx-auto">
@@ -606,7 +628,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
       </section>
 
       {/* 12. Footer */}
-      <footer className="py-20 px-6 bg-black border-t border-white/10 relative z-20">
+      <footer className="py-20 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
           <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
                   <div>

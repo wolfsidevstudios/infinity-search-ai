@@ -116,7 +116,7 @@ const App: React.FC = () => {
   // State for viewing an article
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
 
-  // Init Session Check
+  // Init Session Check & URL Parsing
   useEffect(() => {
     const checkSession = async () => {
         setIsAuthChecking(true);
@@ -135,9 +135,23 @@ const App: React.FC = () => {
             const savedNotionToken = localStorage.getItem('notion_token');
             if (savedNotionToken) setNotionToken(savedNotionToken);
 
-            if (view !== 'success') setView('app');
+            // Handle URL Routing
+            const path = window.location.pathname;
+            if (path === '/assets') setView('assets');
+            else if (view !== 'success') {
+                setView('app');
+                // Set active tab based on path
+                if (path === '/settings') setActiveTab('settings');
+                else if (path === '/discover') setActiveTab('discover');
+                else if (path === '/history') setActiveTab('history');
+                else if (path === '/images') setActiveTab('images');
+                else if (path === '/collections') setActiveTab('collections');
+                else setActiveTab('home');
+            }
         } else {
-             setView('landing');
+             // Allow assets page even if logged out
+             if (window.location.pathname === '/assets') setView('assets');
+             else setView('landing');
         }
         setIsAuthChecking(false);
     };
@@ -178,17 +192,31 @@ const App: React.FC = () => {
                 setConnectedProvider(connectingProvider);
                 setView('success');
                 localStorage.removeItem('connecting_provider');
+                // Clear the hash from URL so it doesn't look messy
+                window.history.replaceState(null, '', window.location.pathname);
             } else {
                 setView('app');
             }
         } else {
             setSessionUser(null);
-            setView('landing');
+            if (window.location.pathname !== '/assets') setView('landing');
         }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Update URL on Tab Change
+  useEffect(() => {
+    if (view === 'app') {
+        const path = activeTab === 'home' ? '/' : `/${activeTab}`;
+        window.history.pushState(null, '', path);
+    } else if (view === 'assets') {
+        window.history.pushState(null, '', '/assets');
+    } else if (view === 'landing') {
+        window.history.pushState(null, '', '/');
+    }
+  }, [activeTab, view]);
 
   // Sync Collections
   useEffect(() => {
@@ -235,6 +263,7 @@ const App: React.FC = () => {
       setGoogleAccessToken(null);
       setIsFigmaConnected(false);
       localStorage.clear(); // Clear all for safety on logout
+      window.history.pushState(null, '', '/');
   };
 
   // Auth Functions (Same as before but omitted boilerplate for brevity, assuming kept from previous code)
@@ -271,9 +300,15 @@ const App: React.FC = () => {
   const initiateGoogleLogin = async () => {
       localStorage.setItem('connecting_provider', 'google');
       try {
+          // IMPORTANT: Redirect to current origin, but Supabase will append params. 
+          // We rely on the initial useEffect to parse the provider_token from the session after redirect.
           const { error } = await supabase.auth.signInWithOAuth({
               provider: 'google',
-              options: { redirectTo: window.location.origin, scopes: 'https://www.googleapis.com/auth/drive.file', queryParams: { access_type: 'offline', prompt: 'consent' } }
+              options: { 
+                  redirectTo: window.location.origin, // Redirect back to root/app
+                  scopes: 'https://www.googleapis.com/auth/drive.file', 
+                  queryParams: { access_type: 'offline', prompt: 'consent' } 
+              }
           });
           if (error) throw error;
       } catch (e) {
