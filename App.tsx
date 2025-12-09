@@ -15,7 +15,6 @@ import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
 import AssetsPage from './components/AssetsPage';
 import SuccessPage from './components/SuccessPage';
-import AgenticProcessView from './components/AgenticProcessView';
 import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
@@ -74,9 +73,8 @@ const App: React.FC = () => {
     isDeepSearch: false,
   });
 
-  // Search Mode & Deep Search
+  // Search Mode
   const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible'>('web');
-  const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false);
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -401,14 +399,6 @@ const App: React.FC = () => {
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
           setAttachedFile(null); // Clear attachment after search
-
-          // Voice Synthesis (Jarvis Mode)
-          if ('speechSynthesis' in window) {
-              const utterance = new SpeechSynthesisUtterance(aiData.text);
-              utterance.pitch = 1;
-              utterance.rate = 1.1;
-              window.speechSynthesis.speak(utterance);
-          }
       }
     } catch (error) {
       console.error(error);
@@ -417,20 +407,9 @@ const App: React.FC = () => {
   };
 
   const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible') => {
-    // If Deep Search is enabled for Web, show Thinking UI first
-    if (mode === 'web' && isDeepSearchEnabled) {
-        setSearchState(prev => ({ ...prev, status: 'thinking', query, isDeepSearch: true }));
-        // Logic continues in onDeepSearchComplete
-    } else {
-        setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
-        setActiveTab('home');
-        performSearch(query, mode);
-    }
-  };
-
-  const handleDeepSearchComplete = () => {
-      // Logic after animation finishes
-      performSearch(searchState.query, 'web');
+      setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
+      setActiveTab('home');
+      performSearch(query, mode);
   };
 
   // ... (Keep existing handleMediaSearch, handleReset, etc.)
@@ -546,7 +525,6 @@ const App: React.FC = () => {
             {!(activeTab === 'home' && searchState.status === 'idle') && (
                 <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 text-white`}>
                     Infinity 2.0
-                    {searchState.isDeepSearch && <span className="text-purple-300 text-xs uppercase tracking-widest border border-purple-500 px-1 rounded animate-pulse">Deep Think</span>}
                 </div>
             )}
         </div>
@@ -559,12 +537,12 @@ const App: React.FC = () => {
                     
                     {/* Home Content */}
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
-                        {/* Logo - Updated */}
+                        {/* Logo - Updated Bigger Size */}
                         <a href="https://freeimage.host/" target="_blank" rel="noopener noreferrer">
                             <img 
                                 src="https://iili.io/fRRfoF9.png" 
                                 alt="Infinity Visual" 
-                                className="w-48 h-auto mb-4 drop-shadow-2xl" 
+                                className="w-80 h-auto mb-4 drop-shadow-2xl" 
                             />
                         </a>
                         
@@ -579,8 +557,6 @@ const App: React.FC = () => {
                                 onFileSelect={handleFileSelect}
                                 attachedFile={attachedFile}
                                 onRemoveFile={handleRemoveFile}
-                                isDeepSearchEnabled={isDeepSearchEnabled}
-                                onToggleDeepSearch={setIsDeepSearchEnabled}
                                 onCameraClick={() => setShowCamera(true)}
                             />
                         </div>
@@ -603,10 +579,6 @@ const App: React.FC = () => {
 
                 {searchState.status === 'searching' && <div className="absolute inset-0 flex items-center justify-center"><LoadingAnimation /></div>}
                 
-                {searchState.status === 'thinking' && (
-                     <AgenticProcessView query={searchState.query} onComplete={handleDeepSearchComplete} />
-                )}
-
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
                         {searchMode === 'notion' ? (

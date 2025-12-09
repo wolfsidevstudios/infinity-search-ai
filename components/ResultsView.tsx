@@ -1,7 +1,6 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Source, MediaItem } from '../types';
-import { ExternalLink, ImageIcon, Bookmark, Check } from 'lucide-react';
+import { ExternalLink, ImageIcon, Bookmark, Check, Volume2, Square } from 'lucide-react';
 
 interface ResultsViewProps {
   summary: string;
@@ -12,7 +11,17 @@ interface ResultsViewProps {
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onOpenImageGrid, onSave }) => {
-  const [savedIds, setSavedIds] = React.useState<Set<string>>(new Set());
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+      // Cleanup speech on unmount
+      return () => {
+          if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+          }
+      };
+  }, []);
 
   const handleSave = (item: any, id: string) => {
       onSave(item);
@@ -26,18 +35,48 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
       }, 2000);
   };
 
+  const handleSpeak = () => {
+      if (!('speechSynthesis' in window)) return;
+
+      if (isSpeaking) {
+          window.speechSynthesis.cancel();
+          setIsSpeaking(false);
+      } else {
+          window.speechSynthesis.cancel(); // Safety clear
+          const utterance = new SpeechSynthesisUtterance(summary);
+          utterance.rate = 1.1;
+          utterance.pitch = 1;
+          utterance.onend = () => setIsSpeaking(false);
+          
+          window.speechSynthesis.speak(utterance);
+          setIsSpeaking(true);
+      }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-6 pb-20 animate-slideUp">
       
       {/* 1. Summary Card */}
       <div className="w-full bg-white/20 backdrop-blur-xl border border-white/30 rounded-[32px] p-8 shadow-2xl text-white relative group">
-        <button 
-            onClick={() => handleSave({ type: 'note', content: { text: summary, title: 'AI Summary' } }, 'summary')}
-            className="absolute top-6 right-6 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Save Summary"
-        >
-            {savedIds.has('summary') ? <Check size={16} className="text-green-400" /> : <Bookmark size={16} />}
-        </button>
+        
+        {/* Actions Row (Top Right) */}
+        <div className="absolute top-6 right-6 flex gap-2">
+            <button 
+                onClick={handleSpeak}
+                className={`p-2 rounded-full transition-all text-white ${isSpeaking ? 'bg-red-500/80 animate-pulse' : 'bg-black/20 hover:bg-black/40'}`}
+                title={isSpeaking ? "Stop Speaking" : "Listen to Summary"}
+            >
+                {isSpeaking ? <Square size={16} fill="currentColor" /> : <Volume2 size={16} />}
+            </button>
+
+            <button 
+                onClick={() => handleSave({ type: 'note', content: { text: summary, title: 'AI Summary' } }, 'summary')}
+                className="p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-opacity"
+                title="Save Summary"
+            >
+                {savedIds.has('summary') ? <Check size={16} className="text-green-400" /> : <Bookmark size={16} />}
+            </button>
+        </div>
 
         <div className="flex items-center gap-2 mb-4 opacity-70">
           <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />

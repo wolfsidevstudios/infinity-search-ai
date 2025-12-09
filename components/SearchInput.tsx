@@ -17,8 +17,6 @@ interface SearchInputProps {
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
-  isDeepSearchEnabled: boolean;
-  onToggleDeepSearch: (enabled: boolean) => void;
   onCameraClick: () => void;
 }
 
@@ -31,8 +29,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
     onFileSelect,
     attachedFile, 
     onRemoveFile,
-    isDeepSearchEnabled,
-    onToggleDeepSearch,
     onCameraClick
 }) => {
   const [query, setQuery] = useState("");
@@ -175,9 +171,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`relative flex items-center w-full h-12 rounded-full border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 ${
-              isDeepSearchEnabled ? 'bg-zinc-900/90 ring-1 ring-purple-500/50' : 'bg-[#1a1a1a]/80 backdrop-blur-xl hover:bg-[#202020]'
-            } ${isDragging ? 'ring-2 ring-blue-500 bg-blue-900/20' : ''}`}
+            className={`relative flex items-center w-full h-12 rounded-full border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 bg-[#1a1a1a]/80 backdrop-blur-xl hover:bg-[#202020] ${isDragging ? 'ring-2 ring-blue-500 bg-blue-900/20' : ''}`}
           >
               
               {/* Left: Mode Selector */}
@@ -286,13 +280,9 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   <button
                       onClick={handleSubmit}
                       disabled={!query.trim() && !attachedFile}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                          isDeepSearchEnabled 
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/20' 
-                          : 'bg-white text-black hover:scale-105 shadow-lg'
-                      } disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed`}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white text-black hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
-                      {isDeepSearchEnabled ? <BrainCircuit size={16} /> : <Search size={16} />}
+                      <Search size={16} />
                   </button>
               </div>
           </div>
@@ -339,21 +329,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   </div>
               </div>
           )}
-
-          {/* Deep Search Toggle (Top Right Floating) */}
-          <div className="absolute -top-8 right-0">
-               <button
-                  type="button"
-                  onClick={() => onToggleDeepSearch(!isDeepSearchEnabled)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      isDeepSearchEnabled 
-                      ? 'bg-purple-500/10 text-purple-400 border-purple-500/50' 
-                      : 'bg-white/5 text-zinc-500 border-white/5 hover:border-white/20'
-                  }`}
-               >
-                   <BrainCircuit size={12} /> Deep Search {isDeepSearchEnabled ? 'ON' : 'OFF'}
-               </button>
-          </div>
 
           {/* "Hit Enter" Hint */}
           <div className="absolute -bottom-10 left-0 right-0 flex justify-center opacity-0 animate-fadeIn" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
