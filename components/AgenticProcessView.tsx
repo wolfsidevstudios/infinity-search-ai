@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Globe, ShieldCheck, BrainCircuit, CheckCircle2 } from 'lucide-react';
+import { Sparkles, BrainCircuit, Globe, CheckCircle, Search } from 'lucide-react';
 
 interface AgenticProcessViewProps {
   onComplete?: () => void;
@@ -8,103 +7,108 @@ interface AgenticProcessViewProps {
 }
 
 const AgenticProcessView: React.FC<AgenticProcessViewProps> = ({ onComplete, query }) => {
-  const [activeStep, setActiveStep] = useState(0);
+  const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   const steps = [
-    { text: "Understanding your question...", icon: BrainCircuit },
-    { text: "Reading trusted sources...", icon: Globe },
-    { text: "Verifying facts & data...", icon: ShieldCheck },
-    { text: "Writing your answer...", icon: Sparkles },
+    { text: "Analyzing your request...", icon: <BrainCircuit size={24} className="text-purple-400" /> },
+    { text: "Reading trusted sources...", icon: <Globe size={24} className="text-blue-400" /> },
+    { text: "Verifying facts...", icon: <Search size={24} className="text-yellow-400" /> },
+    { text: "Synthesizing answer...", icon: <Sparkles size={24} className="text-green-400" /> }
   ];
 
   useEffect(() => {
-    const stepDuration = 800; // ms per step
+    // Total duration ~3-4 seconds
+    const stepDuration = 900;
+    const totalDuration = stepDuration * steps.length + 500;
     
     const interval = setInterval(() => {
-      setActiveStep(prev => {
-        if (prev < steps.length - 1) return prev + 1;
-        return prev;
-      });
+      setStep(prev => (prev < steps.length - 1 ? prev + 1 : prev));
     }, stepDuration);
 
-    const totalTime = (steps.length * stepDuration) + 500;
+    const progressInterval = setInterval(() => {
+        setProgress(old => {
+            if (old >= 100) return 100;
+            return old + 2;
+        });
+    }, totalDuration / 50);
+
     const timeout = setTimeout(() => {
         if (onComplete) onComplete();
-    }, totalTime);
+    }, totalDuration);
 
     return () => {
         clearInterval(interval);
+        clearInterval(progressInterval);
         clearTimeout(timeout);
     };
   }, [onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full animate-fadeIn relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center h-full animate-fadeIn w-full max-w-2xl mx-auto px-6 relative">
       
-      {/* Background Ambience */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[500px] h-[500px] bg-purple-500/10 blur-[100px] rounded-full animate-pulse"></div>
-      </div>
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none"></div>
 
-      <div className="relative z-10 max-w-md w-full flex flex-col items-center">
-        
-        {/* Central Visual */}
-        <div className="relative w-32 h-32 mb-12 flex items-center justify-center">
-            {/* Spinning Rings */}
-            <div className="absolute inset-0 border-4 border-white/5 rounded-full"></div>
-            <div className="absolute inset-0 border-t-4 border-purple-500 rounded-full animate-spin duration-[2s]"></div>
-            <div className="absolute inset-2 border-r-4 border-blue-400/50 rounded-full animate-spin duration-[3s] direction-reverse"></div>
-            
-            {/* Center Icon */}
-            <div className="bg-white/10 backdrop-blur-md p-4 rounded-full shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-                <BrainCircuit size={40} className="text-white" />
-            </div>
-        </div>
+      <div className="relative z-10 flex flex-col items-center">
+          
+          {/* Main Visual: Pulsing Orb Ring */}
+          <div className="relative w-40 h-40 mb-10 flex items-center justify-center">
+              {/* Outer Ring Progress */}
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle 
+                    cx="50" cy="50" r="46" 
+                    fill="none" 
+                    stroke="#333" 
+                    strokeWidth="2" 
+                  />
+                  <circle 
+                    cx="50" cy="50" r="46" 
+                    fill="none" 
+                    stroke="url(#gradient)" 
+                    strokeWidth="3" 
+                    strokeDasharray="290"
+                    strokeDashoffset={290 - (290 * progress) / 100}
+                    strokeLinecap="round"
+                    className="transition-all duration-100 ease-linear"
+                  />
+                  <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#8B5CF6" />
+                          <stop offset="100%" stopColor="#3B82F6" />
+                      </linearGradient>
+                  </defs>
+              </svg>
 
-        {/* Steps */}
-        <div className="w-full space-y-6">
-            <h2 className="text-2xl font-bold text-white text-center mb-8 tracking-tight">
-                Thinking Deeply...
-            </h2>
-            
-            <div className="space-y-4 px-8">
-                {steps.map((step, index) => {
-                    const isActive = index === activeStep;
-                    const isCompleted = index < activeStep;
-                    const Icon = step.icon;
+              {/* Inner Pulsing Orb */}
+              <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 shadow-[0_0_30px_rgba(124,58,237,0.4)] flex items-center justify-center animate-pulse">
+                  <div className="w-20 h-20 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center">
+                       {steps[step].icon}
+                  </div>
+              </div>
+          </div>
 
-                    return (
-                        <div 
-                            key={index}
-                            className={`flex items-center gap-4 transition-all duration-500 ${
-                                isActive || isCompleted ? 'opacity-100 translate-x-0' : 'opacity-30 translate-x-4'
-                            }`}
-                        >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${
-                                isCompleted 
-                                    ? 'bg-green-500 border-green-500 text-black scale-100' 
-                                    : isActive 
-                                        ? 'bg-white border-white text-black scale-110 shadow-[0_0_15px_rgba(255,255,255,0.5)]' 
-                                        : 'border-white/20 text-white/20 scale-90'
-                            }`}>
-                                {isCompleted ? <CheckCircle2 size={16} /> : <Icon size={14} />}
-                            </div>
-                            
-                            <span className={`text-lg font-medium transition-colors ${
-                                isActive ? 'text-white' : isCompleted ? 'text-white/60' : 'text-white/20'
-                            }`}>
-                                {step.text}
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
+          {/* Current Step Text */}
+          <h2 className="text-2xl font-medium text-white mb-2 text-center animate-slideUp key={step}">
+              {steps[step].text}
+          </h2>
+          <p className="text-zinc-500 text-sm mb-8 text-center max-w-md">
+             Gemini 2.5 is reasoning through "{query.substring(0, 30)}{query.length > 30 ? '...' : ''}"
+          </p>
 
-      </div>
-      
-      <div className="absolute bottom-10 text-white/30 text-sm font-medium tracking-widest uppercase">
-          Powered by Gemini 3.0
+          {/* Steps Breadcrumbs */}
+          <div className="flex items-center gap-3">
+              {steps.map((s, i) => (
+                  <React.Fragment key={i}>
+                      <div className={`transition-all duration-500 flex items-center gap-2 px-3 py-1.5 rounded-full border ${i <= step ? 'bg-white/10 border-white/20 text-white' : 'border-transparent text-zinc-600'}`}>
+                          {i < step ? <CheckCircle size={14} className="text-green-500" /> : <div className={`w-3 h-3 rounded-full ${i === step ? 'bg-blue-500 animate-pulse' : 'bg-zinc-700'}`}></div>}
+                          <span className="text-xs font-medium hidden md:inline">{i === step ? 'Processing' : i < step ? 'Done' : 'Pending'}</span>
+                      </div>
+                      {i < steps.length - 1 && <div className={`w-8 h-[1px] ${i < step ? 'bg-white/20' : 'bg-zinc-800'}`}></div>}
+                  </React.Fragment>
+              ))}
+          </div>
+
       </div>
     </div>
   );

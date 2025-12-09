@@ -5,19 +5,17 @@ import { Source } from "../types";
 export const getAiClient = () => {
     const customKey = localStorage.getItem('gemini_api_key');
     
-    // Fallback to process.env.API_KEY if no custom key is provided.
-    // We use a try-catch block to safely access process.env, preventing ReferenceError
-    // in browser environments where 'process' is not defined.
+    // Safe check for process.env to avoid "Uncaught ReferenceError: process is not defined" in pure browser envs
     let envKey = undefined;
     try {
         if (typeof process !== 'undefined' && process.env) {
             envKey = process.env.API_KEY;
         }
     } catch (e) {
-        console.warn("process.env is not accessible");
+        // process variable not available
     }
 
-    return new GoogleGenAI({ apiKey: customKey || envKey });
+    return new GoogleGenAI({ apiKey: customKey || envKey || '' });
 };
 
 interface FileContext {

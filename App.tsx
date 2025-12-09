@@ -116,46 +116,37 @@ const App: React.FC = () => {
   // State for viewing an article
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
 
-  // Init Session Check & URL Parsing
+  // -- INIT & ROUTING LOGIC --
   useEffect(() => {
-    const checkSession = async () => {
+    const initApp = async () => {
         setIsAuthChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         
+        // 1. Check Deep Link Path
+        const path = window.location.pathname.replace('/', '');
         if (session) {
             setSessionUser(session.user);
+            restoreTokens();
             
-            // Restore persistent tokens if available
-            const savedDriveToken = localStorage.getItem('google_drive_token');
-            if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
-            
-            const savedSpotifyToken = localStorage.getItem('spotify_token');
-            if (savedSpotifyToken) setSpotifyToken(savedSpotifyToken);
-
-            const savedNotionToken = localStorage.getItem('notion_token');
-            if (savedNotionToken) setNotionToken(savedNotionToken);
-
-            // Handle URL Routing
-            const path = window.location.pathname;
-            if (path === '/assets') setView('assets');
-            else if (view !== 'success') {
-                setView('app');
-                // Set active tab based on path
-                if (path === '/settings') setActiveTab('settings');
-                else if (path === '/discover') setActiveTab('discover');
-                else if (path === '/history') setActiveTab('history');
-                else if (path === '/images') setActiveTab('images');
-                else if (path === '/collections') setActiveTab('collections');
-                else setActiveTab('home');
+            // If connecting provider, we go to success page, otherwise restore path
+            const connectingProvider = localStorage.getItem('connecting_provider');
+            if (connectingProvider) {
+                 // handled in auth listener
+            } else {
+                 setView('app');
+                 if (['home', 'discover', 'history', 'images', 'settings', 'collections'].includes(path)) {
+                      setActiveTab(path as any);
+                 }
             }
         } else {
-             // Allow assets page even if logged out
-             if (window.location.pathname === '/assets') setView('assets');
+             // If trying to access protected route without session, go to landing or login
+             if (path === 'login') setView('login');
              else setView('landing');
         }
         setIsAuthChecking(false);
     };
-    checkSession();
+
+    initApp();
 
     // Load Collections & AutoSave
     const savedCollections = localStorage.getItem('infinity_collections');
@@ -167,24 +158,7 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         if (session) {
             setSessionUser(session.user);
-            
-            // Capture and persist provider token if available
-            if (session.provider_token) {
-               const provider = session.user.app_metadata.provider;
-               
-               if (provider === 'spotify') {
-                   setSpotifyToken(session.provider_token);
-                   localStorage.setItem('spotify_token', session.provider_token);
-               }
-               if (provider === 'notion') {
-                   setNotionToken(session.provider_token);
-                   localStorage.setItem('notion_token', session.provider_token);
-               }
-               if (provider === 'google') {
-                   setGoogleAccessToken(session.provider_token);
-                   localStorage.setItem('google_drive_token', session.provider_token);
-               }
-            }
+            captureProviderTokens(session);
 
             // CHECK IF WE CAME FROM A "CONNECT" ACTION
             const connectingProvider = localStorage.getItem('connecting_provider');
@@ -192,14 +166,12 @@ const App: React.FC = () => {
                 setConnectedProvider(connectingProvider);
                 setView('success');
                 localStorage.removeItem('connecting_provider');
-                // Clear the hash from URL so it doesn't look messy
-                window.history.replaceState(null, '', window.location.pathname);
             } else {
                 setView('app');
             }
         } else {
             setSessionUser(null);
-            if (window.location.pathname !== '/assets') setView('landing');
+            setView('landing');
         }
     });
 
@@ -208,15 +180,38 @@ const App: React.FC = () => {
 
   // Update URL on Tab Change
   useEffect(() => {
-    if (view === 'app') {
-        const path = activeTab === 'home' ? '/' : `/${activeTab}`;
-        window.history.pushState(null, '', path);
-    } else if (view === 'assets') {
-        window.history.pushState(null, '', '/assets');
-    } else if (view === 'landing') {
-        window.history.pushState(null, '', '/');
-    }
+      if (view === 'app') {
+          const path = activeTab === 'home' ? '/' : `/${activeTab}`;
+          window.history.pushState({}, '', path);
+      }
   }, [activeTab, view]);
+
+  const restoreTokens = () => {
+        const savedDriveToken = localStorage.getItem('google_drive_token');
+        if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
+        const savedSpotifyToken = localStorage.getItem('spotify_token');
+        if (savedSpotifyToken) setSpotifyToken(savedSpotifyToken);
+        const savedNotionToken = localStorage.getItem('notion_token');
+        if (savedNotionToken) setNotionToken(savedNotionToken);
+  };
+
+  const captureProviderTokens = (session: any) => {
+      if (session.provider_token) {
+           const provider = session.user.app_metadata.provider;
+           if (provider === 'spotify') {
+               setSpotifyToken(session.provider_token);
+               localStorage.setItem('spotify_token', session.provider_token);
+           }
+           if (provider === 'notion') {
+               setNotionToken(session.provider_token);
+               localStorage.setItem('notion_token', session.provider_token);
+           }
+           if (provider === 'google') {
+               setGoogleAccessToken(session.provider_token);
+               localStorage.setItem('google_drive_token', session.provider_token);
+           }
+      }
+  };
 
   // Sync Collections
   useEffect(() => {
@@ -262,13 +257,14 @@ const App: React.FC = () => {
       setNotionToken(null);
       setGoogleAccessToken(null);
       setIsFigmaConnected(false);
-      localStorage.clear(); // Clear all for safety on logout
-      window.history.pushState(null, '', '/');
+      localStorage.clear(); 
+      window.history.pushState({}, '', '/');
   };
 
-  // Auth Functions (Same as before but omitted boilerplate for brevity, assuming kept from previous code)
-  // ... (Keep existing initiateLogin functions)
+  const saveReturnTab = () => localStorage.setItem('return_tab', activeTab);
+
   const initiateSpotifyLogin = async () => {
+      saveReturnTab();
       localStorage.setItem('connecting_provider', 'spotify');
       try {
           const { error } = await supabase.auth.signInWithOAuth({
@@ -285,6 +281,7 @@ const App: React.FC = () => {
       }
   };
   const initiateNotionLogin = async () => {
+      saveReturnTab();
       localStorage.setItem('connecting_provider', 'notion');
       try {
           const { error } = await supabase.auth.signInWithOAuth({ provider: 'notion', options: { redirectTo: window.location.origin } });
@@ -298,17 +295,12 @@ const App: React.FC = () => {
       }
   };
   const initiateGoogleLogin = async () => {
+      saveReturnTab();
       localStorage.setItem('connecting_provider', 'google');
       try {
-          // IMPORTANT: Redirect to current origin, but Supabase will append params. 
-          // We rely on the initial useEffect to parse the provider_token from the session after redirect.
           const { error } = await supabase.auth.signInWithOAuth({
               provider: 'google',
-              options: { 
-                  redirectTo: window.location.origin, // Redirect back to root/app
-                  scopes: 'https://www.googleapis.com/auth/drive.file', 
-                  queryParams: { access_type: 'offline', prompt: 'consent' } 
-              }
+              options: { redirectTo: window.location.origin, scopes: 'https://www.googleapis.com/auth/drive.file', queryParams: { access_type: 'offline', prompt: 'consent' } }
           });
           if (error) throw error;
       } catch (e) {
@@ -319,9 +311,20 @@ const App: React.FC = () => {
       }
   };
   const initiateFigmaConnection = () => {
+      saveReturnTab();
       setTimeout(() => { setIsFigmaConnected(true); setConnectedProvider('figma'); setView('success'); setShowFigmaModal(false); }, 500);
   };
-  const handleSuccessContinue = () => { setView('app'); setActiveTab('settings'); };
+  
+  const handleSuccessContinue = () => { 
+      const returnTab = localStorage.getItem('return_tab');
+      setView('app'); 
+      if (returnTab) {
+          setActiveTab(returnTab as any);
+          localStorage.removeItem('return_tab');
+      } else {
+          setActiveTab('settings');
+      }
+  };
 
   const handleModeChange = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
       if (mode === 'spotify' && !spotifyToken) setShowSpotifyModal(true);
@@ -463,6 +466,7 @@ const App: React.FC = () => {
     setSearchMode('web');
     setAttachedFile(null);
     window.speechSynthesis.cancel();
+    window.history.pushState({}, '', '/');
   };
 
   const handleTabChange = (tab: any) => {
