@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Source } from "../types";
 
@@ -29,7 +28,12 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
     const ai = getAiClient();
     const modelName = "gemini-2.5-flash";
 
-    const systemInstruction = "You are a helpful visual search agent. Provide a concise, informative summary of the search query. Focus on key facts. Do not use markdown headers, just paragraphs. If a file is provided, analyze it to answer the user's query.";
+    let systemInstruction = "You are a helpful visual search agent. Provide a concise, informative summary of the search query. Focus on key facts. Do not use markdown headers, just paragraphs. If a file is provided, analyze it to answer the user's query.";
+
+    // Customize prompt if image is present
+    if (fileContext && fileContext.mimeType.startsWith('image/')) {
+        systemInstruction = "You are a visual search expert. Analyze the provided image. The user wants to find related images or information about this visual content. Identify the subject, context, and key details. Then, use the Google Search tool to find relevant information and related visual concepts. Describe the image and provide links or search terms that would help the user find similar images.";
+    }
 
     // Configure tools
     const tools = [{ googleSearch: {} }];

@@ -18,6 +18,7 @@ import SuccessPage from './components/SuccessPage';
 import AgenticProcessView from './components/AgenticProcessView';
 import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
+import CameraView from './components/CameraView';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -77,8 +78,9 @@ const App: React.FC = () => {
   const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible'>('web');
   const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false);
 
-  // File Upload State
+  // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   // Collections State
   const [collections, setCollections] = useState<CollectionItem[]>([]);
@@ -330,6 +332,16 @@ const App: React.FC = () => {
       else reader.readAsText(file);
   };
 
+  const handleCameraCapture = (imageSrc: string) => {
+      setAttachedFile({
+          name: 'Camera Capture',
+          type: 'image',
+          content: imageSrc,
+          mimeType: 'image/jpeg'
+      });
+      setShowCamera(false);
+  };
+
   const handleRemoveFile = () => setAttachedFile(null);
 
   // --- COLLECTIONS LOGIC ---
@@ -366,22 +378,29 @@ const App: React.FC = () => {
              setSearchState(prev => ({ ...prev, status: 'results', media: [], summary: "No results found." }));
           }
       } else {
-          // Web Search
+          // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
+          
+          // Modify query for Visual Search if empty and file is present
+          let activeQuery = query;
+          if (!activeQuery && attachedFile) {
+              activeQuery = "Find images related to this input image and explain them.";
+          }
+
           const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
-            searchWithGemini(query, fileContext),
-            fetchPixabayImages(query, 4),
-            fetchPexelsImages(query, 4),
-            fetchNasaImages(query)
+            searchWithGemini(activeQuery, fileContext),
+            fetchPixabayImages(activeQuery, 4),
+            fetchPexelsImages(activeQuery, 4),
+            fetchNasaImages(activeQuery)
           ]);
     
           const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
-          addToHistory({ type: 'search', title: query, summary: aiData.text, sources: aiData.sources });
+          addToHistory({ type: 'search', title: activeQuery, summary: aiData.text, sources: aiData.sources });
     
-          setSearchState({ status: 'results', query, summary: aiData.text, sources: aiData.sources, media: combinedImages });
+          setSearchState({ status: 'results', query: activeQuery, summary: aiData.text, sources: aiData.sources, media: combinedImages });
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
-          setAttachedFile(null);
+          setAttachedFile(null); // Clear attachment after search
 
           // Voice Synthesis (Jarvis Mode)
           if ('speechSynthesis' in window) {
@@ -496,6 +515,14 @@ const App: React.FC = () => {
 
   return (
     <div className="relative h-screen w-full bg-black text-white flex overflow-hidden">
+      
+      {showCamera && (
+          <CameraView 
+            onCapture={handleCameraCapture}
+            onClose={() => setShowCamera(false)}
+          />
+      )}
+
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
       <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" style={bgStyle()}>
@@ -532,12 +559,14 @@ const App: React.FC = () => {
                     
                     {/* Home Content */}
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
-                        {/* Logo */}
-                        <img 
-                            src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" 
-                            alt="Infinity Logo" 
-                            className="w-24 h-24 mb-4 rounded-3xl shadow-2xl" 
-                        />
+                        {/* Logo - Updated */}
+                        <a href="https://freeimage.host/" target="_blank" rel="noopener noreferrer">
+                            <img 
+                                src="https://iili.io/fRRfoF9.png" 
+                                alt="Infinity Visual" 
+                                className="w-48 h-auto mb-4 drop-shadow-2xl" 
+                            />
+                        </a>
                         
                         {/* Search Input */}
                         <div className="w-full">
@@ -552,6 +581,7 @@ const App: React.FC = () => {
                                 onRemoveFile={handleRemoveFile}
                                 isDeepSearchEnabled={isDeepSearchEnabled}
                                 onToggleDeepSearch={setIsDeepSearchEnabled}
+                                onCameraClick={() => setShowCamera(true)}
                             />
                         </div>
 

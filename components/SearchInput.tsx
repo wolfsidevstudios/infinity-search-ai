@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -19,6 +19,7 @@ interface SearchInputProps {
   onRemoveFile?: () => void;
   isDeepSearchEnabled: boolean;
   onToggleDeepSearch: (enabled: boolean) => void;
+  onCameraClick: () => void;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ 
@@ -31,15 +32,16 @@ const SearchInput: React.FC<SearchInputProps> = ({
     attachedFile, 
     onRemoveFile,
     isDeepSearchEnabled,
-    onToggleDeepSearch
+    onToggleDeepSearch,
+    onCameraClick
 }) => {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Speech Recognition Ref
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -76,6 +78,25 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Drag and Drop Handlers
+  const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      if (e.dataTransfer.files && e.dataTransfer.files[0] && onFileSelect) {
+          onFileSelect(e.dataTransfer.files[0]);
+      }
+  };
+
   const toggleListening = () => {
       if (isListening) {
           recognitionRef.current?.stop();
@@ -102,14 +123,11 @@ const SearchInput: React.FC<SearchInputProps> = ({
       recognition.onstart = () => setIsListening(true);
       recognition.onend = () => {
           setIsListening(false);
-          // Auto submit if query populated
       };
       
       recognition.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
           setQuery(transcript);
-          // Optional: Auto submit after voice
-          // onSearch(transcript, activeMode);
       };
 
       recognition.start();
@@ -118,10 +136,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
   const getPlaceholder = () => {
       if (isListening) return "Listening...";
-      if (activeMode === 'notion') return "Search your workspace docs...";
-      if (activeMode === 'bible') return "Search verse (e.g., John 3:16) or topic...";
-      if (attachedFile) return "Ask about this file...";
-      return "";
+      if (activeMode === 'notion') return "Search your workspace...";
+      if (activeMode === 'bible') return "Search verse or topic...";
+      if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
+      return "Ask anything...";
   };
 
   const getModeLabel = () => {
@@ -152,28 +170,33 @@ const SearchInput: React.FC<SearchInputProps> = ({
     >
       <div className="w-full relative">
           
-          {/* Main Bar */}
-          <div className={`relative flex items-center w-full h-[64px] rounded-full border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all ${
+          {/* Main Bar - Thinner (h-14 -> h-12) */}
+          <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`relative flex items-center w-full h-12 rounded-full border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 ${
               isDeepSearchEnabled ? 'bg-zinc-900/90 ring-1 ring-purple-500/50' : 'bg-[#1a1a1a]/80 backdrop-blur-xl hover:bg-[#202020]'
-          }`}>
+            } ${isDragging ? 'ring-2 ring-blue-500 bg-blue-900/20' : ''}`}
+          >
               
               {/* Left: Mode Selector */}
-              <div className="relative pl-2 z-20" ref={dropdownRef}>
+              <div className="relative pl-1 z-20" ref={dropdownRef}>
                   <button
                       type="button"
                       onClick={() => setShowDropdown(!showDropdown)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-sm font-medium"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
                       <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : 'text-orange-400'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
-                      <ChevronDown size={14} className={`opacity-50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={12} className={`opacity-50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
                   {showDropdown && (
-                    <div className="absolute top-14 left-0 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl p-2 animate-slideUp flex flex-col gap-1 overflow-hidden z-50">
+                    <div className="absolute top-10 left-0 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl p-2 animate-slideUp flex flex-col gap-1 overflow-hidden z-50">
                         <button 
                             type="button"
                             onClick={() => handleModeSelect('web')}
@@ -222,7 +245,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
               </div>
 
               {/* Divider */}
-              <div className="w-px h-6 bg-white/10 mx-2"></div>
+              <div className="w-px h-5 bg-white/10 mx-2"></div>
 
               {/* Input */}
               <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full">
@@ -232,56 +255,93 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder={getPlaceholder()}
                       disabled={isSearching}
-                      className="w-full bg-transparent border-none outline-none text-white text-lg placeholder-zinc-500 h-full px-2"
+                      className="w-full bg-transparent border-none outline-none text-white text-sm placeholder-zinc-500 h-full px-2"
                   />
                   {/* Hidden File Input */}
                   <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*,application/pdf,text/*" />
               </form>
 
               {/* Right: Actions */}
-              <div className="pr-2 flex items-center gap-2">
+              <div className="pr-1 flex items-center gap-1">
+                  
+                  {/* Visual Search / Camera Button */}
+                  <button
+                      type="button"
+                      onClick={onCameraClick}
+                      className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                      title="Visual Search"
+                  >
+                      <Camera size={18} />
+                  </button>
+
                   <button
                       type="button"
                       onClick={toggleListening}
-                      className={`p-2.5 rounded-full hover:bg-white/10 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
+                      className={`p-2 rounded-full hover:bg-white/10 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
                   >
-                      <Mic size={20} />
+                      <Mic size={18} />
                   </button>
                   
                   {/* Mobile Circle Button / Submit */}
                   <button
                       onClick={handleSubmit}
                       disabled={!query.trim() && !attachedFile}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                           isDeepSearchEnabled 
                           ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/20' 
                           : 'bg-white text-black hover:scale-105 shadow-lg'
                       } disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed`}
                   >
-                      {isDeepSearchEnabled ? <BrainCircuit size={18} /> : <Search size={20} />}
+                      {isDeepSearchEnabled ? <BrainCircuit size={16} /> : <Search size={16} />}
                   </button>
               </div>
           </div>
 
-          {/* Attached File Chip */}
+          {/* Attached Images - Circles Under Input */}
           {attachedFile && (
-            <div className="absolute top-[-44px] left-0 animate-slideUp z-20">
-                <div className="flex items-center gap-2 bg-zinc-800 backdrop-blur-md border border-zinc-700 pl-3 pr-2 py-1.5 rounded-full shadow-sm text-sm font-medium text-gray-200">
-                    <FileText size={14} className="text-blue-400" />
-                    <span className="max-w-[150px] truncate">{attachedFile.name}</span>
+            <div className="w-full flex items-center gap-3 mt-4 ml-2 animate-slideUp">
+                <div className="relative group">
+                    <div className="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-zinc-800 shadow-lg">
+                        {attachedFile.type === 'image' ? (
+                            <img src={`data:${attachedFile.mimeType};base64,${attachedFile.content}`} alt="preview" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-400">
+                                <FileText size={20} />
+                            </div>
+                        )}
+                    </div>
                     <button 
-                        type="button" 
                         onClick={onRemoveFile}
-                        className="ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-zinc-700 text-gray-400"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                        <X size={12} />
+                        <X size={10} />
                     </button>
                 </div>
+                
+                {attachedFile.type === 'image' && (
+                    <div className="flex flex-col">
+                        <span className="text-xs text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <ImageIcon size={10} /> Visual Search
+                        </span>
+                        <span className="text-[10px] text-zinc-500 max-w-[150px] truncate">
+                            {attachedFile.name}
+                        </span>
+                    </div>
+                )}
             </div>
           )}
 
+          {/* Drag Overlay Tip */}
+          {isDragging && (
+              <div className="absolute top-14 left-0 right-0 text-center animate-fadeIn">
+                  <div className="inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400">
+                      Drop image to search
+                  </div>
+              </div>
+          )}
+
           {/* Deep Search Toggle (Top Right Floating) */}
-          <div className="absolute -top-10 right-0">
+          <div className="absolute -top-8 right-0">
                <button
                   type="button"
                   onClick={() => onToggleDeepSearch(!isDeepSearchEnabled)}
