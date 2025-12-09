@@ -3,26 +3,29 @@ import { fetchNews } from '../services/newsService';
 import { fetchNasaNews } from '../services/nasaService';
 import { summarizeWorldEvents } from '../services/geminiService';
 import { NewsArticle } from '../types';
-import { Sparkles, Eye, LayoutGrid, Newspaper } from 'lucide-react';
+import { Sparkles, Eye, LayoutGrid, Newspaper, Sun } from 'lucide-react';
 import DashboardWidgets from './DashboardWidgets';
 import ExploreWidgets from './ExploreWidgets';
 
 interface DiscoverViewProps {
   onOpenArticle: (article: NewsArticle) => void;
   onSummarize: (url: string) => void;
+  initialTab?: 'news' | 'widgets' | 'whats_new' | 'brief';
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'news' | 'widgets' | 'whats_new'>('news');
+const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize, initialTab }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>(initialTab || 'news');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [worldSummary, setWorldSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   // Initial Data Load
   useEffect(() => {
@@ -49,6 +52,13 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize 
     };
     loadInitial();
   }, []);
+
+  // Sync initialTab if prop changes
+  useEffect(() => {
+      if (initialTab) {
+          setActiveSubTab(initialTab);
+      }
+  }, [initialTab]);
 
   // Fetch more data when page increases
   useEffect(() => {
@@ -87,32 +97,72 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize 
       return () => { if (observerRef.current) observerRef.current.disconnect(); }
   }, [handleObserver, articles, activeSubTab]); // Re-attach when articles change so ref is valid
 
-  return (
-    <div className="w-full max-w-7xl mx-auto pb-20 animate-slideUp px-4 flex flex-col items-center">
+  // Scroll Detection Observer
+  useEffect(() => {
+      const observer = new IntersectionObserver(
+          ([entry]) => {
+              setIsScrolled(!entry.isIntersecting);
+          },
+          { threshold: 0, rootMargin: "-10px 0px 0px 0px" }
+      );
       
-      {/* Pill Navigation Bar (Top Only Icons) */}
-      <div className="flex items-center gap-2 p-1.5 bg-zinc-900 border border-zinc-800 rounded-full mb-10 shadow-lg">
-          <button 
-            onClick={() => setActiveSubTab('widgets')}
-            className={`w-12 h-10 rounded-full flex items-center justify-center transition-all ${activeSubTab === 'widgets' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-            title="Widgets"
-          >
-              <LayoutGrid size={20} />
-          </button>
-          <button 
-            onClick={() => setActiveSubTab('news')}
-            className={`w-12 h-10 rounded-full flex items-center justify-center transition-all ${activeSubTab === 'news' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-            title="News"
-          >
-              <Newspaper size={20} />
-          </button>
-          <button 
-            onClick={() => setActiveSubTab('whats_new')}
-            className={`w-12 h-10 rounded-full flex items-center justify-center transition-all ${activeSubTab === 'whats_new' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-            title="What's New"
-          >
-              <Sparkles size={20} />
-          </button>
+      if (sentinelRef.current) {
+          observer.observe(sentinelRef.current);
+      }
+      
+      return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="w-full max-w-7xl mx-auto pb-20 animate-slideUp px-4 flex flex-col items-center relative min-h-screen">
+      
+      {/* Sentinel for Scroll Detection */}
+      <div ref={sentinelRef} className="absolute top-0 left-0 w-full h-1 pointer-events-none opacity-0" />
+
+      {/* Floating Pill Navigation Bar */}
+      <div className={`sticky top-2 z-50 transition-all duration-500 ease-in-out mb-8 ${isScrolled ? 'scale-90' : 'scale-100 mt-2'}`}>
+          <div className={`flex items-center gap-2 rounded-full border shadow-2xl transition-all duration-500 ${
+              isScrolled 
+              ? 'p-1 bg-black/60 backdrop-blur-xl border-white/10' 
+              : 'p-1.5 bg-zinc-900 border-zinc-800'
+          }`}>
+              <button 
+                onClick={() => setActiveSubTab('widgets')}
+                className={`rounded-full flex items-center justify-center transition-all ${
+                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
+                } ${activeSubTab === 'widgets' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                title="Widgets"
+              >
+                  <LayoutGrid size={isScrolled ? 16 : 20} />
+              </button>
+              <button 
+                onClick={() => setActiveSubTab('news')}
+                className={`rounded-full flex items-center justify-center transition-all ${
+                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
+                } ${activeSubTab === 'news' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                title="News"
+              >
+                  <Newspaper size={isScrolled ? 16 : 20} />
+              </button>
+              <button 
+                onClick={() => setActiveSubTab('brief')}
+                className={`rounded-full flex items-center justify-center transition-all ${
+                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
+                } ${activeSubTab === 'brief' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                title="Daily Brief"
+              >
+                  <Sun size={isScrolled ? 16 : 20} />
+              </button>
+              <button 
+                onClick={() => setActiveSubTab('whats_new')}
+                className={`rounded-full flex items-center justify-center transition-all ${
+                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
+                } ${activeSubTab === 'whats_new' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                title="What's New"
+              >
+                  <Sparkles size={isScrolled ? 16 : 20} />
+              </button>
+          </div>
       </div>
 
       {/* --- WIDGETS TAB --- */}
@@ -126,6 +176,65 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize 
           </div>
       )}
 
+      {/* --- BRIEF TAB --- */}
+      {activeSubTab === 'brief' && (
+          <div className="w-full max-w-4xl animate-fadeIn space-y-8">
+              <div className="text-center mb-10">
+                   <h2 className="text-4xl font-serif font-bold text-white mb-4">Daily Briefing</h2>
+                   <p className="text-zinc-400">Your AI-curated summary of the world today.</p>
+              </div>
+
+              {/* AI Summary Card (Expanded) */}
+                <div className="bg-gradient-to-br from-zinc-900 to-black backdrop-blur-xl border border-white/20 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                        <Sparkles size={120} className="text-purple-300" />
+                    </div>
+                    
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-6 text-purple-300">
+                            <Sparkles size={24} />
+                            <span className="text-sm font-bold uppercase tracking-widest">Global Executive Summary</span>
+                        </div>
+                        {summaryLoading ? (
+                            <div className="space-y-4 animate-pulse">
+                                <div className="h-6 bg-white/10 rounded w-full"></div>
+                                <div className="h-6 bg-white/10 rounded w-5/6"></div>
+                                <div className="h-6 bg-white/10 rounded w-4/6"></div>
+                            </div>
+                        ) : (
+                            <div className="prose prose-invert prose-lg max-w-none">
+                                <p className="text-2xl font-light text-white leading-relaxed">
+                                    {worldSummary}
+                                </p>
+                            </div>
+                        )}
+                        <div className="mt-8 pt-8 border-t border-white/10 flex justify-between items-center text-sm text-zinc-500">
+                            <span>Curated from {articles.length}+ sources</span>
+                            <span>Updated just now</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Top Stories Preview */}
+                <div>
+                    <h3 className="text-xl font-bold text-white mb-6">Top Stories</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {articles.slice(0, 4).map((article, idx) => (
+                            <div key={idx} onClick={() => onOpenArticle(article)} className="flex gap-4 p-4 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800/50 hover:border-zinc-700 cursor-pointer transition-all">
+                                <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+                                    <img src={article.urlToImage || ''} className="w-full h-full object-cover" alt="Thumb" />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-white leading-tight mb-2 line-clamp-2">{article.title}</h4>
+                                    <div className="text-xs text-zinc-500">{article.source.name}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+          </div>
+      )}
+
       {/* --- NEWS TAB --- */}
       {activeSubTab === 'news' && (
           <div className="w-full animate-fadeIn">
@@ -135,27 +244,6 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize 
                     
                     {/* Dashboard Widgets at Top */}
                     <DashboardWidgets />
-                    
-                    {/* AI Summary Card */}
-                    <div className="bg-transparent backdrop-blur-xl border border-white/20 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group mt-8">
-                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">
-                            <Sparkles size={64} className="text-purple-300" />
-                        </div>
-                        
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-2 mb-3 text-purple-300">
-                                <Sparkles size={16} />
-                                <span className="text-xs font-bold uppercase tracking-widest">Global Briefing</span>
-                            </div>
-                            {summaryLoading ? (
-                                <div className="h-16 w-full animate-pulse bg-white/5 rounded-lg"></div>
-                            ) : (
-                                <p className="text-xl md:text-2xl font-light text-white leading-relaxed max-w-3xl">
-                                    {worldSummary}
-                                </p>
-                            )}
-                        </div>
-                    </div>
                 </div>
 
                 {/* Grid */}

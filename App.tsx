@@ -7,7 +7,6 @@ import ArticleDetailView from './components/ArticleDetailView';
 import HistoryView from './components/HistoryView';
 import ImageGridView from './components/ImageGridView';
 import LoadingAnimation from './components/LoadingAnimation';
-import DashboardWidgets from './components/DashboardWidgets'; 
 import ConnectNotionModal from './components/ConnectNotionModal';
 import NotionResultsView from './components/NotionResultsView';
 import BibleResultsView from './components/BibleResultsView';
@@ -18,6 +17,7 @@ import AssetsPage from './components/AssetsPage';
 import SuccessPage from './components/SuccessPage';
 import AgenticProcessView from './components/AgenticProcessView';
 import CollectionsView from './components/CollectionsView';
+import QuickAccessBar from './components/QuickAccessBar';
 import { searchWithGemini } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -26,8 +26,10 @@ import { supabase } from './services/supabaseClient';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
 import { syncHistoryToDrive } from './services/googleDriveService';
+import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem } from './types';
 import { User } from '@supabase/supabase-js';
+import { ChevronDown } from 'lucide-react';
 
 // Helper to mix results from different sources
 const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
@@ -56,6 +58,7 @@ const App: React.FC = () => {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections'>('home');
+  const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   
   // Appearance
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
@@ -105,6 +108,9 @@ const App: React.FC = () => {
   // State for viewing an article
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
 
+  // Weather State for Home Greeting
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+
   // -- INIT & ROUTING LOGIC --
   useEffect(() => {
     const initApp = async () => {
@@ -136,6 +142,19 @@ const App: React.FC = () => {
     };
 
     initApp();
+
+    // Fetch Weather for Home Greeting
+    const loadWeather = async () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => setWeather(await fetchWeather(pos.coords.latitude, pos.coords.longitude)),
+                async () => setWeather(await fetchWeather(40.7128, -74.0060))
+            );
+        } else {
+            setWeather(await fetchWeather(40.7128, -74.0060));
+        }
+    };
+    loadWeather();
 
     // Load Collections & AutoSave
     const savedCollections = localStorage.getItem('infinity_collections');
@@ -451,6 +470,11 @@ const App: React.FC = () => {
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
 
+  const handleViewDailyBrief = () => {
+      setDiscoverViewTab('brief');
+      setActiveTab('discover');
+  };
+
   // PURE BLACK BACKGROUND
   const bgStyle = () => {
      return { backgroundColor: '#000000', backgroundImage: 'none' };
@@ -464,12 +488,25 @@ const App: React.FC = () => {
       return <div className="h-screen w-full bg-black"><LoginPage onSkip={() => { setSessionUser({ id: 'demo-user', email: 'demo@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Demo User' }, aud: 'authenticated', created_at: '' } as User); setView('app'); }} /></div>;
   }
 
+  // Greeting Variables
+  const userName = sessionUser?.user_metadata?.full_name?.split(' ')[0] || "there";
+  const temp = weather?.temperature ? Math.round(weather.temperature) : '--';
+  const condition = weather?.weathercode !== undefined ? getWeatherDescription(weather.weathercode) : 'clear';
+  const city = weather?.city || "your location";
+
   return (
     <div className="relative h-screen w-full bg-black text-white flex overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
       <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" style={bgStyle()}>
         
+        {/* Quick Access Bar - Absolute Top Right */}
+        {activeTab === 'home' && searchState.status === 'idle' && (
+            <div className="absolute top-6 right-8 z-50">
+                <QuickAccessBar />
+            </div>
+        )}
+
         <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' ? 'hidden' : ''}`}>
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
@@ -491,21 +528,47 @@ const App: React.FC = () => {
             
             {activeTab === 'home' && (
               <>
-                <div className={`flex-1 flex flex-col justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
-                    <SearchInput 
-                        onSearch={handleSearch} 
-                        isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
-                        centered={true}
-                        activeMode={searchMode}
-                        onModeChange={handleModeChange}
-                        onFileSelect={handleFileSelect}
-                        attachedFile={attachedFile}
-                        onRemoveFile={handleRemoveFile}
-                        isDeepSearchEnabled={isDeepSearchEnabled}
-                        onToggleDeepSearch={setIsDeepSearchEnabled}
-                    />
-                    {/* Home widgets kept separate from explore widgets as requested by "not in the home" for the 10 new ones */}
-                    {searchMode === 'web' && <div className="w-full animate-fadeIn delay-300"><DashboardWidgets /></div>}
+                <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
+                    
+                    {/* Home Content */}
+                    <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
+                        {/* Logo */}
+                        <img 
+                            src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" 
+                            alt="Infinity Logo" 
+                            className="w-24 h-24 mb-4 rounded-3xl shadow-2xl" 
+                        />
+                        
+                        {/* Search Input */}
+                        <div className="w-full">
+                            <SearchInput 
+                                onSearch={handleSearch} 
+                                isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
+                                centered={false}
+                                activeMode={searchMode}
+                                onModeChange={handleModeChange}
+                                onFileSelect={handleFileSelect}
+                                attachedFile={attachedFile}
+                                onRemoveFile={handleRemoveFile}
+                                isDeepSearchEnabled={isDeepSearchEnabled}
+                                onToggleDeepSearch={setIsDeepSearchEnabled}
+                            />
+                        </div>
+
+                        {/* Greeting & Brief Link */}
+                        <div className="text-center space-y-3 mt-4">
+                            <p className="text-xl text-zinc-400 font-light">
+                                Hi, {userName}. Today, there will be <span className="text-white font-medium">{temp}°C</span> and <span className="text-white font-medium">{condition}</span> in {city}.
+                            </p>
+                            <button 
+                                onClick={handleViewDailyBrief}
+                                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group"
+                            >
+                                See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
 
                 {searchState.status === 'searching' && <div className="absolute inset-0 flex items-center justify-center"><LoadingAnimation /></div>}
@@ -539,7 +602,7 @@ const App: React.FC = () => {
               </>
             )}
 
-            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle}/></div>}
+            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} initialTab={discoverViewTab} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}

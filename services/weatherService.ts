@@ -34,3 +34,13 @@ export const getWeatherIcon = (code: number) => {
   if (code >= 95) return 'storm';
   return 'cloudy';
 };
+
+export const getWeatherDescription = (code: number): string => {
+  if (code === 0) return 'sunny';
+  if (code >= 1 && code <= 3) return 'partly cloudy';
+  if (code >= 45 && code <= 48) return 'foggy';
+  if (code >= 51 && code <= 67) return 'rainy';
+  if (code >= 71 && code <= 86) return 'snowy';
+  if (code >= 95) return 'stormy';
+  return 'cloudy';
+};
