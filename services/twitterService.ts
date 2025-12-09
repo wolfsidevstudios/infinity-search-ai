@@ -2,7 +2,7 @@ import { MediaItem } from "../types";
 
 const RAPIDAPI_HOST = 'twitter-api45.p.rapidapi.com';
 // NOTE: You must add your RapidAPI key here for real data
-const API_KEY = ''; 
+const API_KEY = 'e961cb2507mshcf8c1a6cfd04874p15b686jsncb498cec734b'; 
 
 export const searchTwitter = async (query: string): Promise<MediaItem[]> => {
   try {
