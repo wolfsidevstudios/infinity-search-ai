@@ -8,10 +8,7 @@ import HistoryView from './components/HistoryView';
 import ImageGridView from './components/ImageGridView';
 import LoadingAnimation from './components/LoadingAnimation';
 import DashboardWidgets from './components/DashboardWidgets'; 
-import ConnectSpotifyModal from './components/ConnectSpotifyModal';
 import ConnectNotionModal from './components/ConnectNotionModal';
-import ConnectFigmaModal from './components/ConnectFigmaModal';
-import SpotifyResultsView from './components/SpotifyResultsView';
 import NotionResultsView from './components/NotionResultsView';
 import BibleResultsView from './components/BibleResultsView';
 import SettingsView from './components/SettingsView';
@@ -26,7 +23,6 @@ import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './service
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
 import { supabase } from './services/supabaseClient';
-import { searchSpotify } from './services/spotifyService';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
 import { syncHistoryToDrive } from './services/googleDriveService';
@@ -75,7 +71,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode & Deep Search
-  const [searchMode, setSearchMode] = useState<'web' | 'spotify' | 'notion' | 'bible'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible'>('web');
   const [isDeepSearchEnabled, setIsDeepSearchEnabled] = useState(false);
 
   // File Upload State
@@ -85,14 +81,8 @@ const App: React.FC = () => {
   const [collections, setCollections] = useState<CollectionItem[]>([]);
 
   // Auth State (Legacy/Direct Connections)
-  const [spotifyToken, setSpotifyToken] = useState<string | null>(null);
-  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
-  
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [showNotionModal, setShowNotionModal] = useState(false);
-
-  const [isFigmaConnected, setIsFigmaConnected] = useState(false);
-  const [showFigmaModal, setShowFigmaModal] = useState(false);
 
   // Google Drive
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
@@ -188,8 +178,6 @@ const App: React.FC = () => {
   const restoreTokens = () => {
         const savedDriveToken = localStorage.getItem('google_drive_token');
         if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
-        const savedSpotifyToken = localStorage.getItem('spotify_token');
-        if (savedSpotifyToken) setSpotifyToken(savedSpotifyToken);
         const savedNotionToken = localStorage.getItem('notion_token');
         if (savedNotionToken) setNotionToken(savedNotionToken);
   };
@@ -197,10 +185,6 @@ const App: React.FC = () => {
   const captureProviderTokens = (session: any) => {
       if (session.provider_token) {
            const provider = session.user.app_metadata.provider;
-           if (provider === 'spotify') {
-               setSpotifyToken(session.provider_token);
-               localStorage.setItem('spotify_token', session.provider_token);
-           }
            if (provider === 'notion') {
                setNotionToken(session.provider_token);
                localStorage.setItem('notion_token', session.provider_token);
@@ -252,33 +236,14 @@ const App: React.FC = () => {
           media: [],
       });
       // Clear tokens
-      setSpotifyToken(null);
       setNotionToken(null);
       setGoogleAccessToken(null);
-      setIsFigmaConnected(false);
       localStorage.clear(); 
       window.history.pushState({}, '', '/');
   };
 
   const saveReturnTab = () => localStorage.setItem('return_tab', activeTab);
 
-  const initiateSpotifyLogin = async () => {
-      saveReturnTab();
-      localStorage.setItem('connecting_provider', 'spotify');
-      try {
-          const { error } = await supabase.auth.signInWithOAuth({
-              provider: 'spotify',
-              options: { scopes: 'user-read-email user-top-read user-library-read streaming', redirectTo: window.location.origin }
-          });
-          if (error) throw error;
-      } catch (e) {
-          setSpotifyToken("mock-spotify-token-demo");
-          setConnectedProvider('spotify');
-          setView('success');
-          localStorage.removeItem('connecting_provider');
-          setShowSpotifyModal(false);
-      }
-  };
   const initiateNotionLogin = async () => {
       saveReturnTab();
       localStorage.setItem('connecting_provider', 'notion');
@@ -309,10 +274,6 @@ const App: React.FC = () => {
           localStorage.removeItem('connecting_provider');
       }
   };
-  const initiateFigmaConnection = () => {
-      saveReturnTab();
-      setTimeout(() => { setIsFigmaConnected(true); setConnectedProvider('figma'); setView('success'); setShowFigmaModal(false); }, 500);
-  };
   
   const handleSuccessContinue = () => { 
       const returnTab = localStorage.getItem('return_tab');
@@ -325,9 +286,8 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
-      if (mode === 'spotify' && !spotifyToken) setShowSpotifyModal(true);
-      else if (mode === 'notion' && !notionToken) setShowNotionModal(true);
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible') => {
+      if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
 
@@ -369,14 +329,9 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'spotify' | 'notion' | 'bible') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible') => {
      try {
-      if (mode === 'spotify') {
-          if (!spotifyToken) return setShowSpotifyModal(true);
-          const tracks = await searchSpotify(query, spotifyToken);
-          setSearchState({ status: 'results', query, summary: `Found top tracks for "${query}" on Spotify.`, sources: [], media: tracks });
-          addToHistory({ type: 'search', title: `Spotify: ${query}`, summary: `Music search results for ${query}`, sources: [] });
-      } else if (mode === 'notion') {
+      if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
           const pages = await searchNotion(query, notionToken);
           setSearchState({ status: 'results', query, summary: `Found ${pages.length} pages in Notion.`, sources: [], media: pages });
@@ -423,7 +378,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'spotify' | 'notion' | 'bible') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible') => {
     // If Deep Search is enabled for Web, show Thinking UI first
     if (mode === 'web' && isDeepSearchEnabled) {
         setSearchState(prev => ({ ...prev, status: 'thinking', query, isDeepSearch: true }));
@@ -490,21 +445,15 @@ const App: React.FC = () => {
   const handleHistorySelect = (item: HistoryItem) => {
       // ... same as before
       if (item.type === 'search') {
-          if (item.title.startsWith("Spotify: ")) { setSearchMode('spotify'); handleSearch(item.title.replace("Spotify: ", ""), 'spotify'); }
-          else if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
+          if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
           else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
 
+  // PURE BLACK BACKGROUND
   const bgStyle = () => {
-      if (activeTab === 'settings' || activeTab === 'collections' || searchMode === 'notion' || searchMode === 'bible') return { backgroundImage: 'none', backgroundColor: '#000000' };
-      if (activeTab === 'home') {
-          if (currentWallpaper) return { backgroundImage: `url('${currentWallpaper}')`, backgroundColor: '#000000', backgroundSize: 'cover', backgroundPosition: 'center' };
-          if (searchState.status === 'idle') return { backgroundImage: 'none', backgroundColor: '#000000' };
-      }
-      if (searchMode === 'spotify') return { backgroundImage: `url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2000&auto=format&fit=crop')`, backgroundColor: '#000000' };
-      return { backgroundImage: `url('https://i.ibb.co/MxrKTrKV/upscalemedia-transformed-4.png')`, backgroundColor: '#000000' };
+     return { backgroundColor: '#000000', backgroundImage: 'none' };
   };
 
   if (view === 'assets') return <AssetsPage onBack={() => setView('landing')} />;
@@ -519,11 +468,8 @@ const App: React.FC = () => {
     <div className="relative h-screen w-full bg-black text-white flex overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
-      <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10">
-        <div className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-[2s] ease-in-out" style={{ ...bgStyle(), transform: searchState.status === 'idle' && activeTab === 'home' ? 'scale(1)' : 'scale(1.05)' }}>
-            <div className={`absolute inset-0 transition-all duration-1000 ${ (activeTab === 'home' && searchState.status === 'idle' && !currentWallpaper) || activeTab === 'settings' || activeTab === 'collections' || searchMode === 'notion' || searchMode === 'bible' ? 'bg-transparent' : 'bg-black/40 backdrop-blur-sm' }`} />
-        </div>
-
+      <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" style={bgStyle()}>
+        
         <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' ? 'hidden' : ''}`}>
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
@@ -558,6 +504,7 @@ const App: React.FC = () => {
                         isDeepSearchEnabled={isDeepSearchEnabled}
                         onToggleDeepSearch={setIsDeepSearchEnabled}
                     />
+                    {/* Home widgets kept separate from explore widgets as requested by "not in the home" for the 10 new ones */}
                     {searchMode === 'web' && <div className="w-full animate-fadeIn delay-300"><DashboardWidgets /></div>}
                 </div>
 
@@ -569,14 +516,7 @@ const App: React.FC = () => {
 
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
-                        {searchMode === 'spotify' ? (
-                            <>
-                                <div className="max-w-6xl mx-auto mb-6 px-4">
-                                     <h2 className="text-3xl font-bold text-white flex items-center gap-3">{searchState.query}</h2>
-                                </div>
-                                <SpotifyResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} />
-                            </>
-                        ) : searchMode === 'notion' ? (
+                        {searchMode === 'notion' ? (
                             <NotionResultsView items={searchState.media} query={searchState.query} />
                         ) : searchMode === 'bible' ? (
                             <BibleResultsView items={searchState.media} query={searchState.query} />
@@ -607,8 +547,8 @@ const App: React.FC = () => {
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 
-                        isSpotifyConnected={!!spotifyToken} isNotionConnected={!!notionToken} isFigmaConnected={isFigmaConnected} isGoogleDriveConnected={!!googleAccessToken}
-                        onConnectNotion={initiateNotionLogin} onConnectSpotify={initiateSpotifyLogin} onConnectFigma={initiateFigmaConnection} onConnectGoogleDrive={initiateGoogleLogin}
+                        isNotionConnected={!!notionToken} isGoogleDriveConnected={!!googleAccessToken}
+                        onConnectNotion={initiateNotionLogin} onConnectGoogleDrive={initiateGoogleLogin}
                         isAutoSaveEnabled={isAutoSaveEnabled} onToggleAutoSave={handleToggleAutoSave}
                         currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser} onLogout={handleLogout}

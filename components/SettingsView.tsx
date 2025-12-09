@@ -1,17 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
 interface SettingsViewProps {
-  isSpotifyConnected: boolean;
   isNotionConnected: boolean;
-  isFigmaConnected: boolean;
   isGoogleDriveConnected: boolean;
   onConnectNotion: () => void;
-  onConnectSpotify: () => void;
-  onConnectFigma: () => void;
   onConnectGoogleDrive: () => void;
   isAutoSaveEnabled: boolean;
   onToggleAutoSave: (enabled: boolean) => void;
@@ -31,13 +26,9 @@ const WALLPAPERS = [
 ];
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
-    isSpotifyConnected, 
     isNotionConnected, 
-    isFigmaConnected,
     isGoogleDriveConnected,
     onConnectNotion, 
-    onConnectSpotify, 
-    onConnectFigma,
     onConnectGoogleDrive,
     isAutoSaveEnabled,
     onToggleAutoSave,
@@ -422,54 +413,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                              <button className="h-10 px-6 bg-red-900/20 text-red-400 rounded-full text-sm font-bold border border-red-900/50 hover:bg-red-900/40 transition-colors">Disconnect</button>
                         ) : (
                              <button onClick={onConnectNotion} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
-                        )}
-                    </div>
-                </div>
-
-                 {/* Spotify Card */}
-                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-[#1DB954] rounded-2xl flex items-center justify-center text-white shadow-md transform rotate-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.42c-.18.3-.55.39-.84.21-2.31-1.41-5.23-1.73-8.66-.95-.33.07-.66-.14-.74-.46-.07-.33.14-.66.46-.74 3.75-.85 7.02-.48 9.57 1.1.3.18.39.55.21.84zm1.2-3.19c-.23.37-.71.49-1.08.26-2.67-1.64-6.74-2.11-9.9-1.15-.4.12-.84-.1-.95-.51-.12-.4.1-.84.51-.95 3.63-1.1 8.16-.57 11.16 1.27.37.23.49.71.26 1.08zm.11-3.32c-3.19-1.89-8.45-2.07-11.5-1.14-.49.15-1.01-.12-1.16-.61-.15-.49.12-1.01.61-1.16 3.53-1.07 9.32-.87 13.01 1.33.44.26.58.83.32 1.27-.26.44-.83.58-1.27.32z"/></svg>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-xl text-white">Spotify</h4>
-                            <p className="text-sm text-zinc-500 font-medium">{isSpotifyConnected ? 'Connected via OAuth' : 'Not connected'}</p>
-                        </div>
-                    </div>
-                    <div>
-                        {isSpotifyConnected ? (
-                             <button className="h-10 px-6 bg-red-900/20 text-red-400 rounded-full text-sm font-bold border border-red-900/50 hover:bg-red-900/40 transition-colors">Disconnect</button>
-                        ) : (
-                             <button onClick={onConnectSpotify} className="h-10 px-6 bg-[#1DB954] text-white rounded-full text-sm font-bold shadow-md hover:bg-[#1ed760]">Connect</button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Figma Card */}
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-black border border-zinc-700 rounded-2xl flex items-center justify-center text-white shadow-md p-3">
-                             <svg xmlns="http://www.w3.org/2000/svg" shapeRendering="geometricPrecision" textRendering="geometricPrecision" imageRendering="optimizeQuality" fillRule="evenodd" clipRule="evenodd" viewBox="0 0 346 512.36">
-                                <g fillRule="nonzero">
-                                    <path fill="#00B6FF" d="M172.53 246.9c0-42.04 34.09-76.11 76.12-76.11h11.01c.3.01.63-.01.94-.01 47.16 0 85.4 38.25 85.4 85.4 0 47.15-38.24 85.39-85.4 85.39-.31 0-.64-.01-.95-.01l-11 .01c-42.03 0-76.12-34.09-76.12-76.12V246.9z"/>
-                                    <path fill="#24CB71" d="M0 426.98c0-47.16 38.24-85.41 85.4-85.41l87.13.01v84.52c0 47.65-39.06 86.26-86.71 86.26C38.67 512.36 0 474.13 0 426.98z"/>
-                                    <path fill="#FF7237" d="M172.53.01v170.78h87.13c.3-.01.63.01.94.01 47.16 0 85.4-38.25 85.4-85.4C346 38.24 307.76 0 260.6 0c-.31 0-.64.01-.95.01h-87.12z"/>
-                                    <path fill="#FF3737" d="M0 85.39c0 47.16 38.24 85.4 85.4 85.4h87.13V.01H85.39C38.24.01 0 38.24 0 85.39z"/>
-                                    <path fill="#874FFF" d="M0 256.18c0 47.16 38.24 85.4 85.4 85.4h87.13V170.8H85.39C38.24 170.8 0 209.03 0 256.18z"/>
-                                </g>
-                             </svg>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-xl text-white">Figma</h4>
-                            <p className="text-sm text-zinc-500 font-medium">{isFigmaConnected ? 'Connected' : 'Not connected'}</p>
-                        </div>
-                    </div>
-                    <div>
-                        {isFigmaConnected ? (
-                             <button className="h-10 px-6 bg-red-900/20 text-red-400 rounded-full text-sm font-bold border border-red-900/50 hover:bg-red-900/40 transition-colors">Disconnect</button>
-                        ) : (
-                             <button onClick={onConnectFigma} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
                         )}
                     </div>
                 </div>

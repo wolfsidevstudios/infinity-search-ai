@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Plus, Upload, Music, Globe, FileText, X, BookOpen, Mic, BrainCircuit } from 'lucide-react';
+import { ArrowRight, Plus, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -10,11 +9,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'spotify' | 'notion' | 'bible') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'spotify' | 'notion' | 'bible';
-  onModeChange: (mode: 'web' | 'spotify' | 'notion' | 'bible') => void;
+  activeMode: 'web' | 'notion' | 'bible';
+  onModeChange: (mode: 'web' | 'notion' | 'bible') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -60,7 +59,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'spotify' | 'notion' | 'bible') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -119,7 +118,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
   const getPlaceholder = () => {
       if (isListening) return "Listening...";
-      if (activeMode === 'spotify') return "Search for songs, artists, albums...";
       if (activeMode === 'notion') return "Search your workspace docs...";
       if (activeMode === 'bible') return "Search verse (e.g., John 3:16) or topic...";
       if (attachedFile) return "Ask about this file...";
@@ -134,9 +132,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     >
       {centered && (
         <h1 className="text-3xl md:text-5xl font-semibold text-white mb-10 tracking-tight text-center">
-            {activeMode === 'spotify' ? (
-                 <>Search <span className="text-[#1DB954]">Spotify</span></>
-            ) : activeMode === 'notion' ? (
+            {activeMode === 'notion' ? (
                  <>Search <span className="text-white">Notion</span></>
             ) : activeMode === 'bible' ? (
                  <>Search <span className="text-[#c2b29c] font-serif italic">Scripture</span></>
@@ -231,15 +227,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
                             <span className="font-medium">Notion</span>
                         </button>
 
-                        <button 
-                            type="button"
-                            onClick={() => handleModeSelect('spotify')}
-                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'spotify' ? 'bg-[#1DB954] text-white shadow-lg' : 'hover:bg-[#1DB954]/20 hover:text-[#1DB954] text-gray-300'}`}
-                        >
-                            <Music size={18} />
-                            <span className="font-medium">Spotify</span>
-                        </button>
-
                         <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
 
                         <button 
@@ -271,9 +258,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 placeholder={getPlaceholder()}
                 disabled={isSearching}
                 className={`w-full h-[72px] pl-16 pr-32 rounded-full border border-white/10 text-white placeholder-zinc-500 shadow-[0_4px_20px_rgba(0,0,0,0.2)] focus:outline-none focus:ring-4 transition-all text-xl backdrop-blur-md ${
-                    activeMode === 'spotify' 
-                    ? 'bg-zinc-900/80 focus:ring-green-900/30' 
-                    : activeMode === 'notion'
+                    activeMode === 'notion'
                     ? 'bg-zinc-900/80 focus:ring-zinc-700/30'
                     : activeMode === 'bible'
                     ? 'bg-[#1e1b18]/90 focus:ring-orange-900/20 border-[#3c3022]'
@@ -297,7 +282,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     type="submit"
                     disabled={(!query.trim() && !attachedFile) || isSearching}
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 text-white disabled:opacity-30 disabled:hover:scale-100 ${
-                        activeMode === 'spotify' ? 'bg-[#1DB954]' : activeMode === 'bible' ? 'bg-[#5c4b37]' : isDeepSearchEnabled ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-white text-black'
+                        activeMode === 'bible' ? 'bg-[#5c4b37]' : isDeepSearchEnabled ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-white text-black'
                     }`}
                 >
                     {isDeepSearchEnabled ? <BrainCircuit size={20} /> : <ArrowRight size={24} />}
