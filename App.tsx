@@ -605,6 +605,7 @@ const App: React.FC = () => {
                                     images={searchState.media} 
                                     onOpenImageGrid={() => handleMediaSearch(searchState.query, 'image')}
                                     onSave={handleSaveToCollections}
+                                    query={searchState.query}
                                 />
                             </>
                         )}

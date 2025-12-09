@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Source, MediaItem } from '../types';
 import { ExternalLink, ImageIcon, Bookmark, Check, Volume2, Square } from 'lucide-react';
+import GoogleCustomSearch from './GoogleCustomSearch';
 
 interface ResultsViewProps {
   summary: string;
@@ -11,6 +12,34 @@ interface ResultsViewProps {
 }
 
 const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onOpenImageGrid, onSave }) => {
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  // Extract query from summary context or pass it as prop? 
+  // Ideally passed as prop, but for now we can infer or we need to update the parent App.tsx 
+  // to pass query to ResultsView. For this specific request, I will assume the parent *should* pass query,
+  // but since I cannot change the Props interface without breaking App.tsx in a strict type check if I don't update App.tsx simultaneously,
+  // I will check if I can modify App.tsx. The user prompt was "add this...".
+  // Actually, I can update App.tsx to pass the query.
+  
+  // However, `summary` usually contains the answer. 
+  // Let's assume we render GoogleCustomSearch based on a prop we add.
+  // Wait, I will update App.tsx to pass `query` to ResultsView.
+}
+
+// Re-defining component to include query prop properly.
+// I will update the interface and the component.
+
+// We need to update App.tsx to pass the query first.
+// Let's look at App.tsx again. It calls `<ResultsView ... />`.
+// I will update ResultsView to accept `query` but make it optional to avoid breaking if App.tsx isn't updated perfectly in sync,
+// though I will update App.tsx in this response as well.
+
+export default function ResultsViewWrapper(props: any) {
+    // Wrapper to handle potential missing props during hot reload if strict
+    return <ResultsViewInternal {...props} />;
+}
+
+const ResultsViewInternal: React.FC<ResultsViewProps & { query?: string }> = ({ summary, sources, images, onOpenImageGrid, onSave, query }) => {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -166,8 +195,11 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
           ))}
         </div>
       )}
+
+      {/* 4. Google Custom Search Results */}
+      {query && (
+          <GoogleCustomSearch query={query} />
+      )}
     </div>
   );
 };
-
-export default ResultsView;
