@@ -9,11 +9,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'notion' | 'bible') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'notion' | 'bible';
-  onModeChange: (mode: 'web' | 'notion' | 'bible') => void;
+  activeMode: 'web' | 'notion' | 'bible' | 'podcast';
+  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -57,7 +57,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'notion' | 'bible') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -134,6 +134,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (isListening) return "Listening...";
       if (activeMode === 'notion') return "Search your workspace...";
       if (activeMode === 'bible') return "Search verse or topic...";
+      if (activeMode === 'podcast') return "Search for podcasts...";
       if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
       return "Ask anything...";
   };
@@ -142,6 +143,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       switch(activeMode) {
           case 'notion': return 'Notion';
           case 'bible': return 'Scripture';
+          case 'podcast': return 'Podcast';
           default: return 'Web';
       }
   };
@@ -154,6 +156,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
              </div>
           );
           case 'bible': return <BookOpen size={16} />;
+          case 'podcast': return <Mic size={16} />;
           default: return <Globe size={16} />;
       }
   };
@@ -166,7 +169,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     >
       <div className="w-full relative">
           
-          {/* Main Bar - Thinner (h-14 -> h-12) */}
+          {/* Main Bar */}
           <div 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -181,7 +184,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onClick={() => setShowDropdown(!showDropdown)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
-                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : 'text-orange-400'}`}>
+                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'podcast' ? 'text-red-400' : 'text-orange-400'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
@@ -209,6 +212,17 @@ const SearchInput: React.FC<SearchInputProps> = ({
                         >
                             <BookOpen size={18} />
                             <span className="font-medium">Bible Search</span>
+                        </button>
+
+                        <div className="h-[1px] bg-white/10 mx-2 my-1"></div>
+
+                        <button 
+                            type="button"
+                            onClick={() => handleModeSelect('podcast')}
+                            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all ${activeMode === 'podcast' ? 'bg-red-900/20 text-red-200 border border-red-900/50' : 'hover:bg-white/10 text-gray-300'}`}
+                        >
+                            <Mic size={18} />
+                            <span className="font-medium">Podcast</span>
                         </button>
 
                         <div className="h-[1px] bg-white/10 mx-2 my-1"></div>

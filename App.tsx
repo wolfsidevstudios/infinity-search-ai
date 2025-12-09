@@ -10,6 +10,7 @@ import LoadingAnimation from './components/LoadingAnimation';
 import ConnectNotionModal from './components/ConnectNotionModal';
 import NotionResultsView from './components/NotionResultsView';
 import BibleResultsView from './components/BibleResultsView';
+import PodcastResultsView from './components/PodcastResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -25,6 +26,7 @@ import { fetchNasaImages } from './services/nasaService';
 import { supabase } from './services/supabaseClient';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
+import { searchPodcasts } from './services/podcastService';
 import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem } from './types';
@@ -74,7 +76,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -305,7 +307,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast') => {
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -358,7 +360,7 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast') => {
      try {
       if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
@@ -375,6 +377,10 @@ const App: React.FC = () => {
           } else {
              setSearchState(prev => ({ ...prev, status: 'results', media: [], summary: "No results found." }));
           }
+      } else if (mode === 'podcast') {
+          const podcasts = await searchPodcasts(query);
+          setSearchState({ status: 'results', query, summary: `Found ${podcasts.length} podcasts.`, sources: [], media: podcasts });
+          addToHistory({ type: 'search', title: `Podcast: ${query}`, summary: `Audio search for ${query}`, sources: [] });
       } else {
           // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
@@ -406,7 +412,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -464,6 +470,7 @@ const App: React.FC = () => {
       if (item.type === 'search') {
           if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
           else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
+          else if (item.title.startsWith("Podcast: ")) { setSearchMode('podcast'); handleSearch(item.title.replace("Podcast: ", ""), 'podcast'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
@@ -585,6 +592,8 @@ const App: React.FC = () => {
                             <NotionResultsView items={searchState.media} query={searchState.query} />
                         ) : searchMode === 'bible' ? (
                             <BibleResultsView items={searchState.media} query={searchState.query} />
+                        ) : searchMode === 'podcast' ? (
+                            <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} />
                         ) : (
                             <>
                                 <div className="max-w-4xl mx-auto mb-6">

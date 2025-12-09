@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio' | 'article' | 'bible';
+  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
