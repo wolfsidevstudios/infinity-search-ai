@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, Palette, Clock, Timer, FileText, Scale, Lightbulb, Activity, Wind, Circle } from 'lucide-react';
+import { Calculator, Palette, Clock, Timer, FileText, Scale, Lightbulb, Activity, Wind, Circle, Fuel, Map, Cat } from 'lucide-react';
+import { fetchGasPrices, GasPrice } from '../services/gasService';
+import { fetchCityOfTheDay, CityData } from '../services/geoService';
+import { fetchCatOfTheDay, CatData } from '../services/catService';
 
 const ExploreWidgets: React.FC = () => {
   // Widget 1: Calculator State
@@ -15,6 +18,11 @@ const ExploreWidgets: React.FC = () => {
   // Widget 6: Converter
   const [kg, setKg] = useState<number | ''>('');
 
+  // New Widgets State
+  const [gasPrices, setGasPrices] = useState<GasPrice[]>([]);
+  const [city, setCity] = useState<CityData | null>(null);
+  const [cat, setCat] = useState<CatData | null>(null);
+
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(interval);
@@ -28,6 +36,13 @@ const ExploreWidgets: React.FC = () => {
       return () => clearInterval(interval);
   }, [timerRunning, timeLeft]);
 
+  useEffect(() => {
+      // Load New Data
+      fetchGasPrices().then(setGasPrices);
+      fetchCityOfTheDay().then(setCity);
+      fetchCatOfTheDay().then(setCat);
+  }, []);
+
   const evalCalc = () => {
       try {
           // eslint-disable-next-line no-eval
@@ -40,7 +55,7 @@ const ExploreWidgets: React.FC = () => {
   const widgetClass = "bg-zinc-900/50 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col shadow-lg relative overflow-hidden group hover:border-white/20 transition-all";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full pb-20">
       
       {/* 1. Calculator */}
       <div className={widgetClass}>
@@ -224,6 +239,78 @@ const ExploreWidgets: React.FC = () => {
                   <div className="text-xs text-zinc-500">Latency: 24ms</div>
               </div>
           </div>
+      </div>
+
+      {/* 11. Gas Prices (New) */}
+      <div className={widgetClass}>
+           <div className="flex items-center gap-2 mb-4 text-zinc-400 text-xs font-bold uppercase tracking-wider">
+              <Fuel size={14} className="text-red-400" /> Fuel Prices
+          </div>
+          <div className="space-y-3">
+              {gasPrices.slice(0, 4).map((price, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 pb-2 last:border-0">
+                      <span className="text-zinc-300 font-medium">{price.name}</span>
+                      <div className="flex flex-col items-end">
+                          <span className="text-white font-mono font-bold">${price.gasoline}</span>
+                          <span className="text-[10px] text-zinc-500">Reg</span>
+                      </div>
+                  </div>
+              ))}
+          </div>
+      </div>
+
+      {/* 12. City of the Day (New) */}
+      <div className={widgetClass}>
+           <div className="flex items-center gap-2 mb-4 text-zinc-400 text-xs font-bold uppercase tracking-wider">
+              <Map size={14} className="text-blue-400" /> City of the Day
+          </div>
+          {city ? (
+              <div className="flex flex-col h-full justify-between">
+                  <div>
+                      <h3 className="text-xl font-bold text-white leading-tight mb-1">{city.name}</h3>
+                      <p className="text-sm text-zinc-400">{city.region}, {city.countryCode}</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                      <div className="flex justify-between items-end">
+                          <div>
+                              <div className="text-[10px] text-zinc-500 uppercase font-bold">Population</div>
+                              <div className="text-lg font-mono text-white">{(city.population / 1000000).toFixed(1)}M</div>
+                          </div>
+                          <div className="text-right">
+                              <div className="text-[10px] text-zinc-500 uppercase font-bold">Explorer Score</div>
+                              <div className="text-lg font-bold text-green-400">9.2</div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          ) : (
+              <div className="flex-1 flex items-center justify-center text-zinc-500 text-xs">Loading City...</div>
+          )}
+      </div>
+
+      {/* 13. Cat of the Day (New) */}
+      <div className={`${widgetClass} p-0`}>
+           {cat ? (
+               <>
+                   <img src={cat.url} alt="Cat" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+                   <div className="absolute top-6 left-6 flex items-center gap-2 text-white/80 text-xs font-bold uppercase tracking-wider z-10">
+                      <Cat size={14} /> Cat of the Day
+                   </div>
+                   <div className="absolute bottom-6 left-6 right-6 z-10">
+                       <h3 className="text-xl font-bold text-white leading-tight mb-1">
+                           {cat.breeds?.[0]?.name || 'Mystery Cat'}
+                       </h3>
+                       <p className="text-xs text-zinc-300 line-clamp-2">
+                           {cat.breeds?.[0]?.temperament || 'A cute furry friend.'}
+                       </p>
+                   </div>
+               </>
+           ) : (
+               <div className="w-full h-full flex items-center justify-center text-zinc-500">
+                   <Cat size={32} className="animate-bounce opacity-20" />
+               </div>
+           )}
       </div>
 
     </div>
