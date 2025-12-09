@@ -106,10 +106,17 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   const getQrUrl = (transparent: boolean) => {
       if (!sharePost) return '';
       const postUrl = `https://infinitysearch-ai.vercel.app/community/${sharePost.id}`;
-      // Use QuickChart API for logo embedding
-      // light=00000000 creates transparent background (hex + alpha)
+      
+      // Use wsrv.nl to resize the logo to 200px width.
+      // This prevents the "maxContentLength size of 1048576 exceeded" error from QuickChart
+      // because the original image at ibb.co might be too large for their fetcher.
+      // We strip the protocol for wsrv or just pass the full url encoded.
+      // wsrv.nl expects the url parameter.
+      const optimizedLogoUrl = `https://wsrv.nl/?url=i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png&w=200&output=png`;
+
       const bgColor = transparent ? '00000000' : 'ffffff';
-      return `https://quickchart.io/qr?text=${encodeURIComponent(postUrl)}&centerImageUrl=${encodeURIComponent(INFINITY_LOGO_URL)}&centerImageSizeRatio=0.25&ecLevel=H&size=500&format=png&margin=1&light=${bgColor}`;
+      
+      return `https://quickchart.io/qr?text=${encodeURIComponent(postUrl)}&centerImageUrl=${encodeURIComponent(optimizedLogoUrl)}&centerImageSizeRatio=0.25&ecLevel=H&size=500&format=png&margin=1&light=${bgColor}`;
   };
 
   const handleDownloadQr = async (transparent: boolean) => {
@@ -118,6 +125,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       try {
           const url = getQrUrl(transparent);
           const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch QR");
+          
           const blob = await response.blob();
           const objectUrl = URL.createObjectURL(blob);
           
@@ -130,6 +139,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           URL.revokeObjectURL(objectUrl);
       } catch (e) {
           console.error("QR Download failed", e);
+          // Fallback: just open in new tab if download fails due to CORS or other issues
           window.open(getQrUrl(transparent), '_blank');
       }
       setIsDownloading(false);
