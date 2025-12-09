@@ -37,25 +37,24 @@ interface BibleResponse {
   }[];
   translation_id: string;
   translation_name: string;
+  isAiGenerated?: boolean;
 }
 
 export const fetchBiblePassage = async (query: string, versionId: string = 'kjv', language: 'en' | 'es' = 'en'): Promise<BibleResponse | null> => {
   try {
-    // 1. Check if query looks like a specific reference (e.g., "John 3:16" or "Juan 3:16")
-    // Simple regex for Number(optional) Name Chapter:Verse
+    const ai = getAiClient();
+    
+    // 1. Identify intent with AI
     const referenceRegex = /^\d?\s?[a-zA-Z\u00C0-\u00FF]+\s\d+(:(\d+([-\u2013\u2014]\d+)?)?)?$/;
     let reference = query;
+    let isTopical = !referenceRegex.test(query);
 
-    // 2. If it's a keyword search (e.g., "verses about hope", "versiculos de amor"), use Gemini to get a reference first
-    // We also use Gemini to normalize book names from Spanish to English standard if needed by the API,
-    // though bible-api.com handles many languages well, standardization helps.
-    if (!referenceRegex.test(query) || language === 'es') {
-        const ai = getAiClient();
+    if (isTopical || language === 'es') {
         const prompt = `User query: "${query}". 
         Target Language Context: ${language === 'es' ? 'Spanish' : 'English'}.
         
         Task: Identify the single most relevant Bible chapter or verse reference for this query.
-        - If the user asks for a topic (e.g. "love", "paz"), find the best verse.
+        - If the user asks for a topic (e.g. "love", "paz"), find the BEST possible verse that captures the essence.
         - If the user provides a book name in Spanish (e.g. "Salmos"), map it to the standard reference (e.g. "Psalms 23").
         
         Return ONLY the standard reference string (e.g., "Jeremiah 29:11" or "Psalms 23"). 
@@ -70,26 +69,49 @@ export const fetchBiblePassage = async (query: string, versionId: string = 'kjv'
         if (text) reference = text;
     }
 
-    // 3. Fetch from API
-    // Ensure we encode the reference properly
+    // 2. Try Fetching from API
     const url = `https://bible-api.com/${encodeURIComponent(reference)}?translation=${versionId}`;
-    console.log("Fetching Bible API:", url);
-
     const response = await fetch(url);
     
-    if (!response.ok) {
-        // Fallback: If exact version fails (some rare versions might have issues), try KJV or RVR based on lang
-        if (versionId !== 'kjv' && language === 'en') {
-             return fetchBiblePassage(reference, 'kjv', 'en');
-        }
-        if (versionId !== 'rvr' && language === 'es') {
-             return fetchBiblePassage(reference, 'rvr', 'es');
-        }
-        return null;
+    if (response.ok) {
+        const data = await response.json();
+        return data;
     }
 
-    const data = await response.json();
-    return data;
+    // 3. AI Fallback (If API fails or translation unavailable)
+    // This makes the search truly "AI Powered" by ensuring a result even for complex or obscure requests
+    console.log("Bible API failed, falling back to AI generation...");
+    
+    const fallbackPrompt = `Provide the full text for the Bible passage: "${reference}" (or the verse best matching "${query}").
+    Translation Style: ${versionId === 'kjv' ? 'King James (Old English)' : 'Modern English'}.
+    Language: ${language === 'es' ? 'Spanish' : 'English'}.
+    
+    Return the response as JSON matching this structure:
+    {
+      "reference": "Book Chapter:Verse",
+      "text": "Full text of the passage...",
+      "translation_name": "AI Generated Translation",
+      "verses": [
+         { "book_name": "Book", "chapter": 1, "verse": 1, "text": "Verse text..." }
+      ]
+    }`;
+
+    const fallbackResult = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: fallbackPrompt,
+        config: { responseMimeType: "application/json" }
+    });
+
+    if (fallbackResult.text) {
+        const data = JSON.parse(fallbackResult.text);
+        return {
+            ...data,
+            translation_id: 'ai-gen',
+            isAiGenerated: true
+        };
+    }
+
+    return null;
 
   } catch (error) {
     console.error("Bible Fetch Error:", error);

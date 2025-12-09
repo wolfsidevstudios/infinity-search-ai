@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -9,11 +9,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community';
-  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => void;
+  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe';
+  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -64,7 +64,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -140,9 +140,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const getPlaceholder = () => {
       if (isListening) return "Listening...";
       if (activeMode === 'notion') return "Search your workspace...";
-      if (activeMode === 'bible') return "Search verse or topic...";
+      if (activeMode === 'bible') return "Search verse, topic, or emotion...";
       if (activeMode === 'podcast') return "Search for podcasts...";
       if (activeMode === 'community') return "Search community posts...";
+      if (activeMode === 'recipe') return "What do you want to cook?";
       if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
       return "Ask anything...";
   };
@@ -153,6 +154,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           case 'bible': return 'Scripture';
           case 'podcast': return 'Podcast';
           case 'community': return 'Community';
+          case 'recipe': return 'Recipes';
           default: return 'Web';
       }
   };
@@ -167,12 +169,13 @@ const SearchInput: React.FC<SearchInputProps> = ({
           case 'bible': return <BookOpen size={16} />;
           case 'podcast': return <Mic size={16} />;
           case 'community': return <Users size={16} />;
+          case 'recipe': return <Utensils size={16} />;
           default: return <Globe size={16} />;
       }
   };
 
   const renderDropdownItem = (
-      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community', 
+      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe', 
       icon: React.ReactNode, 
       label: string,
       colorClass: string,
@@ -216,7 +219,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onClick={() => setShowDropdown(!showDropdown)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
-                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-orange-400'}`}>
+                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'recipe' ? 'text-orange-400' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-[#e8dccb]'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
@@ -227,8 +230,9 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   {showDropdown && (
                     <div className="absolute top-10 left-0 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-1.5 animate-slideUp flex flex-col gap-0.5 overflow-hidden z-50">
                         {renderDropdownItem('web', <Globe size={16} />, 'Web Search', 'bg-white text-black')}
-                        {renderDropdownItem('community', <Users size={16} />, 'Community', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
+                        {renderDropdownItem('recipe', <Utensils size={16} />, 'Recipes', 'bg-orange-900/30 text-orange-400 border border-orange-800/50')}
                         {renderDropdownItem('bible', <BookOpen size={16} />, 'Scripture', 'bg-[#3c3022] text-[#e8dccb] border border-[#5c4b37]')}
+                        {renderDropdownItem('community', <Users size={16} />, 'Community', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
                         {renderDropdownItem('podcast', <Mic size={16} />, 'Podcast', 'bg-red-900/20 text-red-200 border border-red-900/50')}
                         
                         <div className="h-[1px] bg-white/10 mx-1 my-1"></div>

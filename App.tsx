@@ -12,6 +12,7 @@ import NotionResultsView from './components/NotionResultsView';
 import BibleResultsView from './components/BibleResultsView';
 import PodcastResultsView from './components/PodcastResultsView';
 import CommunityView from './components/CommunityView';
+import RecipeResultsView from './components/RecipeResultsView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -28,6 +29,7 @@ import { supabase } from './services/supabaseClient';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
 import { searchPodcasts } from './services/podcastService';
+import { searchRecipes } from './services/recipeService';
 import { searchTwitter } from './services/twitterService';
 import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
@@ -80,7 +82,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -116,6 +118,9 @@ const App: React.FC = () => {
 
   // Weather State for Home Greeting
   const [weather, setWeather] = useState<WeatherData | null>(null);
+
+  // State for Recipes
+  const [recipes, setRecipes] = useState<any[]>([]);
 
   // -- INIT & ROUTING LOGIC --
   useEffect(() => {
@@ -332,7 +337,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => {
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -385,7 +390,7 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => {
      try {
       if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
@@ -409,6 +414,11 @@ const App: React.FC = () => {
       } else if (mode === 'community') {
           // Just set state to results, the view will handle the fetching
           setSearchState({ status: 'results', query, summary: `Searching community...`, sources: [], media: [] });
+      } else if (mode === 'recipe') {
+          const results = await searchRecipes(query);
+          setRecipes(results); // Store in dedicated recipe state
+          setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
+          addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
       } else {
           // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
@@ -440,7 +450,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -503,6 +513,7 @@ const App: React.FC = () => {
           if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
           else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
           else if (item.title.startsWith("Podcast: ")) { setSearchMode('podcast'); handleSearch(item.title.replace("Podcast: ", ""), 'podcast'); }
+          else if (item.title.startsWith("Recipe: ")) { setSearchMode('recipe'); handleSearch(item.title.replace("Recipe: ", ""), 'recipe'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
@@ -631,6 +642,8 @@ const App: React.FC = () => {
                             <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} />
                         ) : searchMode === 'community' ? (
                             <CommunityView user={sessionUser} initialQuery={searchState.query} />
+                        ) : searchMode === 'recipe' ? (
+                            <RecipeResultsView recipes={recipes} query={searchState.query} />
                         ) : (
                             <>
                                 <div className="max-w-4xl mx-auto mb-6">

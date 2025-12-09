@@ -52,3 +52,23 @@ export const fetchRandomRecipes = async (count: number = 3): Promise<Recipe[]> =
     return [];
   }
 };
+
+export const searchRecipes = async (query: string): Promise<Recipe[]> => {
+  try {
+    // TheMealDB search endpoint
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+    
+    if (!response.ok) {
+        throw new Error("Recipe search failed");
+    }
+
+    const data = await response.json();
+    
+    if (!data.meals) return [];
+
+    return data.meals.map((meal: any) => mapMealToRecipe(meal));
+  } catch (error) {
+    console.error("Recipe Search Error:", error);
+    return [];
+  }
+};
