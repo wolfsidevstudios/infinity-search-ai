@@ -14,6 +14,20 @@ export const fetchPosts = async (): Promise<CommunityPost[]> => {
   return data as CommunityPost[];
 };
 
+export const fetchPostById = async (id: string): Promise<CommunityPost | null> => {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching post:', error);
+    return null;
+  }
+  return data as CommunityPost;
+};
+
 export const searchPosts = async (query: string): Promise<CommunityPost[]> => {
   // Simple text search on content column
   const { data, error } = await supabase

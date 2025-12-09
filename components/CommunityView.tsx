@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
-import { fetchPosts, createPost, searchPosts, likePost } from '../services/communityService';
+import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
   initialQuery?: string;
+  initialPostId?: string | null;
 }
 
-const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => {
+const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -19,20 +20,34 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   
+  // Share State
+  const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
+  const [copied, setCopied] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadPosts();
-  }, [initialQuery]);
+  }, [initialQuery, initialPostId]);
 
   const loadPosts = async () => {
     setLoading(true);
     let data = [];
-    if (initialQuery) {
+    
+    if (initialPostId) {
+        const singlePost = await fetchPostById(initialPostId);
+        if (singlePost) {
+            data = [singlePost];
+        } else {
+            // Fallback if ID invalid
+            data = await fetchPosts();
+        }
+    } else if (initialQuery) {
         data = await searchPosts(initialQuery);
     } else {
         data = await fetchPosts();
     }
+    
     setPosts(data);
     setLoading(false);
   };
@@ -77,6 +92,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
       await likePost(post.id, post.likes_count);
   };
 
+  const handleCopyLink = () => {
+      if (!sharePost) return;
+      const url = `https://infinitysearch-ai.vercel.app/community/${sharePost.id}`;
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+  };
+
   const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
       const now = new Date();
@@ -88,12 +111,31 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
       return date.toLocaleDateString();
   };
 
+  const clearFilters = () => {
+      // Reload full feed
+      if (initialPostId) {
+          // This prop is usually from App.tsx URL, so to 'clear' we'd ideally change URL, 
+          // but strictly within this component we can just fetch all posts.
+          window.history.pushState({}, '', '/community');
+          setLoading(true);
+          fetchPosts().then(data => {
+              setPosts(data);
+              setLoading(false);
+          });
+      }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto pb-20 animate-slideUp">
       
       {/* Header */}
       <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Infinity Community</h2>
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              {initialPostId && (
+                  <button onClick={clearFilters} className="mr-2 hover:bg-zinc-800 p-1 rounded-full transition-colors"><ArrowLeft size={20}/></button>
+              )}
+              Infinity Community
+          </h2>
           {initialQuery && (
               <div className="text-sm text-blue-400 font-medium flex items-center gap-1">
                   <Search size={14} /> Result for "{initialQuery}"
@@ -101,8 +143,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
           )}
       </div>
 
-      {/* Compose Box */}
-      {!initialQuery && (
+      {/* Compose Box - Only show if not viewing a single specific post (unless we want to allow replying later) */}
+      {!initialQuery && !initialPostId && (
           <div className="px-4 mb-8">
             <div className="flex gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0">
@@ -164,7 +206,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
           {loading ? (
               <div className="py-10 text-center text-zinc-500">Loading community...</div>
           ) : posts.length === 0 ? (
-              <div className="py-10 text-center text-zinc-500">No posts yet. Be the first!</div>
+              <div className="py-10 text-center text-zinc-500">No posts found.</div>
           ) : (
               posts.map((post) => (
                   <div key={post.id} className="p-4 border-b border-zinc-800 hover:bg-zinc-900/30 transition-colors cursor-pointer animate-fadeIn">
@@ -214,7 +256,10 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
                                       </div>
                                       <span className="text-xs">{post.likes_count}</span>
                                   </button>
-                                  <button className="flex items-center gap-2 group hover:text-green-400 transition-colors">
+                                  <button 
+                                    onClick={() => setSharePost(post)}
+                                    className="flex items-center gap-2 group hover:text-green-400 transition-colors"
+                                  >
                                       <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
                                           <Share2 size={18} />
                                       </div>
@@ -226,6 +271,70 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery }) => 
               ))
           )}
       </div>
+
+      {/* Share Modal */}
+      {sharePost && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" onClick={() => setSharePost(null)}>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl relative animate-slideUp" onClick={e => e.stopPropagation()}>
+                <button onClick={() => setSharePost(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+                    <X size={20} />
+                </button>
+                
+                <h3 className="text-xl font-bold text-white mb-6 text-center">Share Post</h3>
+                
+                {/* QR Code */}
+                <div className="flex justify-center mb-6">
+                    <div className="p-3 bg-white rounded-xl shadow-lg">
+                        <img 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}`} 
+                            alt="QR Code" 
+                            className="w-32 h-32" 
+                        />
+                    </div>
+                </div>
+
+                {/* URL Input */}
+                <div className="flex items-center gap-2 bg-black border border-zinc-800 rounded-xl p-1.5 mb-6 focus-within:border-blue-500 transition-colors">
+                    <div className="pl-3 pr-2 text-zinc-500">
+                        <LinkIcon size={16} />
+                    </div>
+                    <input 
+                        type="text" 
+                        readOnly 
+                        value={`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`} 
+                        className="bg-transparent text-zinc-300 text-sm flex-1 outline-none truncate font-mono"
+                    />
+                    <button 
+                        onClick={handleCopyLink}
+                        className={`p-2.5 rounded-lg text-white font-medium text-xs transition-all ${copied ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}
+                    >
+                        {copied ? 'Copied!' : 'Copy'}
+                    </button>
+                </div>
+
+                {/* Social Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                    <a 
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 py-3 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl font-bold text-sm transition-colors"
+                    >
+                        <Facebook size={18} /> Facebook
+                    </a>
+                    <a 
+                        href={`https://www.reddit.com/submit?url=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}&title=${encodeURIComponent("Check out this post on Infinity")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-2 py-3 bg-[#FF4500] hover:bg-[#e03d00] text-white rounded-xl font-bold text-sm transition-colors"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+                        Reddit
+                    </a>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

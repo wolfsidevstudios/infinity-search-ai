@@ -63,6 +63,7 @@ const App: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community'>('home');
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
+  const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
   
   // Appearance
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
@@ -123,6 +124,7 @@ const App: React.FC = () => {
         
         // 1. Check Deep Link Path
         const path = window.location.pathname.replace('/', '');
+        
         if (session) {
             setSessionUser(session.user);
             restoreTokens();
@@ -133,7 +135,13 @@ const App: React.FC = () => {
                  // handled in auth listener
             } else {
                  setView('app');
-                 if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community'].includes(path)) {
+                 
+                 // Handle specific routes
+                 if (path.startsWith('community/')) {
+                     setActiveTab('community');
+                     const postId = path.split('/')[1];
+                     if (postId) setInitialCommunityPostId(postId);
+                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -193,10 +201,16 @@ const App: React.FC = () => {
   // Update URL on Tab Change
   useEffect(() => {
       if (view === 'app') {
-          const path = activeTab === 'home' ? '/' : `/${activeTab}`;
+          let path = '/';
+          if (activeTab !== 'home') {
+              path = `/${activeTab}`;
+              if (activeTab === 'community' && initialCommunityPostId) {
+                  path = `/community/${initialCommunityPostId}`;
+              }
+          }
           window.history.pushState({}, '', path);
       }
-  }, [activeTab, view]);
+  }, [activeTab, view, initialCommunityPostId]);
 
   const restoreTokens = () => {
         const savedDriveToken = localStorage.getItem('google_drive_token');
@@ -453,6 +467,10 @@ const App: React.FC = () => {
 
   const handleTabChange = (tab: any) => {
     setActiveTab(tab);
+    if (tab === 'community') {
+        // Clear specific post state when clicking tab
+        setInitialCommunityPostId(null);
+    }
     if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
          handleMediaSearch(searchState.query, mediaType);
     }
@@ -623,7 +641,7 @@ const App: React.FC = () => {
 
             {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} initialTab={discoverViewTab} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
-            {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} /></div>}
+            {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
