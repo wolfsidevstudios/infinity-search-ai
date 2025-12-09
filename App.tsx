@@ -544,7 +544,7 @@ const App: React.FC = () => {
                             <SearchInput 
                                 onSearch={handleSearch} 
                                 isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
-                                centered={false}
+                                centered={true}
                                 activeMode={searchMode}
                                 onModeChange={handleModeChange}
                                 onFileSelect={handleFileSelect}
