@@ -2,13 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
   initialQuery?: string;
   initialPostId?: string | null;
 }
+
+const INFINITY_LOGO_URL = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png';
 
 const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -23,6 +25,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   // Share State
   const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -100,6 +103,38 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       setTimeout(() => setCopied(false), 2000);
   };
 
+  const getQrUrl = (transparent: boolean) => {
+      if (!sharePost) return '';
+      const postUrl = `https://infinitysearch-ai.vercel.app/community/${sharePost.id}`;
+      // Use QuickChart API for logo embedding
+      // light=00000000 creates transparent background (hex + alpha)
+      const bgColor = transparent ? '00000000' : 'ffffff';
+      return `https://quickchart.io/qr?text=${encodeURIComponent(postUrl)}&centerImageUrl=${encodeURIComponent(INFINITY_LOGO_URL)}&centerImageSizeRatio=0.25&ecLevel=H&size=500&format=png&margin=1&light=${bgColor}`;
+  };
+
+  const handleDownloadQr = async (transparent: boolean) => {
+      if (!sharePost) return;
+      setIsDownloading(true);
+      try {
+          const url = getQrUrl(transparent);
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.download = `infinity-post-${sharePost.id.slice(0,8)}-qr${transparent ? '-transparent' : ''}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(objectUrl);
+      } catch (e) {
+          console.error("QR Download failed", e);
+          window.open(getQrUrl(transparent), '_blank');
+      }
+      setIsDownloading(false);
+  };
+
   const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
       const now = new Date();
@@ -114,8 +149,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   const clearFilters = () => {
       // Reload full feed
       if (initialPostId) {
-          // This prop is usually from App.tsx URL, so to 'clear' we'd ideally change URL, 
-          // but strictly within this component we can just fetch all posts.
           window.history.pushState({}, '', '/community');
           setLoading(true);
           fetchPosts().then(data => {
@@ -143,7 +176,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           )}
       </div>
 
-      {/* Compose Box - Only show if not viewing a single specific post (unless we want to allow replying later) */}
+      {/* Compose Box */}
       {!initialQuery && !initialPostId && (
           <div className="px-4 mb-8">
             <div className="flex gap-4">
@@ -282,15 +315,33 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                 
                 <h3 className="text-xl font-bold text-white mb-6 text-center">Share Post</h3>
                 
-                {/* QR Code */}
+                {/* QR Code - Display with White Background for visibility in Dark Mode */}
                 <div className="flex justify-center mb-6">
-                    <div className="p-3 bg-white rounded-xl shadow-lg">
+                    <div className="p-3 bg-white rounded-xl shadow-lg relative group">
                         <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}`} 
+                            src={getQrUrl(false)} 
                             alt="QR Code" 
-                            className="w-32 h-32" 
+                            className="w-40 h-40 object-contain" 
                         />
                     </div>
+                </div>
+
+                {/* Download Actions */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                    <button 
+                        onClick={() => handleDownloadQr(false)}
+                        disabled={isDownloading}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        <Download size={14} /> Download PNG
+                    </button>
+                    <button 
+                        onClick={() => handleDownloadQr(true)}
+                        disabled={isDownloading}
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        <Download size={14} /> Transparent PNG
+                    </button>
                 </div>
 
                 {/* URL Input */}
@@ -328,7 +379,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                         rel="noreferrer"
                         className="flex items-center justify-center gap-2 py-3 bg-[#FF4500] hover:bg-[#e03d00] text-white rounded-xl font-bold text-sm transition-colors"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
                         Reddit
                     </a>
                 </div>
