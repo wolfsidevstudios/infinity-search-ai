@@ -170,6 +170,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
               {/* Mode Selector */}
               <div className="relative pl-2" ref={menuRef}>
                   <button 
+                    type="button"
                     onClick={() => setShowModeMenu(!showModeMenu)}
                     className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
                   >
@@ -185,6 +186,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                               {MODES.map((mode) => (
                                   <button
                                     key={mode.id}
+                                    type="button"
                                     onClick={() => {
                                         onModeChange(mode.id as any);
                                         setShowModeMenu(false);
