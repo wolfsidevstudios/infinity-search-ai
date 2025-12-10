@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, Globe, Youtube, ChefHat } from 'lucide-react';
 import { Recipe } from '../services/recipeService';
 
@@ -10,8 +11,8 @@ interface RecipeModalProps {
 const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose }) => {
   if (!recipe) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black animate-fadeIn"> 
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black animate-fadeIn"> 
       
       {/* Modal Content - Full Screen */}
       <div className="relative bg-[#0a0a0a] w-full h-full overflow-hidden flex flex-col text-white">
@@ -91,7 +92,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
