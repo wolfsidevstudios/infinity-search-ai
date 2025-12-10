@@ -1,9 +1,9 @@
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Mail } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'mail';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'mail') => void;
   onReset: () => void;
 }
 
@@ -73,6 +73,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="Community"
             >
                 <Users size={activeTab === 'community' ? 28 : 24} strokeWidth={activeTab === 'community' ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('mail')}
+                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                  activeTab === 'mail' 
+                    ? 'text-white' 
+                    : 'text-zinc-500 hover:text-white'
+                }`}
+                title="Infinity Mail"
+            >
+                <Mail size={activeTab === 'mail' ? 28 : 24} strokeWidth={activeTab === 'mail' ? 2.5 : 2} />
             </button>
 
             <button 

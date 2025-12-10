@@ -23,6 +23,7 @@ import SuccessPage from './components/SuccessPage';
 import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
+import MailView from './components/MailView';
 import { searchWithGemini, getProductRecommendations } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -67,7 +68,7 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'mail'>('home');
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
   
@@ -155,7 +156,7 @@ const App: React.FC = () => {
                      setActiveTab('community');
                      const postId = path.split('/')[1];
                      if (postId) setInitialCommunityPostId(postId);
-                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community'].includes(path)) {
+                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'mail'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -622,7 +623,7 @@ const App: React.FC = () => {
             )}
         </div>
 
-        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
+        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'mail' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
             
             {activeTab === 'home' && (
               <>
@@ -729,6 +730,7 @@ const App: React.FC = () => {
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
             {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
+            {activeTab === 'mail' && <div className="w-full h-full"><MailView /></div>}
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 

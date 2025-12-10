@@ -165,3 +165,19 @@ export interface AppStoreApp {
   link: string;
   rating?: number;
 }
+
+export interface Email {
+  _id: string;
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  html?: string;
+  date: number;
+  ip?: string;
+}
+
+export interface TempMailbox {
+  address: string;
+  token: string;
+}
