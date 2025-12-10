@@ -1,8 +1,6 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { NewsArticle } from '../types';
-import { Calendar, User, ArrowLeft, ExternalLink, Sparkles, Activity, Loader2 } from 'lucide-react';
-import { analyzeSentiment } from '../services/huggingFaceService';
+import { Calendar, User, ArrowLeft, ExternalLink, Sparkles } from 'lucide-react';
 
 interface ArticleDetailViewProps {
   article: NewsArticle;
@@ -11,9 +9,6 @@ interface ArticleDetailViewProps {
 }
 
 const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ article, onBack, onSummarize }) => {
-  const [sentiment, setSentiment] = useState<{ label: string; score: number } | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -23,19 +18,10 @@ const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ article, onBack, 
     });
   };
 
-  const handleAnalyzeSentiment = async () => {
-      setAnalyzing(true);
-      // Analyze description or content
-      const text = article.description || article.content || article.title;
-      const result = await analyzeSentiment(text);
-      setSentiment(result);
-      setAnalyzing(false);
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto pb-20 animate-slideUp">
       {/* Navbar Actions */}
-      <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
+      <div className="flex items-center justify-between mb-8">
         <button 
           onClick={onBack}
           className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all"
@@ -43,38 +29,12 @@ const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({ article, onBack, 
           <ArrowLeft size={18} /> Back
         </button>
         
-        <div className="flex items-center gap-3">
-            {/* Sentiment Button */}
-            <button 
-                onClick={handleAnalyzeSentiment}
-                disabled={analyzing}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md transition-all border ${
-                    sentiment 
-                    ? (sentiment.label === 'POSITIVE' ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-red-500/20 border-red-500/50 text-red-300')
-                    : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
-                }`}
-            >
-                {analyzing ? (
-                    <><Loader2 size={16} className="animate-spin" /> Analyzing...</>
-                ) : sentiment ? (
-                    <>
-                        <Activity size={16} /> 
-                        <span className="font-bold">{sentiment.label}</span>
-                        <span className="opacity-70 text-xs">{(sentiment.score * 100).toFixed(0)}%</span>
-                    </>
-                ) : (
-                    <><Activity size={16} /> Check Vibe</>
-                )}
-            </button>
-
-            {/* Summarize Button */}
-            <button 
-                onClick={() => onSummarize(article.url)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/80 to-blue-500/80 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg transition-all transform hover:scale-105"
-            >
-                <Sparkles size={16} /> Summarize
-            </button>
-        </div>
+        <button 
+            onClick={() => onSummarize(article.url)}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/80 to-blue-500/80 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg transition-all transform hover:scale-105"
+        >
+            <Sparkles size={16} /> Summarize with AI
+        </button>
       </div>
 
       {/* Article Card */}
