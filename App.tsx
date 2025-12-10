@@ -71,7 +71,7 @@ const App: React.FC = () => {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
   const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
-  const [previousTab, setPreviousTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'pricing'>('home');
+  const [previousTab, setPreviousTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
   
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
@@ -584,9 +584,15 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
-  // PURE BLACK BACKGROUND
+  // UPDATED: Custom Background Image from Prompt
   const bgStyle = () => {
-     return { backgroundColor: '#000000', backgroundImage: 'none' };
+     if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
+     // User requested image as default background
+     return { 
+         backgroundImage: `url(https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png)`, 
+         backgroundSize: 'cover', 
+         backgroundPosition: 'center' 
+     };
   };
 
   if (view === 'assets') return <AssetsPage onBack={() => setView('landing')} />;
@@ -618,8 +624,13 @@ const App: React.FC = () => {
 
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
-      <main className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" style={bgStyle()}>
-        
+      <main 
+        className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" 
+        style={bgStyle()}
+      >
+        {/* Heavy dark overlay for text readability over the custom image */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] pointer-events-none z-0" />
+
         {/* Quick Access Bar - Absolute Top Right */}
         {activeTab === 'home' && searchState.status === 'idle' && (
             <div className="absolute top-6 right-8 z-50">

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -46,7 +46,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
+  const [polarToken, setPolarToken] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [isPolarSaved, setIsPolarSaved] = useState(false);
   
   // Bible Settings
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
@@ -56,6 +58,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     // Load saved key on mount
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) setApiKey(savedKey);
+
+    const savedPolarToken = localStorage.getItem('polar_access_token');
+    if (savedPolarToken) setPolarToken(savedPolarToken);
     
     const savedBibleVersion = localStorage.getItem('bible_version') || 'kjv';
     const savedBibleLang = localStorage.getItem('bible_lang') || 'en';
@@ -71,6 +76,16 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     }
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const handleSavePolar = () => {
+      if (polarToken.trim()) {
+          localStorage.setItem('polar_access_token', polarToken.trim());
+      } else {
+          localStorage.removeItem('polar_access_token');
+      }
+      setIsPolarSaved(true);
+      setTimeout(() => setIsPolarSaved(false), 2000);
   };
 
   const handleBibleSave = (version: string) => {
@@ -123,7 +138,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="mt-auto pl-4 text-xs text-zinc-500 font-medium">
-            Infinity v2.3.0
+            Infinity v2.4.0
         </div>
       </div>
 
@@ -452,6 +467,44 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         ) : (
                              <button onClick={onConnectNotion} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
                         )}
+                    </div>
+                </div>
+
+                {/* Polar Card */}
+                <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-6 shadow-sm hover:border-zinc-600 transition-all">
+                    <div className="flex items-center gap-5 mb-6">
+                        <div className="w-14 h-14 bg-black border border-white/20 rounded-2xl flex items-center justify-center shadow-sm">
+                             <DollarSign size={24} className="text-white" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-xl text-white">Polar Payments</h4>
+                            <p className="text-sm text-zinc-500 font-medium">Use your own checkout configuration</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label className="text-xs font-bold text-zinc-500 mb-2 block uppercase tracking-wider">
+                            Access Token
+                        </label>
+                        <div className="flex gap-3">
+                            <input 
+                                type="password" 
+                                value={polarToken}
+                                onChange={(e) => setPolarToken(e.target.value)}
+                                placeholder="polar_pat_..."
+                                className="flex-1 h-12 px-4 bg-black border border-zinc-800 rounded-full focus:ring-2 focus:ring-blue-900 outline-none font-mono text-sm text-white placeholder-zinc-700"
+                            />
+                            <button 
+                                onClick={handleSavePolar}
+                                className={`h-12 px-6 rounded-full font-bold text-white transition-all flex items-center gap-2 ${isPolarSaved ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}
+                            >
+                                {isPolarSaved ? <CheckCircle size={18} /> : <Save size={18} />}
+                                Save
+                            </button>
+                        </div>
+                        <p className="text-xs text-zinc-600 mt-2">
+                            Providing a token allows dynamic checkout generation. Without it, the default link is used.
+                        </p>
                     </div>
                 </div>
 

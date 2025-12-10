@@ -1,9 +1,33 @@
 
-import React from 'react';
-import { Check, Sparkles, Zap, Shield, Crown, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Sparkles, Zap, Shield, Crown, ArrowRight, Loader2 } from 'lucide-react';
+import { createCheckoutSession } from '../services/polarService';
 
 const PricingView: React.FC = () => {
-  const checkoutUrl = "https://sandbox.polar.sh/checkout/polar_c_af59j8QHCjJBb3uzWdbwOjuTbrftmGe3sLXWP26VUf6";
+  const DEFAULT_CHECKOUT_URL = "https://sandbox.polar.sh/checkout/polar_c_af59j8QHCjJBb3uzWdbwOjuTbrftmGe3sLXWP26VUf6";
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+
+  const handleCheckout = async () => {
+      const polarToken = localStorage.getItem('polar_access_token');
+      
+      if (!polarToken) {
+          window.open(DEFAULT_CHECKOUT_URL, '_blank');
+          return;
+      }
+
+      setLoadingCheckout(true);
+      // Attempt to create dynamic session
+      const dynamicUrl = await createCheckoutSession(polarToken);
+      
+      if (dynamicUrl) {
+          window.location.href = dynamicUrl;
+      } else {
+          // Fallback if API fails or token is invalid
+          alert("Could not generate dynamic checkout. Falling back to default link.");
+          window.open(DEFAULT_CHECKOUT_URL, '_blank');
+      }
+      setLoadingCheckout(false);
+  };
 
   const features = [
     "Unlimited Deep Think queries (Gemini 2.5 Pro)",
@@ -83,14 +107,13 @@ const PricingView: React.FC = () => {
                   ))}
                </div>
 
-               <a 
-                 href={checkoutUrl}
-                 target="_blank"
-                 rel="noreferrer"
-                 className="w-full py-4 bg-white text-black rounded-2xl font-bold text-lg hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-[1.02]"
+               <button 
+                 onClick={handleCheckout}
+                 disabled={loadingCheckout}
+                 className="w-full py-4 bg-white text-black rounded-2xl font-bold text-lg hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed"
                >
-                 Upgrade Now <ArrowRight size={20} />
-               </a>
+                 {loadingCheckout ? <Loader2 className="animate-spin" /> : <>Upgrade Now <ArrowRight size={20} /></>}
+               </button>
                <p className="text-center text-xs text-zinc-500 mt-4">Secure payment via Polar.sh</p>
             </div>
           </div>
@@ -122,4 +145,3 @@ const PricingView: React.FC = () => {
 };
 
 export default PricingView;
-    
