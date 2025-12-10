@@ -393,7 +393,7 @@ const App: React.FC = () => {
       try {
           const { error } = await supabase.auth.signInWithOAuth({
               provider: 'github',
-              options: { redirectTo: window.location.origin, scopes: 'repo' }
+              options: { redirectTo: window.location.origin, scopes: 'repo read:user user:email' }
           });
           if (error) throw error;
       } catch (e) {
@@ -701,6 +701,20 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
+  const renderPill = (mode: any, label: string, icon: React.ReactNode) => (
+      <button
+          key={mode}
+          onClick={() => handleModeChange(mode)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-md border ${
+              searchMode === mode
+              ? 'bg-white text-black border-white shadow-lg scale-105'
+              : 'bg-black/40 text-zinc-300 border-white/10 hover:bg-black/60 hover:text-white hover:border-white/20'
+          }`}
+      >
+          {icon} {label}
+      </button>
+  );
+
   // UPDATED: Pure black background logic as requested
   const bgStyle = () => {
      if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
@@ -814,6 +828,22 @@ const App: React.FC = () => {
                                 onCameraClick={() => setShowCamera(true)}
                                 isPro={isPro}
                             />
+                        </div>
+
+                        {/* Quick Mode Pills */}
+                        <div className="flex gap-2 overflow-x-auto w-full justify-center pb-2 hide-scrollbar">
+                            {renderPill('web', 'Web', <Globe size={14} />)}
+                            {renderPill('web', 'Images', <ImageIcon size={14} />)}
+                            {renderPill('web', 'News', <Newspaper size={14} />)}
+                            
+                            {isPro && (
+                                <>
+                                    {renderPill('shopping', 'Shopping', <ShoppingBag size={14} />)}
+                                    {renderPill('flight', 'Flights', <Plane size={14} />)}
+                                    {renderPill('drive', 'Drive', <HardDrive size={14} />)}
+                                    {renderPill('code', 'Code', <Terminal size={14} />)}
+                                </>
+                            )}
                         </div>
 
                         {/* Greeting & Brief Link */}

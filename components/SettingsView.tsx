@@ -132,7 +132,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleConnectGithub = async () => {
       try {
-          const { data, error } = await supabase.auth.linkIdentity({ provider: 'github' });
+          const { data, error } = await supabase.auth.linkIdentity({ 
+            provider: 'github',
+            options: {
+                scopes: 'repo read:user user:email'
+            }
+          });
           if (error) throw error;
           // Redirect handled by Supabase
       } catch (e) {
@@ -250,7 +255,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* ... (Other Tabs remain unchanged) ... */}
           {/* TAB: SUBSCRIPTION */}
           {activeTab === 'subscription' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
