@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -20,7 +20,7 @@ interface SettingsViewProps {
   onUpgradeClick: () => void;
 }
 
-type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription';
 
 const WALLPAPERS = [
   { id: 'default', url: null, name: 'Default Black', isPro: false },
@@ -108,6 +108,18 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       localStorage.setItem('infinity_ai_model', model);
   };
 
+  const handleCancelSubscription = () => {
+      if (window.confirm("Are you sure you want to cancel your Infinity Pro subscription? You will lose access to premium features immediately.")) {
+          localStorage.removeItem('infinity_pro_status');
+          setIsPro(false);
+          alert("Subscription cancelled successfully.");
+          // Reset model if on pro model
+          if (selectedModel !== 'gemini-2.5-flash') {
+              handleModelChange('gemini-2.5-flash');
+          }
+      }
+  };
+
   const navItemClass = (tab: Tab) => `
     flex items-center gap-3 px-6 py-3.5 rounded-full transition-all cursor-pointer font-medium mb-1.5
     ${activeTab === tab 
@@ -130,6 +142,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="flex flex-col gap-1">
             <div onClick={() => setActiveTab('profile')} className={navItemClass('profile')}>
                 <User size={20} /> Profile
+            </div>
+            <div onClick={() => setActiveTab('subscription')} className={navItemClass('subscription')}>
+                <CreditCard size={20} /> Subscription
             </div>
             <div onClick={() => setActiveTab('customization')} className={navItemClass('customization')}>
                 <Palette size={20} /> Customization
@@ -211,6 +226,97 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <LogOut size={18} /> Sign Out
                   </button>
                </div>
+            </div>
+          )}
+
+          {/* TAB: SUBSCRIPTION */}
+          {activeTab === 'subscription' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Subscription Management</h3>
+              
+              {isPro ? (
+                  <div className="bg-zinc-900 border border-yellow-500/30 rounded-[32px] p-8 relative overflow-hidden shadow-2xl">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[80px] pointer-events-none"></div>
+                      
+                      <div className="flex items-center gap-6 mb-8 relative z-10">
+                          <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl rotate-3">
+                              <Crown size={32} className="text-white" fill="currentColor" />
+                          </div>
+                          <div>
+                              <h4 className="text-3xl font-bold text-white mb-1">Infinity Pro</h4>
+                              <div className="flex items-center gap-2 text-green-400 text-sm font-bold uppercase tracking-wider bg-green-900/20 px-3 py-1 rounded-full border border-green-900/50 w-fit">
+                                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                  Active Subscription
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="space-y-5 mb-10 border-t border-white/10 pt-8 relative z-10">
+                          <div className="flex justify-between items-center text-base">
+                              <span className="text-zinc-400 font-medium">Billing Cycle</span>
+                              <span className="text-white font-bold">Monthly</span>
+                          </div>
+                          <div className="flex justify-between items-center text-base">
+                              <span className="text-zinc-400 font-medium">Next Payment</span>
+                              <span className="text-white font-bold">May 12, 2025</span>
+                          </div>
+                          <div className="flex justify-between items-center text-base">
+                              <span className="text-zinc-400 font-medium">Amount</span>
+                              <span className="text-white font-bold text-xl">$20.00</span>
+                          </div>
+                          <div className="flex justify-between items-center text-base">
+                              <span className="text-zinc-400 font-medium">Payment Method</span>
+                              <div className="flex items-center gap-2 text-white font-bold">
+                                  <div className="w-8 h-5 bg-white rounded flex items-center justify-center">
+                                      <div className="w-4 h-4 bg-orange-500 rounded-full opacity-80 -mr-2"></div>
+                                      <div className="w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
+                                  </div>
+                                  •••• 4242
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="flex gap-4 relative z-10">
+                          <button 
+                              onClick={handleCancelSubscription}
+                              className="flex-1 h-14 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-full font-bold transition-all flex items-center justify-center gap-2 group"
+                          >
+                              <AlertTriangle size={18} className="group-hover:scale-110 transition-transform"/> Cancel Subscription
+                          </button>
+                          <button className="flex-1 h-14 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                              Update Payment Method
+                          </button>
+                      </div>
+                      
+                      <p className="text-xs text-zinc-500 mt-6 text-center">
+                          Managed securely via Polar.sh. Canceling will downgrade your account at the end of the billing period.
+                      </p>
+                  </div>
+              ) : (
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-10 text-center relative overflow-hidden group hover:border-zinc-700 transition-all">
+                      <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
+                          <User size={40} className="text-zinc-500 group-hover:text-white transition-colors" />
+                      </div>
+                      <h4 className="text-3xl font-bold text-white mb-2">Free Plan</h4>
+                      <p className="text-zinc-400 mb-8 max-w-sm mx-auto text-lg leading-relaxed">
+                          You are currently on the free tier. Upgrade to unlock the full power of Infinity including 3.0 Pro reasoning and cloud sync.
+                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-left max-w-sm mx-auto mb-10 text-zinc-500 text-sm">
+                          <div className="flex items-center gap-2"><CheckCircle size={14}/> Basic Search</div>
+                          <div className="flex items-center gap-2"><CheckCircle size={14}/> Local History</div>
+                          <div className="flex items-center gap-2 opacity-50"><Lock size={14}/> Deep Reasoning</div>
+                          <div className="flex items-center gap-2 opacity-50"><Lock size={14}/> Cloud Backup</div>
+                      </div>
+
+                      <button 
+                          onClick={onUpgradeClick}
+                          className="h-16 px-10 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform shadow-2xl flex items-center justify-center gap-3 mx-auto text-lg"
+                      >
+                          <Crown size={20} className="text-yellow-600" fill="currentColor" /> Upgrade to Pro
+                      </button>
+                  </div>
+              )}
             </div>
           )}
 
