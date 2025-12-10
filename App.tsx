@@ -43,7 +43,7 @@ import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Globe, Image as ImageIcon, ShoppingBag, Plane, Terminal, HardDrive, Newspaper } from 'lucide-react';
 
 // Helper to mix results from different sources
 const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
@@ -701,6 +701,20 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
+  const renderPill = (mode: any, label: string, icon: React.ReactNode) => (
+      <button
+          key={mode}
+          onClick={() => handleModeChange(mode)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 backdrop-blur-md border ${
+              searchMode === mode
+              ? 'bg-white text-black border-white shadow-lg scale-105'
+              : 'bg-black/40 text-zinc-300 border-white/10 hover:bg-black/60 hover:text-white hover:border-white/20'
+          }`}
+      >
+          {icon} {label}
+      </button>
+  );
+
   // UPDATED: Pure black background logic as requested
   const bgStyle = () => {
      if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
@@ -718,6 +732,7 @@ const App: React.FC = () => {
 
   // Greeting Variables
   const userName = sessionUser?.user_metadata?.full_name?.split(' ')[0] || "there";
+  const userAvatar = sessionUser?.user_metadata?.avatar_url;
   const tempVal = weather?.temperature || 0;
   const tempDisplay = weatherUnit === 'c' ? Math.round(tempVal) : Math.round(tempVal * 9/5 + 32);
   const tempUnitLabel = weatherUnit === 'c' ? 'C' : 'F';
@@ -746,8 +761,23 @@ const App: React.FC = () => {
 
         {/* Quick Access Bar - Absolute Top Right */}
         {activeTab === 'home' && searchState.status === 'idle' && (
-            <div className="absolute top-6 right-8 z-50">
+            <div className="absolute top-6 right-8 z-50 flex items-center gap-4">
                 <QuickAccessBar />
+                
+                {/* Profile Pic with Pro Ring */}
+                {sessionUser && (
+                    <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
+                        <div className="w-full h-full rounded-full overflow-hidden bg-black border border-white/10">
+                            {userAvatar ? (
+                                <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white font-bold">
+                                    {userName.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         )}
 
@@ -785,7 +815,7 @@ const App: React.FC = () => {
                         </a>
                         
                         {/* Search Input */}
-                        <div className="w-full">
+                        <div className="w-full relative z-30">
                             <SearchInput 
                                 onSearch={handleSearch} 
                                 isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
@@ -796,7 +826,24 @@ const App: React.FC = () => {
                                 attachedFile={attachedFile}
                                 onRemoveFile={handleRemoveFile}
                                 onCameraClick={() => setShowCamera(true)}
+                                isPro={isPro}
                             />
+                        </div>
+
+                        {/* Quick Mode Pills */}
+                        <div className="flex gap-2 overflow-x-auto w-full justify-center pb-2 hide-scrollbar">
+                            {renderPill('web', 'Web', <Globe size={14} />)}
+                            {renderPill('web', 'Images', <ImageIcon size={14} />)}
+                            {renderPill('web', 'News', <Newspaper size={14} />)}
+                            
+                            {isPro && (
+                                <>
+                                    {renderPill('shopping', 'Shopping', <ShoppingBag size={14} />)}
+                                    {renderPill('flight', 'Flights', <Plane size={14} />)}
+                                    {renderPill('drive', 'Drive', <HardDrive size={14} />)}
+                                    {renderPill('code', 'Code', <Terminal size={14} />)}
+                                </>
+                            )}
                         </div>
 
                         {/* Greeting & Brief Link */}

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane, HardDrive, Terminal } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane, HardDrive, Terminal, Sparkles, Lock } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -19,6 +19,7 @@ interface SearchInputProps {
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
   onCameraClick: () => void;
+  isPro: boolean;
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ 
@@ -30,7 +31,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
     onFileSelect,
     attachedFile, 
     onRemoveFile,
-    onCameraClick
+    onCameraClick,
+    isPro
 }) => {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -243,9 +245,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   {showDropdown && (
                     <div className="absolute top-10 left-0 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-1.5 animate-slideUp flex flex-col gap-0.5 overflow-hidden z-50">
                         {renderDropdownItem('web', <Globe size={16} />, 'Web Search', 'bg-white text-black')}
-                        {renderDropdownItem('shopping', <ShoppingBag size={16} />, 'Shopping', 'bg-pink-900/30 text-pink-400 border border-pink-800/50')}
-                        {renderDropdownItem('flight', <Plane size={16} />, 'Flights', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
-                        {renderDropdownItem('code', <Terminal size={16} />, 'Code Pilot', 'bg-green-900/30 text-green-400 border border-green-800/50')}
+                        
                         {renderDropdownItem('recipe', <Utensils size={16} />, 'Recipes', 'bg-orange-900/30 text-orange-400 border border-orange-800/50')}
                         {renderDropdownItem('bible', <BookOpen size={16} />, 'Scripture', 'bg-[#3c3022] text-[#e8dccb] border border-[#5c4b37]')}
                         {renderDropdownItem('community', <Users size={16} />, 'Community', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
@@ -253,6 +253,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                         
                         <div className="h-[1px] bg-white/10 mx-1 my-1"></div>
                         
+                        {/* Connected Apps */}
                         {renderDropdownItem('notion', 
                             <div className="w-4 h-4 flex items-center justify-center">
                                 <svg viewBox="0 0 122.88 128.1" fill="currentColor"><path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/></svg>
@@ -260,8 +261,20 @@ const SearchInput: React.FC<SearchInputProps> = ({
                             'Notion', 
                             'bg-white text-black shadow-lg'
                         )}
-                        {renderDropdownItem('drive', <HardDrive size={16} />, 'Ask Drive', 'bg-green-900/20 text-green-200 border border-green-900/50')}
 
+                        {/* Pro Modes - Gated */}
+                        {isPro && (
+                            <>
+                                <div className="h-[1px] bg-white/10 mx-1 my-1"></div>
+                                {renderDropdownItem('shopping', <ShoppingBag size={16} />, 'Shopping', 'bg-pink-900/30 text-pink-400 border border-pink-800/50')}
+                                {renderDropdownItem('flight', <Plane size={16} />, 'Flights', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
+                                {renderDropdownItem('code', <Terminal size={16} />, 'Code Pilot', 'bg-green-900/30 text-green-400 border border-green-800/50')}
+                                {renderDropdownItem('drive', <HardDrive size={16} />, 'Ask Drive', 'bg-green-900/20 text-green-200 border border-green-900/50')}
+                            </>
+                        )}
+
+                        {/* File Upload */}
+                        <div className="h-[1px] bg-white/10 mx-1 my-1"></div>
                         <button 
                             type="button"
                             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-white/10 text-gray-300 transition-all text-left text-sm"
@@ -270,6 +283,18 @@ const SearchInput: React.FC<SearchInputProps> = ({
                             <Upload size={16} />
                             <span className="font-medium">File Upload</span>
                         </button>
+
+                        {/* Upsell for Free Users */}
+                        {!isPro && (
+                            <div className="mt-1 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-2 rounded-lg border border-yellow-500/20 text-center">
+                                <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-yellow-200 uppercase tracking-wide mb-1">
+                                    <Sparkles size={10} /> Pro Features
+                                </div>
+                                <p className="text-[10px] text-zinc-400 leading-tight">
+                                    Unlock Shopping, Flights, Drive & Code Agents
+                                </p>
+                            </div>
+                        )}
                     </div>
                   )}
               </div>
