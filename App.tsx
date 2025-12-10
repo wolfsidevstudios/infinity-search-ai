@@ -17,6 +17,7 @@ import RecipeResultsView from './components/RecipeResultsView';
 import RecipeDetailView from './components/RecipeModal'; 
 import ShoppingResultsView from './components/ShoppingResultsView';
 import FlightResultsView from './components/FlightResultsView';
+import CodePilotView from './components/CodePilotView';
 import SettingsView from './components/SettingsView';
 import MarketingPage from './components/MarketingPage';
 import LoginPage from './components/LoginPage';
@@ -26,7 +27,7 @@ import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
-import { searchWithGemini, getProductRecommendations, askDrive } from './services/geminiService';
+import { searchWithGemini, getProductRecommendations, askDrive, generateCode } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
@@ -96,7 +97,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -112,6 +113,9 @@ const App: React.FC = () => {
   // Google Drive
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
+
+  // GitHub (Code Pilot)
+  const [githubToken, setGithubToken] = useState<string | null>(null);
 
   // Connection Success State
   const [connectedProvider, setConnectedProvider] = useState<string>('');
@@ -271,6 +275,8 @@ const App: React.FC = () => {
         if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
         const savedNotionToken = localStorage.getItem('notion_token');
         if (savedNotionToken) setNotionToken(savedNotionToken);
+        const savedGithubToken = localStorage.getItem('github_token');
+        if (savedGithubToken) setGithubToken(savedGithubToken);
   };
 
   const captureProviderTokens = (session: any) => {
@@ -284,6 +290,13 @@ const App: React.FC = () => {
                setGoogleAccessToken(session.provider_token);
                localStorage.setItem('google_drive_token', session.provider_token);
            }
+           if (provider === 'github') {
+               setGithubToken(session.provider_token);
+               localStorage.setItem('github_token', session.provider_token);
+           }
+      } else {
+          // If we linked an identity, the token might be in the identities array (access token not always exposed this way without re-auth, but supabase handles provider_token on signIn). 
+          // For linked identities, usually re-login is required to refresh session with new tokens.
       }
   };
 
@@ -336,6 +349,7 @@ const App: React.FC = () => {
       // Clear tokens
       setNotionToken(null);
       setGoogleAccessToken(null);
+      setGithubToken(null);
       localStorage.clear(); 
       window.history.pushState({}, '', '/');
   };
@@ -372,6 +386,22 @@ const App: React.FC = () => {
           localStorage.removeItem('connecting_provider');
       }
   };
+
+  const initiateGithubConnect = async () => {
+      saveReturnTab();
+      localStorage.setItem('connecting_provider', 'github');
+      try {
+          const { error } = await supabase.auth.signInWithOAuth({
+              provider: 'github',
+              options: { redirectTo: window.location.origin, scopes: 'repo' }
+          });
+          if (error) throw error;
+      } catch (e) {
+          console.error(e);
+          // Demo fallback logic if Auth fails in preview environment
+          alert("Could not initiate GitHub auth in this environment.");
+      }
+  };
   
   const handleSuccessContinue = () => { 
       // If we just came from Polar payment, show Pricing tab to confirm status
@@ -391,7 +421,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
           alert(`Upgrade to Infinity Pro to access ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode!`);
           setActiveTab('pricing');
@@ -450,7 +480,7 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
      try {
       // Pro Gate Check inside search execution for safety
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
@@ -461,18 +491,14 @@ const App: React.FC = () => {
 
       if (mode === 'drive') {
           if (!googleAccessToken) {
-              // Initiate login if token missing, though UI should probably handle this better
               await initiateGoogleLogin(); 
-              // For UX, return after triggering login
               return; 
           }
           const { text, sources } = await askDrive(query, googleAccessToken);
-          // Map sources to MediaItems for rendering in ResultsView logic or custom view
-          // For simplicity, we treat them as generic 'article' types or custom 'file' types
           const mediaItems: MediaItem[] = sources.map((s, i) => ({
               id: `drive-${i}`,
               type: 'article',
-              thumbnailUrl: '', // Could add icon based on file extension
+              thumbnailUrl: '', 
               contentUrl: s.uri,
               pageUrl: s.uri,
               title: s.title,
@@ -481,6 +507,19 @@ const App: React.FC = () => {
           
           setSearchState({ status: 'results', query, summary: text, sources: sources, media: mediaItems });
           addToHistory({ type: 'search', title: `Drive: ${query}`, summary: text, sources: [] });
+
+      } else if (mode === 'code') {
+          // Code Pilot Mode
+          const result = await generateCode(query);
+          setSearchState({ 
+              status: 'results', 
+              query, 
+              summary: result.explanation, 
+              sources: [], 
+              media: [], 
+              codeResult: result 
+          });
+          addToHistory({ type: 'search', title: `Code: ${query}`, summary: result.explanation, sources: [] });
 
       } else if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
@@ -570,7 +609,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -648,6 +687,7 @@ const App: React.FC = () => {
           else if (item.title.startsWith("Shopping: ")) { setSearchMode('shopping'); handleSearch(item.title.replace("Shopping: ", ""), 'shopping'); }
           else if (item.title.startsWith("Flight: ")) { setSearchMode('flight'); handleSearch(item.title.replace("Flight: ", ""), 'flight'); }
           else if (item.title.startsWith("Drive: ")) { setSearchMode('drive'); handleSearch(item.title.replace("Drive: ", ""), 'drive'); }
+          else if (item.title.startsWith("Code: ")) { setSearchMode('code'); handleSearch(item.title.replace("Code: ", ""), 'code'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };
@@ -779,7 +819,13 @@ const App: React.FC = () => {
                 
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
-                        {searchMode === 'notion' ? (
+                        {searchMode === 'code' && searchState.codeResult ? (
+                            <CodePilotView 
+                                codeResult={searchState.codeResult} 
+                                githubToken={githubToken} 
+                                onConnectGithub={initiateGithubConnect} 
+                            />
+                        ) : searchMode === 'notion' ? (
                             <NotionResultsView items={searchState.media} query={searchState.query} />
                         ) : searchMode === 'bible' ? (
                             <BibleResultsView items={searchState.media} query={searchState.query} />

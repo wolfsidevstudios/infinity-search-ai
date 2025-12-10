@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast' | 'post' | 'file';
+  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast' | 'post' | 'file' | 'code';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
@@ -21,7 +21,7 @@ export interface MediaItem {
 
 export interface CollectionItem {
   id: string;
-  type: 'web' | 'image' | 'audio' | 'note' | 'product' | 'flight' | 'app';
+  type: 'web' | 'image' | 'audio' | 'note' | 'product' | 'flight' | 'app' | 'code';
   content: any; // Flexible payload based on type
   dateAdded: number;
 }
@@ -36,8 +36,16 @@ export interface SearchState {
   aiProductPicks?: ShoppingProduct[];
   productImages?: MediaItem[];
   flights?: Flight[];
+  codeResult?: CodeResult;
   error?: string;
   isDeepSearch?: boolean;
+}
+
+export interface CodeResult {
+    fileName: string;
+    language: string;
+    code: string;
+    explanation: string;
 }
 
 export interface PixabayImage {

@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Github } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
+import { supabase } from '../services/supabaseClient';
 
 interface SettingsViewProps {
   isNotionConnected: boolean;
@@ -56,6 +57,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
   const [bibleVersion, setBibleVersion] = useState<string>('kjv');
 
+  // GitHub State
+  const [isGithubConnected, setIsGithubConnected] = useState(false);
+
   useEffect(() => {
     // Load saved key on mount
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -74,7 +78,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     const savedModel = localStorage.getItem('infinity_ai_model') || 'gemini-2.5-flash';
     setSelectedModel(savedModel);
-  }, []);
+
+    // Check linked identities
+    if (user?.identities) {
+        const gh = user.identities.find(id => id.provider === 'github');
+        if (gh) setIsGithubConnected(true);
+    }
+  }, [user]);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
@@ -117,6 +127,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           if (selectedModel !== 'gemini-2.5-flash') {
               handleModelChange('gemini-2.5-flash');
           }
+      }
+  };
+
+  const handleConnectGithub = async () => {
+      try {
+          const { data, error } = await supabase.auth.linkIdentity({ provider: 'github' });
+          if (error) throw error;
+          // Redirect handled by Supabase
+      } catch (e) {
+          console.error("Error linking GitHub:", e);
+          alert("Failed to link GitHub. Please try again.");
       }
   };
 
@@ -229,6 +250,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
+          {/* ... (Other Tabs remain unchanged) ... */}
           {/* TAB: SUBSCRIPTION */}
           {activeTab === 'subscription' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
@@ -320,7 +342,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* TAB: CUSTOMIZATION */}
           {activeTab === 'customization' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Customization</h3>
@@ -379,7 +400,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-           {/* TAB: WALLPAPERS */}
            {activeTab === 'wallpapers' && (
             <div className="space-y-8 animate-slideUp max-w-4xl">
               <h3 className="text-3xl font-bold text-white">Home Wallpaper</h3>
@@ -423,74 +443,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         </div>
                     </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: CLOUD STORAGE */}
-          {activeTab === 'cloud' && (
-            <div className="space-y-8 animate-slideUp max-w-2xl">
-              <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
-              <p className="text-zinc-500">Connect to Google Drive to automatically back up your search history and notes.</p>
-              
-              <div className="space-y-6">
-                <div className={`flex items-center justify-between p-6 bg-zinc-900 border rounded-[32px] shadow-sm transition-all ${isGoogleDriveConnected ? 'border-green-500/30' : 'border-zinc-800'}`}>
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md">
-                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg text-white">Google Drive</h4>
-                            <p className="text-sm text-zinc-400">{isGoogleDriveConnected ? 'Connected via OAuth' : 'Not connected'}</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        {isGoogleDriveConnected ? (
-                             <>
-                                <a 
-                                    href="https://drive.google.com/drive/u/0/my-drive" 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 text-white font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                                >
-                                    Open Drive <ExternalLink size={14} />
-                                </a>
-                                <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
-                                    <Check size={16} /> Connected
-                                </div>
-                             </>
-                        ) : (
-                             <button onClick={onConnectGoogleDrive} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect Drive</button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Auto-Save Toggle */}
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm relative overflow-hidden">
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isAutoSaveEnabled ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}>
-                            <RefreshCw size={20} className={isAutoSaveEnabled && isGoogleDriveConnected ? 'animate-spin-slow' : ''} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg text-white flex items-center gap-2">
-                                Auto-backup History
-                                {!isPro && <Lock size={14} className="text-yellow-500" />}
-                            </h4>
-                            <p className="text-sm text-zinc-400">Sync search history to 'infinity_search_history.json'</p>
-                        </div>
-                    </div>
-                    
-                    <button 
-                        onClick={() => {
-                            if (!isPro) onUpgradeClick();
-                            else onToggleAutoSave(!isAutoSaveEnabled);
-                        }}
-                        disabled={!isGoogleDriveConnected && isPro}
-                        className={`w-16 h-9 rounded-full relative transition-colors z-10 ${(!isGoogleDriveConnected && isPro) ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
-                    >
-                        <div className={`absolute top-1 w-7 h-7 bg-white rounded-full shadow-md transition-all ${isAutoSaveEnabled ? 'left-[calc(100%-32px)]' : 'left-1'}`}></div>
-                    </button>
-                </div>
               </div>
             </div>
           )}
@@ -568,12 +520,102 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
+          {activeTab === 'cloud' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
+              <p className="text-zinc-500">Connect to Google Drive to automatically back up your search history and notes.</p>
+              
+              <div className="space-y-6">
+                <div className={`flex items-center justify-between p-6 bg-zinc-900 border rounded-[32px] shadow-sm transition-all ${isGoogleDriveConnected ? 'border-green-500/30' : 'border-zinc-800'}`}>
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md">
+                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white">Google Drive</h4>
+                            <p className="text-sm text-zinc-400">{isGoogleDriveConnected ? 'Connected via OAuth' : 'Not connected'}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        {isGoogleDriveConnected ? (
+                             <>
+                                <a 
+                                    href="https://drive.google.com/drive/u/0/my-drive" 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="flex items-center gap-2 text-white font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                                >
+                                    Open Drive <ExternalLink size={14} />
+                                </a>
+                                <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
+                                    <Check size={16} /> Connected
+                                </div>
+                             </>
+                        ) : (
+                             <button onClick={onConnectGoogleDrive} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect Drive</button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Auto-Save Toggle */}
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm relative overflow-hidden">
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isAutoSaveEnabled ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}>
+                            <RefreshCw size={20} className={isAutoSaveEnabled && isGoogleDriveConnected ? 'animate-spin-slow' : ''} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white flex items-center gap-2">
+                                Auto-backup History
+                                {!isPro && <Lock size={14} className="text-yellow-500" />}
+                            </h4>
+                            <p className="text-sm text-zinc-400">Sync search history to 'infinity_search_history.json'</p>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={() => {
+                            if (!isPro) onUpgradeClick();
+                            else onToggleAutoSave(!isAutoSaveEnabled);
+                        }}
+                        disabled={!isGoogleDriveConnected && isPro}
+                        className={`w-16 h-9 rounded-full relative transition-colors z-10 ${(!isGoogleDriveConnected && isPro) ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
+                    >
+                        <div className={`absolute top-1 w-7 h-7 bg-white rounded-full shadow-md transition-all ${isAutoSaveEnabled ? 'left-[calc(100%-32px)]' : 'left-1'}`}></div>
+                    </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB: CONNECTED APPS */}
           {activeTab === 'connected' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Connected Apps</h3>
               
               <div className="space-y-4">
+                 
+                 {/* GitHub Card (NEW) */}
+                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-black border border-zinc-700 rounded-2xl flex items-center justify-center shadow-sm p-3">
+                             <Github size={24} className="text-white" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-xl text-white">GitHub</h4>
+                            <p className="text-sm text-zinc-500 font-medium">{isGithubConnected ? 'Linked to Account' : 'Not linked'}</p>
+                        </div>
+                    </div>
+                    <div>
+                        {isGithubConnected ? (
+                             <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
+                                 <Check size={16} /> Linked
+                             </div>
+                        ) : (
+                             <button onClick={handleConnectGithub} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
+                        )}
+                    </div>
+                </div>
+
                  {/* Notion Card */}
                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
                     <div className="flex items-center gap-5">

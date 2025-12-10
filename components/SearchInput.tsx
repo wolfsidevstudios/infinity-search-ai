@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane, HardDrive } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane, HardDrive, Terminal } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -10,11 +10,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive';
-  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => void;
+  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code';
+  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -65,7 +65,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -142,6 +142,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (isListening) return "Listening...";
       if (activeMode === 'notion') return "Search your workspace...";
       if (activeMode === 'drive') return "Ask Drive about your files...";
+      if (activeMode === 'code') return "Describe the code you need...";
       if (activeMode === 'bible') return "Search verse, topic, or emotion...";
       if (activeMode === 'podcast') return "Search for podcasts...";
       if (activeMode === 'community') return "Search community posts...";
@@ -156,6 +157,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       switch(activeMode) {
           case 'notion': return 'Notion';
           case 'drive': return 'Ask Drive';
+          case 'code': return 'Code Pilot';
           case 'bible': return 'Scripture';
           case 'podcast': return 'Podcast';
           case 'community': return 'Community';
@@ -174,6 +176,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
              </div>
           );
           case 'drive': return <HardDrive size={16} />;
+          case 'code': return <Terminal size={16} />;
           case 'bible': return <BookOpen size={16} />;
           case 'podcast': return <Mic size={16} />;
           case 'community': return <Users size={16} />;
@@ -185,7 +188,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const renderDropdownItem = (
-      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive', 
+      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code', 
       icon: React.ReactNode, 
       label: string,
       colorClass: string,
@@ -229,7 +232,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onClick={() => setShowDropdown(!showDropdown)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
-                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'drive' ? 'text-green-400' : activeMode === 'recipe' ? 'text-orange-400' : activeMode === 'shopping' ? 'text-pink-400' : activeMode === 'flight' ? 'text-sky-400' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-[#e8dccb]'}`}>
+                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'drive' ? 'text-green-400' : activeMode === 'code' ? 'text-green-400' : activeMode === 'recipe' ? 'text-orange-400' : activeMode === 'shopping' ? 'text-pink-400' : activeMode === 'flight' ? 'text-sky-400' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-[#e8dccb]'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
@@ -242,6 +245,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                         {renderDropdownItem('web', <Globe size={16} />, 'Web Search', 'bg-white text-black')}
                         {renderDropdownItem('shopping', <ShoppingBag size={16} />, 'Shopping', 'bg-pink-900/30 text-pink-400 border border-pink-800/50')}
                         {renderDropdownItem('flight', <Plane size={16} />, 'Flights', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}
+                        {renderDropdownItem('code', <Terminal size={16} />, 'Code Pilot', 'bg-green-900/30 text-green-400 border border-green-800/50')}
                         {renderDropdownItem('recipe', <Utensils size={16} />, 'Recipes', 'bg-orange-900/30 text-orange-400 border border-orange-800/50')}
                         {renderDropdownItem('bible', <BookOpen size={16} />, 'Scripture', 'bg-[#3c3022] text-[#e8dccb] border border-[#5c4b37]')}
                         {renderDropdownItem('community', <Users size={16} />, 'Community', 'bg-sky-900/30 text-sky-400 border border-sky-800/50')}

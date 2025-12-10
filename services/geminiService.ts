@@ -1,6 +1,6 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Source, ShoppingProduct } from "../types";
+import { Source, ShoppingProduct, CodeResult } from "../types";
 
 // Helper to get the AI client, prioritizing Local Storage key if set
 export const getAiClient = () => {
@@ -125,6 +125,49 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
         sources: [] 
     };
   }
+};
+
+// Pro Feature: Code Pilot
+export const generateCode = async (query: string): Promise<CodeResult> => {
+    try {
+        const ai = getAiClient();
+        const modelName = getSelectedModel();
+
+        const systemInstruction = `You are an expert software engineer called "Code Pilot".
+        Your task is to write clean, efficient, and well-commented code based on the user's request.
+        
+        Return ONLY valid JSON in the following format:
+        {
+            "fileName": "suggested_filename.ext",
+            "language": "language_name",
+            "code": "The full code string...",
+            "explanation": "A brief explanation of how the code works."
+        }
+        Do not use markdown formatting for the JSON itself. Just raw JSON.`;
+
+        const response = await ai.models.generateContent({
+            model: modelName,
+            contents: query,
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: "application/json"
+            }
+        });
+
+        if (response.text) {
+            return JSON.parse(response.text);
+        }
+        throw new Error("No code generated");
+
+    } catch (error) {
+        console.error("Code Pilot Error:", error);
+        return {
+            fileName: "error.txt",
+            language: "text",
+            code: "Error generating code. Please try again.",
+            explanation: "The AI could not process your request."
+        };
+    }
 };
 
 // Pro Feature: Ask Drive
