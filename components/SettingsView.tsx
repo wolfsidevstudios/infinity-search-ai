@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Github } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
-import { supabase } from '../services/supabaseClient';
 
 interface SettingsViewProps {
   isNotionConnected: boolean;
@@ -57,9 +56,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
   const [bibleVersion, setBibleVersion] = useState<string>('kjv');
 
-  // GitHub State
-  const [isGithubConnected, setIsGithubConnected] = useState(false);
-
   useEffect(() => {
     // Load saved key on mount
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -78,12 +74,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     const savedModel = localStorage.getItem('infinity_ai_model') || 'gemini-2.5-flash';
     setSelectedModel(savedModel);
-
-    // Check linked identities
-    if (user?.identities) {
-        const gh = user.identities.find(id => id.provider === 'github');
-        if (gh) setIsGithubConnected(true);
-    }
   }, [user]);
 
   const handleSaveKey = () => {
@@ -106,12 +96,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       setTimeout(() => setIsPolarSaved(false), 2000);
   };
 
-  const handleBibleSave = (version: string) => {
-      setBibleVersion(version);
-      localStorage.setItem('bible_version', version);
-      localStorage.setItem('bible_lang', bibleLang);
-  };
-
   const handleModelChange = (model: string) => {
       if (model !== 'gemini-2.5-flash' && !isPro) return;
       setSelectedModel(model);
@@ -127,17 +111,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           if (selectedModel !== 'gemini-2.5-flash') {
               handleModelChange('gemini-2.5-flash');
           }
-      }
-  };
-
-  const handleConnectGithub = async () => {
-      try {
-          const { data, error } = await supabase.auth.linkIdentity({ provider: 'github' });
-          if (error) throw error;
-          // Redirect handled by Supabase
-      } catch (e) {
-          console.error("Error linking GitHub:", e);
-          alert("Failed to link GitHub. Please try again.");
       }
   };
 
@@ -250,7 +223,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* ... (Other Tabs remain unchanged) ... */}
           {/* TAB: SUBSCRIPTION */}
           {activeTab === 'subscription' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
@@ -286,16 +258,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               <span className="text-zinc-400 font-medium">Amount</span>
                               <span className="text-white font-bold text-xl">$20.00</span>
                           </div>
-                          <div className="flex justify-between items-center text-base">
-                              <span className="text-zinc-400 font-medium">Payment Method</span>
-                              <div className="flex items-center gap-2 text-white font-bold">
-                                  <div className="w-8 h-5 bg-white rounded flex items-center justify-center">
-                                      <div className="w-4 h-4 bg-orange-500 rounded-full opacity-80 -mr-2"></div>
-                                      <div className="w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
-                                  </div>
-                                  •••• 4242
-                              </div>
-                          </div>
                       </div>
 
                       <div className="flex gap-4 relative z-10">
@@ -304,9 +266,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               className="flex-1 h-14 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-full font-bold transition-all flex items-center justify-center gap-2 group"
                           >
                               <AlertTriangle size={18} className="group-hover:scale-110 transition-transform"/> Cancel Subscription
-                          </button>
-                          <button className="flex-1 h-14 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                              Update Payment Method
                           </button>
                       </div>
                       
@@ -594,28 +553,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               
               <div className="space-y-4">
                  
-                 {/* GitHub Card (NEW) */}
-                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-black border border-zinc-700 rounded-2xl flex items-center justify-center shadow-sm p-3">
-                             <Github size={24} className="text-white" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-xl text-white">GitHub</h4>
-                            <p className="text-sm text-zinc-500 font-medium">{isGithubConnected ? 'Linked to Account' : 'Not linked'}</p>
-                        </div>
-                    </div>
-                    <div>
-                        {isGithubConnected ? (
-                             <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
-                                 <Check size={16} /> Linked
-                             </div>
-                        ) : (
-                             <button onClick={handleConnectGithub} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
-                        )}
-                    </div>
-                </div>
-
                  {/* Notion Card */}
                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
                     <div className="flex items-center gap-5">

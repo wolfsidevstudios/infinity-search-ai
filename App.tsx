@@ -38,7 +38,6 @@ import { searchPodcasts } from './services/podcastService';
 import { searchRecipes, Recipe } from './services/recipeService';
 import { searchShopping, fetchGoogleImages } from './services/shoppingService';
 import { searchFlights } from './services/flightService';
-import { searchTwitter } from './services/twitterService';
 import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
@@ -113,9 +112,6 @@ const App: React.FC = () => {
   // Google Drive
   const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
-
-  // GitHub (Code Pilot)
-  const [githubToken, setGithubToken] = useState<string | null>(null);
 
   // Connection Success State
   const [connectedProvider, setConnectedProvider] = useState<string>('');
@@ -275,8 +271,6 @@ const App: React.FC = () => {
         if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
         const savedNotionToken = localStorage.getItem('notion_token');
         if (savedNotionToken) setNotionToken(savedNotionToken);
-        const savedGithubToken = localStorage.getItem('github_token');
-        if (savedGithubToken) setGithubToken(savedGithubToken);
   };
 
   const captureProviderTokens = (session: any) => {
@@ -290,13 +284,6 @@ const App: React.FC = () => {
                setGoogleAccessToken(session.provider_token);
                localStorage.setItem('google_drive_token', session.provider_token);
            }
-           if (provider === 'github') {
-               setGithubToken(session.provider_token);
-               localStorage.setItem('github_token', session.provider_token);
-           }
-      } else {
-          // If we linked an identity, the token might be in the identities array (access token not always exposed this way without re-auth, but supabase handles provider_token on signIn). 
-          // For linked identities, usually re-login is required to refresh session with new tokens.
       }
   };
 
@@ -305,10 +292,8 @@ const App: React.FC = () => {
       localStorage.setItem('infinity_collections', JSON.stringify(collections));
   }, [collections]);
 
-  // History Sync Logic - Restricted to Pro for Auto Sync, but let's assume auto-sync logic is checked inside Settings toggle
-  // If user enabled it previously but is no longer pro (unlikely), we honor the local storage flag but check permission.
+  // History Sync Logic
   useEffect(() => {
-      // Auto-save logic now gated in settings, but we double check here
       if (isAutoSaveEnabled && isPro && googleAccessToken && history.length > 0) {
           const timeout = setTimeout(() => {
               syncHistoryToDrive(history, googleAccessToken)
@@ -349,7 +334,6 @@ const App: React.FC = () => {
       // Clear tokens
       setNotionToken(null);
       setGoogleAccessToken(null);
-      setGithubToken(null);
       localStorage.clear(); 
       window.history.pushState({}, '', '/');
   };
@@ -386,22 +370,6 @@ const App: React.FC = () => {
           localStorage.removeItem('connecting_provider');
       }
   };
-
-  const initiateGithubConnect = async () => {
-      saveReturnTab();
-      localStorage.setItem('connecting_provider', 'github');
-      try {
-          const { error } = await supabase.auth.signInWithOAuth({
-              provider: 'github',
-              options: { redirectTo: window.location.origin, scopes: 'repo' }
-          });
-          if (error) throw error;
-      } catch (e) {
-          console.error(e);
-          // Demo fallback logic if Auth fails in preview environment
-          alert("Could not initiate GitHub auth in this environment.");
-      }
-  };
   
   const handleSuccessContinue = () => { 
       // If we just came from Polar payment, show Pricing tab to confirm status
@@ -422,6 +390,7 @@ const App: React.FC = () => {
   };
 
   const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
+      // Logic retained for future extensibility even if UI is hidden
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
           alert(`Upgrade to Infinity Pro to access ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode!`);
           setActiveTab('pricing');
@@ -615,7 +584,6 @@ const App: React.FC = () => {
       performSearch(query, mode);
   };
 
-  // ... (Keep existing handleMediaSearch, handleReset, etc.)
   const handleMediaSearch = async (query: string, type: 'image' | 'video') => {
       setMediaGridData({ items: [], loading: true });
       setMediaType(type);
@@ -678,7 +646,6 @@ const App: React.FC = () => {
   };
 
   const handleHistorySelect = (item: HistoryItem) => {
-      // ... same as before
       if (item.type === 'search') {
           if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
           else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
@@ -701,10 +668,8 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
-  // UPDATED: Pure black background logic as requested
   const bgStyle = () => {
      if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-     // User requested pure black background default
      return { backgroundColor: '#000000' };
   };
 
@@ -742,15 +707,12 @@ const App: React.FC = () => {
         className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" 
         style={bgStyle()}
       >
-        {/* Use a simple overlay only if we have a wallpaper image to dim it */}
         {currentWallpaper && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-0" />}
 
-        {/* Quick Access Bar - Absolute Top Right */}
         {activeTab === 'home' && searchState.status === 'idle' && (
             <div className="absolute top-6 right-8 z-50 flex items-center gap-4">
                 <QuickAccessBar />
                 
-                {/* Profile Pic with Pro Ring */}
                 {sessionUser && (
                     <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
                         <div className="w-full h-full rounded-full overflow-hidden bg-black border border-white/10">
@@ -789,9 +751,7 @@ const App: React.FC = () => {
               <>
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
                     
-                    {/* Home Content */}
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
-                        {/* Logo - Updated Bigger Size */}
                         <a href="https://freeimage.host/" target="_blank" rel="noopener noreferrer">
                             <img 
                                 src="https://iili.io/fRRfoF9.png" 
@@ -800,7 +760,6 @@ const App: React.FC = () => {
                             />
                         </a>
                         
-                        {/* Search Input */}
                         <div className="w-full relative z-30">
                             <SearchInput 
                                 onSearch={handleSearch} 
@@ -816,7 +775,6 @@ const App: React.FC = () => {
                             />
                         </div>
 
-                        {/* Greeting & Brief Link */}
                         <div className="text-center space-y-3 mt-4">
                             <p className="text-xl text-zinc-400 font-light">
                                 Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.
@@ -837,11 +795,7 @@ const App: React.FC = () => {
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
                         {searchMode === 'code' && searchState.codeResult ? (
-                            <CodePilotView 
-                                codeResult={searchState.codeResult} 
-                                githubToken={githubToken} 
-                                onConnectGithub={initiateGithubConnect} 
-                            />
+                            <CodePilotView codeResult={searchState.codeResult} />
                         ) : searchMode === 'notion' ? (
                             <NotionResultsView items={searchState.media} query={searchState.query} />
                         ) : searchMode === 'bible' ? (
