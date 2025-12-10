@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -23,10 +23,10 @@ interface SettingsViewProps {
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected';
 
 const WALLPAPERS = [
-  { id: 'default', url: null, name: 'Default Black' },
-  { id: 'abstract', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000&auto=format&fit=crop', name: 'Neon Abstract' },
-  { id: 'user1', url: 'https://iili.io/fItvPs9.jpg', name: 'Dark Gradient' },
-  { id: 'user2', url: 'https://iili.io/fItv4xS.jpg', name: 'Soft Mesh' },
+  { id: 'default', url: null, name: 'Default Black', isPro: false },
+  { id: 'abstract', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000&auto=format&fit=crop', name: 'Neon Abstract', isPro: true },
+  { id: 'user1', url: 'https://iili.io/fItvPs9.jpg', name: 'Dark Gradient', isPro: true },
+  { id: 'user2', url: 'https://iili.io/fItv4xS.jpg', name: 'Soft Mesh', isPro: true },
 ];
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
@@ -50,6 +50,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [isSaved, setIsSaved] = useState(false);
   const [isPolarSaved, setIsPolarSaved] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash');
   
   // Bible Settings
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
@@ -70,6 +71,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     const proStatus = localStorage.getItem('infinity_pro_status');
     setIsPro(proStatus === 'active');
+
+    const savedModel = localStorage.getItem('infinity_ai_model') || 'gemini-2.5-flash';
+    setSelectedModel(savedModel);
   }, []);
 
   const handleSaveKey = () => {
@@ -96,6 +100,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       setBibleVersion(version);
       localStorage.setItem('bible_version', version);
       localStorage.setItem('bible_lang', bibleLang);
+  };
+
+  const handleModelChange = (model: string) => {
+      if (model !== 'gemini-2.5-flash' && !isPro) return;
+      setSelectedModel(model);
+      localStorage.setItem('infinity_ai_model', model);
   };
 
   const navItemClass = (tab: Tab) => `
@@ -273,7 +283,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 {WALLPAPERS.map((wp) => (
                     <div 
                         key={wp.id}
-                        onClick={() => onWallpaperChange(wp.url)}
+                        onClick={() => { if (!wp.isPro || isPro) onWallpaperChange(wp.url); else onUpgradeClick(); }}
                         className={`group cursor-pointer relative aspect-[9/16] rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md ${
                             currentWallpaper === wp.url ? 'border-white scale-105 shadow-xl' : 'border-transparent hover:scale-105'
                         }`}
@@ -291,6 +301,14 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                         {currentWallpaper === wp.url && (
                             <div className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-black shadow-lg">
                                 <Check size={14} />
+                            </div>
+                        )}
+
+                        {wp.isPro && !isPro && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[1px]">
+                                <div className="bg-yellow-500/20 text-yellow-400 p-2 rounded-full border border-yellow-500/50">
+                                    <Lock size={20} />
+                                </div>
                             </div>
                         )}
                         
@@ -342,21 +360,27 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
 
                 {/* Auto-Save Toggle */}
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm">
-                    <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm relative overflow-hidden">
+                    <div className="flex items-center gap-4 relative z-10">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isAutoSaveEnabled ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}>
                             <RefreshCw size={20} className={isAutoSaveEnabled && isGoogleDriveConnected ? 'animate-spin-slow' : ''} />
                         </div>
                         <div>
-                            <h4 className="font-bold text-lg text-white">Auto-backup History</h4>
+                            <h4 className="font-bold text-lg text-white flex items-center gap-2">
+                                Auto-backup History
+                                {!isPro && <Lock size={14} className="text-yellow-500" />}
+                            </h4>
                             <p className="text-sm text-zinc-400">Sync search history to 'infinity_search_history.json'</p>
                         </div>
                     </div>
                     
                     <button 
-                        onClick={() => onToggleAutoSave(!isAutoSaveEnabled)}
-                        disabled={!isGoogleDriveConnected}
-                        className={`w-16 h-9 rounded-full relative transition-colors ${!isGoogleDriveConnected ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
+                        onClick={() => {
+                            if (!isPro) onUpgradeClick();
+                            else onToggleAutoSave(!isAutoSaveEnabled);
+                        }}
+                        disabled={!isGoogleDriveConnected && isPro}
+                        className={`w-16 h-9 rounded-full relative transition-colors z-10 ${(!isGoogleDriveConnected && isPro) ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
                     >
                         <div className={`absolute top-1 w-7 h-7 bg-white rounded-full shadow-md transition-all ${isAutoSaveEnabled ? 'left-[calc(100%-32px)]' : 'left-1'}`}></div>
                     </button>
@@ -365,59 +389,47 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* TAB: BIBLE PREFERENCES */}
-          {activeTab === 'bible' && (
-            <div className="space-y-8 animate-slideUp max-w-2xl">
-              <h3 className="text-3xl font-bold text-white">Bible Preferences</h3>
-              <p className="text-zinc-500">Select your preferred language and translation for Bible search.</p>
-
-              <div className="flex gap-4 mb-6">
-                  <button 
-                    onClick={() => setBibleLang('en')}
-                    className={`px-6 py-3 rounded-full font-bold transition-all ${bibleLang === 'en' ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'}`}
-                  >
-                      English
-                  </button>
-                  <button 
-                    onClick={() => setBibleLang('es')}
-                    className={`px-6 py-3 rounded-full font-bold transition-all ${bibleLang === 'es' ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'}`}
-                  >
-                      Español
-                  </button>
-              </div>
-
-              <div className="space-y-4">
-                  {BIBLE_VERSIONS.filter(v => v.language === bibleLang).map((version) => (
-                      <div 
-                        key={version.id}
-                        onClick={() => handleBibleSave(version.id)}
-                        className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all ${
-                            bibleVersion === version.id 
-                            ? 'border-white bg-zinc-900 shadow-md' 
-                            : 'border-zinc-800 bg-black hover:border-zinc-600'
-                        }`}
-                      >
-                          <div className="flex items-center gap-4">
-                              <BookOpen size={20} className={bibleVersion === version.id ? 'text-white' : 'text-zinc-600'} />
-                              <span className={`font-bold ${bibleVersion === version.id ? 'text-white' : 'text-zinc-500'}`}>
-                                  {version.name}
-                              </span>
-                          </div>
-                          {bibleVersion === version.id && (
-                              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-black">
-                                  <Check size={14} />
-                              </div>
-                          )}
-                      </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
           {/* TAB: AI (API KEY) */}
           {activeTab === 'ai' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Feature AI</h3>
+              
+              {/* Model Switcher */}
+              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl mb-6 relative overflow-hidden">
+                  <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      <Cpu size={20} /> AI Model Selection
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                      {[
+                          { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Fastest reasoning', isPro: false },
+                          { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Balanced performance', isPro: true },
+                          { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', desc: 'Maximum reasoning power', isPro: true },
+                      ].map((model) => (
+                          <div 
+                            key={model.id}
+                            onClick={() => handleModelChange(model.id)}
+                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                                selectedModel === model.id 
+                                ? 'bg-blue-900/20 border-blue-500/50' 
+                                : 'bg-black border-zinc-800 hover:border-zinc-700'
+                            }`}
+                          >
+                              <div>
+                                  <div className={`font-bold ${selectedModel === model.id ? 'text-blue-400' : 'text-white'}`}>{model.name}</div>
+                                  <div className="text-xs text-zinc-500">{model.desc}</div>
+                              </div>
+                              {model.isPro && !isPro ? (
+                                  <Lock size={16} className="text-yellow-500" />
+                              ) : (
+                                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedModel === model.id ? 'border-blue-500 bg-blue-500' : 'border-zinc-600'}`}>
+                                      {selectedModel === model.id && <Check size={12} className="text-white" />}
+                                  </div>
+                              )}
+                          </div>
+                      ))}
+                  </div>
+              </div>
+
               <p className="text-blue-200 leading-relaxed font-medium bg-blue-900/20 p-6 rounded-[24px] border border-blue-900/50">
                 Unlock the full potential of Infinity by connecting your own Google Gemini API key. 
                 Your key is stored locally on your device and never sent to our servers.

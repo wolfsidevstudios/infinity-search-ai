@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Calculator, Palette, Clock, Timer, FileText, Scale, Lightbulb, Activity, Wind, Circle, Fuel, Map, Cat } from 'lucide-react';
+import { Calculator, Palette, Clock, Timer, FileText, Scale, Lightbulb, Activity, Wind, Circle, Fuel, Map, Cat, Plus } from 'lucide-react';
 import { fetchGasPrices, GasPrice } from '../services/gasService';
 import { fetchCityOfTheDay, CityData } from '../services/geoService';
 import { fetchCatOfTheDay, CatData } from '../services/catService';
@@ -22,6 +23,7 @@ const ExploreWidgets: React.FC = () => {
   const [gasPrices, setGasPrices] = useState<GasPrice[]>([]);
   const [city, setCity] = useState<CityData | null>(null);
   const [cat, setCat] = useState<CatData | null>(null);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => setTime(new Date()), 1000);
@@ -41,6 +43,9 @@ const ExploreWidgets: React.FC = () => {
       fetchGasPrices().then(setGasPrices);
       fetchCityOfTheDay().then(setCity);
       fetchCatOfTheDay().then(setCat);
+      
+      const status = localStorage.getItem('infinity_pro_status');
+      if (status === 'active') setIsPro(true);
   }, []);
 
   const evalCalc = () => {
@@ -57,6 +62,17 @@ const ExploreWidgets: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full pb-20">
       
+      {/* ADD WIDGET (Pro) */}
+      <div className={`border-2 border-dashed border-zinc-800 rounded-[32px] flex items-center justify-center p-6 min-h-[200px] cursor-pointer hover:border-zinc-600 transition-all group ${!isPro ? 'opacity-50' : ''}`}>
+          <div className="text-center">
+              <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-zinc-700 transition-colors">
+                  <Plus size={24} className="text-zinc-400 group-hover:text-white"/>
+              </div>
+              <h3 className="font-bold text-zinc-300">Add Custom Widget</h3>
+              {!isPro && <p className="text-xs text-yellow-500 mt-1">Pro Feature</p>}
+          </div>
+      </div>
+
       {/* 1. Calculator */}
       <div className={widgetClass}>
           <div className="flex items-center gap-2 mb-4 text-zinc-400 text-xs font-bold uppercase tracking-wider">

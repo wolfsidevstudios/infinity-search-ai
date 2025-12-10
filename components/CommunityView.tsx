@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
@@ -26,11 +27,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadPosts();
+    const status = localStorage.getItem('infinity_pro_status');
+    if (status === 'active') setIsPro(true);
   }, [initialQuery, initialPostId]);
 
   const loadPosts = async () => {
@@ -95,6 +99,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       await likePost(post.id, post.likes_count);
   };
 
+  const handleHype = async (post: CommunityPost) => {
+      if (!isPro) return alert("Hyping posts is an Infinity Pro feature!");
+      // Optimistic update with double increment for hype
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 5 } : p));
+      // Mock hype logic reusing like mechanism for demo simplicity
+      await likePost(post.id, post.likes_count + 4); 
+  };
+
   const handleCopyLink = () => {
       if (!sharePost) return;
       const url = `https://infinitysearch-ai.vercel.app/community/${sharePost.id}`;
@@ -106,16 +118,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   const getQrUrl = (transparent: boolean) => {
       if (!sharePost) return '';
       const postUrl = `https://infinitysearch-ai.vercel.app/community/${sharePost.id}`;
-      
-      // Use wsrv.nl to resize the logo to 200px width.
-      // This prevents the "maxContentLength size of 1048576 exceeded" error from QuickChart
-      // because the original image at ibb.co might be too large for their fetcher.
-      // We strip the protocol for wsrv or just pass the full url encoded.
-      // wsrv.nl expects the url parameter.
       const optimizedLogoUrl = `https://wsrv.nl/?url=i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png&w=200&output=png`;
-
       const bgColor = transparent ? '00000000' : 'ffffff';
-      
       return `https://quickchart.io/qr?text=${encodeURIComponent(postUrl)}&centerImageUrl=${encodeURIComponent(optimizedLogoUrl)}&centerImageSizeRatio=0.25&ecLevel=H&size=500&format=png&margin=1&light=${bgColor}`;
   };
 
@@ -139,7 +143,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           URL.revokeObjectURL(objectUrl);
       } catch (e) {
           console.error("QR Download failed", e);
-          // Fallback: just open in new tab if download fails due to CORS or other issues
           window.open(getQrUrl(transparent), '_blank');
       }
       setIsDownloading(false);
@@ -157,7 +160,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   };
 
   const clearFilters = () => {
-      // Reload full feed
       if (initialPostId) {
           window.history.pushState({}, '', '/community');
           setLoading(true);
@@ -298,6 +300,15 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                           <Heart size={18} />
                                       </div>
                                       <span className="text-xs">{post.likes_count}</span>
+                                  </button>
+                                  <button 
+                                    onClick={() => handleHype(post)}
+                                    className={`flex items-center gap-2 group transition-colors ${isPro ? 'hover:text-yellow-400' : 'opacity-50 hover:opacity-100'}`}
+                                    title={isPro ? "Hype Post" : "Upgrade to Hype"}
+                                  >
+                                      <div className="p-2 rounded-full group-hover:bg-yellow-500/10 transition-colors">
+                                          <Zap size={18} className={isPro ? 'text-zinc-500 group-hover:text-yellow-400' : 'text-zinc-600'} fill={isPro ? 'none' : 'currentColor'} />
+                                      </div>
                                   </button>
                                   <button 
                                     onClick={() => setSharePost(post)}

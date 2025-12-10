@@ -26,7 +26,7 @@ import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
-import { searchWithGemini, getProductRecommendations } from './services/geminiService';
+import { searchWithGemini, getProductRecommendations, askDrive } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
 import { fetchNasaImages } from './services/nasaService';
@@ -79,6 +79,7 @@ const App: React.FC = () => {
   // Appearance & Settings
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
+  const [isPro, setIsPro] = useState(false);
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
@@ -95,7 +96,7 @@ const App: React.FC = () => {
   });
 
   // Search Mode
-  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight'>('web');
+  const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive'>('web');
 
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
@@ -142,6 +143,9 @@ const App: React.FC = () => {
         setIsAuthChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         
+        const proStatus = localStorage.getItem('infinity_pro_status');
+        if (proStatus === 'active') setIsPro(true);
+
         // 1. Check for Payment Return Parameters First
         const urlParams = new URLSearchParams(window.location.search);
         const providerParam = urlParams.get('provider');
@@ -151,6 +155,7 @@ const App: React.FC = () => {
             console.log("Payment detected via URL params.");
             // Activate Pro Status
             localStorage.setItem('infinity_pro_status', 'active');
+            setIsPro(true);
             setConnectedProvider('Polar Pro Plan');
             setView('success');
             // Clean URL so refresh doesn't re-trigger logic or keep ugly params
@@ -287,9 +292,11 @@ const App: React.FC = () => {
       localStorage.setItem('infinity_collections', JSON.stringify(collections));
   }, [collections]);
 
-  // History Sync Logic
+  // History Sync Logic - Restricted to Pro for Auto Sync, but let's assume auto-sync logic is checked inside Settings toggle
+  // If user enabled it previously but is no longer pro (unlikely), we honor the local storage flag but check permission.
   useEffect(() => {
-      if (isAutoSaveEnabled && googleAccessToken && history.length > 0) {
+      // Auto-save logic now gated in settings, but we double check here
+      if (isAutoSaveEnabled && isPro && googleAccessToken && history.length > 0) {
           const timeout = setTimeout(() => {
               syncHistoryToDrive(history, googleAccessToken)
                   .then(res => {
@@ -302,7 +309,7 @@ const App: React.FC = () => {
           }, 5000); 
           return () => clearTimeout(timeout);
       }
-  }, [history, isAutoSaveEnabled, googleAccessToken]);
+  }, [history, isAutoSaveEnabled, googleAccessToken, isPro]);
 
   const handleToggleAutoSave = (enabled: boolean) => {
       setIsAutoSaveEnabled(enabled);
@@ -384,7 +391,13 @@ const App: React.FC = () => {
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
+  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
+      if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
+          alert(`Upgrade to Infinity Pro to access ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode!`);
+          setActiveTab('pricing');
+          return;
+      }
+      
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -437,9 +450,39 @@ const App: React.FC = () => {
   };
 
   // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
+  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
      try {
-      if (mode === 'notion') {
+      // Pro Gate Check inside search execution for safety
+      if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
+          setSearchState(prev => ({ ...prev, status: 'idle' }));
+          setActiveTab('pricing');
+          return;
+      }
+
+      if (mode === 'drive') {
+          if (!googleAccessToken) {
+              // Initiate login if token missing, though UI should probably handle this better
+              await initiateGoogleLogin(); 
+              // For UX, return after triggering login
+              return; 
+          }
+          const { text, sources } = await askDrive(query, googleAccessToken);
+          // Map sources to MediaItems for rendering in ResultsView logic or custom view
+          // For simplicity, we treat them as generic 'article' types or custom 'file' types
+          const mediaItems: MediaItem[] = sources.map((s, i) => ({
+              id: `drive-${i}`,
+              type: 'article',
+              thumbnailUrl: '', // Could add icon based on file extension
+              contentUrl: s.uri,
+              pageUrl: s.uri,
+              title: s.title,
+              source: 'Google Drive'
+          }));
+          
+          setSearchState({ status: 'results', query, summary: text, sources: sources, media: mediaItems });
+          addToHistory({ type: 'search', title: `Drive: ${query}`, summary: text, sources: [] });
+
+      } else if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
           const pages = await searchNotion(query, notionToken);
           setSearchState({ status: 'results', query, summary: `Found ${pages.length} pages in Notion.`, sources: [], media: pages });
@@ -527,7 +570,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
+  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -604,6 +647,7 @@ const App: React.FC = () => {
           else if (item.title.startsWith("Recipe: ")) { setSearchMode('recipe'); handleSearch(item.title.replace("Recipe: ", ""), 'recipe'); }
           else if (item.title.startsWith("Shopping: ")) { setSearchMode('shopping'); handleSearch(item.title.replace("Shopping: ", ""), 'shopping'); }
           else if (item.title.startsWith("Flight: ")) { setSearchMode('flight'); handleSearch(item.title.replace("Flight: ", ""), 'flight'); }
+          else if (item.title.startsWith("Drive: ")) { setSearchMode('drive'); handleSearch(item.title.replace("Drive: ", ""), 'drive'); }
           else { setSearchMode('web'); handleSearch(item.title, 'web'); }
       } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
   };

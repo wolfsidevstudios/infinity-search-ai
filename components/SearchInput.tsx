@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane } from 'lucide-react';
+import { ArrowRight, ChevronDown, Upload, Globe, FileText, X, BookOpen, Mic, BrainCircuit, Search, Camera, Image as ImageIcon, Users, Utensils, ShoppingBag, Plane, HardDrive } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -9,11 +10,11 @@ interface AttachedFile {
 }
 
 interface SearchInputProps {
-  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => void;
+  onSearch: (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => void;
   isSearching: boolean;
   centered: boolean;
-  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight';
-  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => void;
+  activeMode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive';
+  onModeChange: (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => void;
   onFileSelect?: (file: File) => void;
   attachedFile?: AttachedFile | null;
   onRemoveFile?: () => void;
@@ -64,7 +65,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
     }
   };
 
-  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight') => {
+  const handleModeSelect = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive') => {
       onModeChange(mode);
       setShowDropdown(false);
   };
@@ -140,6 +141,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const getPlaceholder = () => {
       if (isListening) return "Listening...";
       if (activeMode === 'notion') return "Search your workspace...";
+      if (activeMode === 'drive') return "Ask Drive about your files...";
       if (activeMode === 'bible') return "Search verse, topic, or emotion...";
       if (activeMode === 'podcast') return "Search for podcasts...";
       if (activeMode === 'community') return "Search community posts...";
@@ -153,6 +155,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const getModeLabel = () => {
       switch(activeMode) {
           case 'notion': return 'Notion';
+          case 'drive': return 'Ask Drive';
           case 'bible': return 'Scripture';
           case 'podcast': return 'Podcast';
           case 'community': return 'Community';
@@ -170,6 +173,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 <svg viewBox="0 0 122.88 128.1" fill="currentColor"><path d="M21.19,22.46c4,3.23,5.48,3,13,2.49l70.53-4.24c1.5,0,.25-1.49-.25-1.74L92.72,10.5a14.08,14.08,0,0,0-11-3.23l-68.29,5c-2.49.24-3,1.49-2,2.49l9.73,7.72ZM25.42,38.9v74.21c0,4,2,5.48,6.48,5.23l77.52-4.48c4.49-.25,5-3,5-6.23V33.91c0-3.23-1.25-5-4-4.73l-81,4.73c-3,.25-4,1.75-4,5Zm76.53,4c.49,2.24,0,4.48-2.25,4.73L96,48.36v54.79c-3.24,1.74-6.23,2.73-8.72,2.73-4,0-5-1.24-8-5L54.83,62.55V99.66l7.73,1.74s0,4.48-6.23,4.48l-17.2,1c-.5-1,0-3.48,1.75-4l4.48-1.25V52.59l-6.23-.5a4.66,4.66,0,0,1,4.24-5.73l18.44-1.24L87.24,84V49.6l-6.48-.74a4.21,4.21,0,0,1,4-5l17.21-1ZM7.72,5.52l71-5.23C87.49-.46,89.73.05,95.21,4L117.89,20c3.74,2.74,5,3.48,5,6.47v87.42c0,5.47-2,8.71-9,9.21l-82.5,5c-5.24.25-7.73-.5-10.47-4L4.24,102.4c-3-4-4.24-7-4.24-10.46V14.24C0,9.76,2,6,7.72,5.52Z"/></svg>
              </div>
           );
+          case 'drive': return <HardDrive size={16} />;
           case 'bible': return <BookOpen size={16} />;
           case 'podcast': return <Mic size={16} />;
           case 'community': return <Users size={16} />;
@@ -181,7 +185,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const renderDropdownItem = (
-      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight', 
+      mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive', 
       icon: React.ReactNode, 
       label: string,
       colorClass: string,
@@ -225,7 +229,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       onClick={() => setShowDropdown(!showDropdown)}
                       className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors text-xs font-medium"
                   >
-                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'recipe' ? 'text-orange-400' : activeMode === 'shopping' ? 'text-pink-400' : activeMode === 'flight' ? 'text-sky-400' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-[#e8dccb]'}`}>
+                      <span className={`${activeMode === 'web' ? 'text-blue-400' : activeMode === 'notion' ? 'text-white' : activeMode === 'drive' ? 'text-green-400' : activeMode === 'recipe' ? 'text-orange-400' : activeMode === 'shopping' ? 'text-pink-400' : activeMode === 'flight' ? 'text-sky-400' : activeMode === 'podcast' ? 'text-red-400' : activeMode === 'community' ? 'text-sky-400' : 'text-[#e8dccb]'}`}>
                         {getModeIcon()}
                       </span>
                       <span>{getModeLabel()}</span>
@@ -252,6 +256,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                             'Notion', 
                             'bg-white text-black shadow-lg'
                         )}
+                        {renderDropdownItem('drive', <HardDrive size={16} />, 'Ask Drive', 'bg-green-900/20 text-green-200 border border-green-900/50')}
 
                         <button 
                             type="button"

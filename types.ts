@@ -7,7 +7,7 @@ export interface Source {
 
 export interface MediaItem {
   id: string | number;
-  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast' | 'post';
+  type: 'image' | 'video' | 'audio' | 'article' | 'bible' | 'podcast' | 'post' | 'file';
   thumbnailUrl: string;
   contentUrl: string; // Full image URL or Video file URL or Audio preview
   pageUrl: string; // Link to the source page
@@ -125,6 +125,7 @@ export interface CommunityPost {
   hashtags: string[];
   created_at: string;
   likes_count: number;
+  hype_count?: number;
   author_name?: string;
   author_avatar?: string;
 }
