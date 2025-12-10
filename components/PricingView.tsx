@@ -3,7 +3,7 @@ import React from 'react';
 import { Check, Sparkles, Zap, Shield, Crown, ArrowRight } from 'lucide-react';
 
 const PricingView: React.FC = () => {
-  const checkoutUrl = "https://buy.polar.sh/polar_cl_PgUSah1HN8TPbImrWmo79oksFVegpUlMayl0y1Eqbhd";
+  const checkoutUrl = "https://sandbox.polar.sh/checkout/polar_c_af59j8QHCjJBb3uzWdbwOjuTbrftmGe3sLXWP26VUf6";
 
   const features = [
     "Unlimited Deep Think queries (Gemini 2.5 Pro)",
@@ -122,3 +122,4 @@ const PricingView: React.FC = () => {
 };
 
 export default PricingView;
+    
