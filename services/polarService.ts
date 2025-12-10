@@ -5,12 +5,28 @@ const POLAR_API_BASE = 'https://api.polar.sh/v1';
 const POLAR_SANDBOX_API_BASE = 'https://sandbox-api.polar.sh/v1';
 
 export const createCheckoutSession = async (accessToken: string, isSandbox: boolean = true): Promise<string | null> => {
+    // 1. Try Edge Function First
+    try {
+        const edgeRes = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: accessToken, isSandbox })
+        });
+
+        if (edgeRes.ok) {
+            const data = await edgeRes.json();
+            if (data.url) return data.url;
+        }
+    } catch (e) {
+        // Fallback silently if /api/checkout doesn't exist (e.g. running in client-only mode)
+        console.log("Edge function unreachable, falling back to client-side logic.");
+    }
+
+    // 2. Client-Side Fallback (Demo Mode)
     try {
         const baseUrl = isSandbox ? POLAR_SANDBOX_API_BASE : POLAR_API_BASE;
         
-        // 1. First, fetch products to find a suitable price ID to checkout
-        // In a real app, you might have a specific price ID hardcoded, but if using a generic token,
-        // we'll try to find the first available subscription product.
+        // Fetch products to find a price ID
         const productsRes = await fetch(`${baseUrl}/products?is_recurring=true`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -33,7 +49,7 @@ export const createCheckoutSession = async (accessToken: string, isSandbox: bool
 
         const priceId = firstProduct.prices[0].id;
 
-        // 2. Create Checkout Session
+        // Create Checkout Session
         const checkoutRes = await fetch(`${baseUrl}/checkouts/custom/`, {
             method: 'POST',
             headers: {
@@ -42,8 +58,8 @@ export const createCheckoutSession = async (accessToken: string, isSandbox: bool
             },
             body: JSON.stringify({
                 product_price_id: priceId,
-                success_url: window.location.origin + '/success?provider=polar',
-                customer_email: undefined // Optional: Pre-fill if we have user email
+                success_url: window.location.origin + '/?success=true', // Redirect to root with param
+                customer_email: undefined 
             })
         });
 

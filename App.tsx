@@ -145,8 +145,10 @@ const App: React.FC = () => {
         // 1. Check for Payment Return Parameters First
         const urlParams = new URLSearchParams(window.location.search);
         const providerParam = urlParams.get('provider');
+        const successParam = urlParams.get('success');
 
-        if (providerParam === 'polar') {
+        if (providerParam === 'polar' || successParam === 'true') {
+            console.log("Payment detected via URL params.");
             // Activate Pro Status
             localStorage.setItem('infinity_pro_status', 'active');
             setConnectedProvider('Polar Pro Plan');
@@ -365,6 +367,13 @@ const App: React.FC = () => {
   };
   
   const handleSuccessContinue = () => { 
+      // If we just came from Polar payment, show Pricing tab to confirm status
+      if (connectedProvider === 'Polar Pro Plan') {
+          setView('app');
+          setActiveTab('pricing');
+          return;
+      }
+
       const returnTab = localStorage.getItem('return_tab');
       setView('app'); 
       if (returnTab) {
@@ -608,10 +617,10 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
-  // UPDATED: Pure black background logic
+  // UPDATED: Pure black background logic as requested
   const bgStyle = () => {
      if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-     // User requested pure black background
+     // User requested pure black background default
      return { backgroundColor: '#000000' };
   };
 
