@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles } from 'lucide-react';
+import { playSound } from '../services/soundService';
 
 interface SidebarProps {
   activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing';
@@ -16,6 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
       <div>
         <button 
           onClick={() => onTabChange('settings')}
+          onMouseEnter={() => playSound('hover')}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group shadow-sm border border-white/10 ${
               activeTab === 'settings' 
               ? 'bg-white border-white scale-110' 
@@ -32,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             {/* New Chat (Reset) */}
             <button 
             onClick={onReset}
+            onMouseEnter={() => playSound('hover')}
             className="w-12 h-12 mb-4 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group"
             title="New Chat"
             >
@@ -42,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('home')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'home' || activeTab === 'recipe' 
                     ? 'text-white' 
@@ -54,6 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             
             <button 
                 onClick={() => onTabChange('discover')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'discover' 
                     ? 'text-white' 
@@ -66,6 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('community')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'community' 
                     ? 'text-white' 
@@ -78,6 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('collections')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'collections' 
                     ? 'text-white' 
@@ -90,6 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             
              <button 
                 onClick={() => onTabChange('history')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'history' 
                     ? 'text-white' 
@@ -102,6 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('pricing')}
+                onMouseEnter={() => playSound('hover')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'pricing' 
                     ? 'text-yellow-400' 
@@ -117,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
       <div className="pt-4">
         <button 
             onClick={() => onTabChange('images')}
+            onMouseEnter={() => playSound('hover')}
             className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:scale-105 shadow-sm border ${
                 activeTab === 'images' 
                 ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20' 

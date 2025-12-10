@@ -4,6 +4,7 @@ import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphon
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 import { supabase } from '../services/supabaseClient';
+import { playSound } from '../services/soundService';
 
 interface SettingsViewProps {
   isNotionConnected: boolean;
@@ -87,6 +88,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   }, [user]);
 
   const handleSaveKey = () => {
+    playSound('success');
     if (apiKey.trim()) {
       localStorage.setItem('gemini_api_key', apiKey.trim());
     } else {
@@ -97,6 +99,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleSavePolar = () => {
+      playSound('success');
       if (polarToken.trim()) {
           localStorage.setItem('polar_access_token', polarToken.trim());
       } else {
@@ -114,6 +117,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleModelChange = (model: string) => {
       if (model !== 'gemini-2.5-flash' && !isPro) return;
+      playSound('click');
       setSelectedModel(model);
       localStorage.setItem('infinity_ai_model', model);
   };
@@ -131,6 +135,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleConnectGithub = async () => {
+      playSound('click');
       try {
           const { data, error } = await supabase.auth.linkIdentity({ 
             provider: 'github',
@@ -387,13 +392,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                     <div className="flex items-center gap-2 bg-zinc-800 p-1 rounded-full border border-zinc-700">
                         <button 
-                            onClick={() => onToggleWeatherUnit('c')}
+                            onClick={() => { onToggleWeatherUnit('c'); playSound('click'); }}
                             className={`w-10 h-8 rounded-full font-bold text-sm transition-all ${weatherUnit === 'c' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             °C
                         </button>
                         <button 
-                            onClick={() => onToggleWeatherUnit('f')}
+                            onClick={() => { onToggleWeatherUnit('f'); playSound('click'); }}
                             className={`w-10 h-8 rounded-full font-bold text-sm transition-all ${weatherUnit === 'f' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             °F
@@ -413,7 +418,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 {WALLPAPERS.map((wp) => (
                     <div 
                         key={wp.id}
-                        onClick={() => { if (!wp.isPro || isPro) onWallpaperChange(wp.url); else onUpgradeClick(); }}
+                        onClick={() => { if (!wp.isPro || isPro) { onWallpaperChange(wp.url); playSound('click'); } else { onUpgradeClick(); playSound('error'); } }}
                         className={`group cursor-pointer relative aspect-[9/16] rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md ${
                             currentWallpaper === wp.url ? 'border-white scale-105 shadow-xl' : 'border-transparent hover:scale-105'
                         }`}
@@ -578,8 +583,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     
                     <button 
                         onClick={() => {
-                            if (!isPro) onUpgradeClick();
-                            else onToggleAutoSave(!isAutoSaveEnabled);
+                            if (!isPro) { onUpgradeClick(); playSound('error'); }
+                            else { 
+                                const newState = !isAutoSaveEnabled;
+                                onToggleAutoSave(newState);
+                                playSound(newState ? 'on' : 'off');
+                            }
                         }}
                         disabled={!isGoogleDriveConnected && isPro}
                         className={`w-16 h-9 rounded-full relative transition-colors z-10 ${(!isGoogleDriveConnected && isPro) ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}

@@ -44,6 +44,7 @@ import { fetchWeather, getWeatherDescription, WeatherData } from './services/wea
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
 import { ChevronDown, Globe, Image as ImageIcon, ShoppingBag, Plane, Terminal, HardDrive, Newspaper } from 'lucide-react';
+import { playSound } from './services/soundService';
 
 // Helper to mix results from different sources
 const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
@@ -162,6 +163,7 @@ const App: React.FC = () => {
             setIsPro(true);
             setConnectedProvider('Polar Pro Plan');
             setView('success');
+            playSound('success');
             // Clean URL so refresh doesn't re-trigger logic or keep ugly params
             window.history.replaceState({}, '', window.location.pathname);
             setIsAuthChecking(false);
@@ -243,6 +245,7 @@ const App: React.FC = () => {
             if (connectingProvider) {
                 setConnectedProvider(connectingProvider);
                 setView('success');
+                playSound('success');
                 localStorage.removeItem('connecting_provider');
             } else {
                 setView('app');
@@ -366,6 +369,7 @@ const App: React.FC = () => {
           setNotionToken('mock-notion-token-demo');
           setConnectedProvider('notion');
           setView('success');
+          playSound('success');
           localStorage.removeItem('connecting_provider');
           setShowNotionModal(false);
       }
@@ -383,6 +387,7 @@ const App: React.FC = () => {
           setGoogleAccessToken("mock-google-token-demo");
           setConnectedProvider('google');
           setView('success');
+          playSound('success');
           localStorage.removeItem('connecting_provider');
       }
   };
@@ -427,6 +432,8 @@ const App: React.FC = () => {
           setActiveTab('pricing');
           return;
       }
+      
+      playSound('click');
       
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
@@ -473,10 +480,12 @@ const App: React.FC = () => {
           dateAdded: Date.now()
       };
       setCollections(prev => [newItem, ...prev]);
+      playSound('success');
   };
 
   const handleRemoveFromCollections = (id: string) => {
       setCollections(prev => prev.filter(item => item.id !== id));
+      playSound('click');
   };
 
   // --- SEARCH LOGIC ---
@@ -507,6 +516,7 @@ const App: React.FC = () => {
           
           setSearchState({ status: 'results', query, summary: text, sources: sources, media: mediaItems });
           addToHistory({ type: 'search', title: `Drive: ${query}`, summary: text, sources: [] });
+          playSound('success');
 
       } else if (mode === 'code') {
           // Code Pilot Mode
@@ -520,12 +530,14 @@ const App: React.FC = () => {
               codeResult: result 
           });
           addToHistory({ type: 'search', title: `Code: ${query}`, summary: result.explanation, sources: [] });
+          playSound('success');
 
       } else if (mode === 'notion') {
           if (!notionToken) return setShowNotionModal(true);
           const pages = await searchNotion(query, notionToken);
           setSearchState({ status: 'results', query, summary: `Found ${pages.length} pages in Notion.`, sources: [], media: pages });
           addToHistory({ type: 'search', title: `Notion: ${query}`, summary: `Workspace search for ${query}`, sources: [] });
+          playSound('success');
       } else if (mode === 'bible') {
           const preferredVersion = localStorage.getItem('bible_version') || 'kjv';
           const preferredLang = (localStorage.getItem('bible_lang') as 'en' | 'es') || 'en';
@@ -533,6 +545,7 @@ const App: React.FC = () => {
           if (bibleData) {
               setSearchState({ status: 'results', query, summary: `Passage from ${bibleData.reference}`, sources: [], media: [{ id: bibleData.reference, type: 'bible', thumbnailUrl: '', contentUrl: '', pageUrl: '', title: bibleData.reference, source: bibleData.translation_id, data: bibleData }] });
               addToHistory({ type: 'search', title: `Scripture: ${bibleData.reference}`, summary: bibleData.text.substring(0, 100) + '...', sources: [] });
+              playSound('success');
           } else {
              setSearchState(prev => ({ ...prev, status: 'results', media: [], summary: "No results found." }));
           }
@@ -540,6 +553,7 @@ const App: React.FC = () => {
           const podcasts = await searchPodcasts(query);
           setSearchState({ status: 'results', query, summary: `Found ${podcasts.length} podcasts.`, sources: [], media: podcasts });
           addToHistory({ type: 'search', title: `Podcast: ${query}`, summary: `Audio search for ${query}`, sources: [] });
+          playSound('success');
       } else if (mode === 'community') {
           // Just set state to results, the view will handle the fetching
           setSearchState({ status: 'results', query, summary: `Searching community...`, sources: [], media: [] });
@@ -548,6 +562,7 @@ const App: React.FC = () => {
           setRecipes(results); // Store in dedicated recipe state
           setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
           addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
+          playSound('success');
       } else if (mode === 'shopping') {
           // 1. Parallel Fetch: Multi-source products + Google Images
           const [products, images] = await Promise.all([
@@ -570,7 +585,10 @@ const App: React.FC = () => {
           if (products.length > 0) {
               getProductRecommendations(products, query).then(picks => {
                   setSearchState(prev => ({ ...prev, aiProductPicks: picks }));
+                  playSound('success');
               });
+          } else {
+              playSound('success');
           }
 
           addToHistory({ type: 'search', title: `Shopping: ${query}`, summary: `Product search for ${query}`, sources: [] });
@@ -578,6 +596,7 @@ const App: React.FC = () => {
           const flights = await searchFlights(query);
           setSearchState({ status: 'results', query, summary: `Found ${flights.length} flights.`, sources: [], media: [], flights: flights });
           addToHistory({ type: 'search', title: `Flight: ${query}`, summary: `Travel search for ${query}`, sources: [] });
+          playSound('success');
       } else {
           // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
@@ -602,6 +621,7 @@ const App: React.FC = () => {
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
           setAttachedFile(null); // Clear attachment after search
+          playSound('success');
       }
     } catch (error) {
       console.error(error);
@@ -610,6 +630,7 @@ const App: React.FC = () => {
   };
 
   const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
+      playSound('click');
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
       performSearch(query, mode);
@@ -617,6 +638,7 @@ const App: React.FC = () => {
 
   // ... (Keep existing handleMediaSearch, handleReset, etc.)
   const handleMediaSearch = async (query: string, type: 'image' | 'video') => {
+      playSound('click');
       setMediaGridData({ items: [], loading: true });
       setMediaType(type);
       setActiveTab('images');
@@ -632,9 +654,11 @@ const App: React.FC = () => {
       } catch (e) { console.error("Media search failed", e); }
       setMediaGridData({ items: results, loading: false });
       addToHistory({ type: 'search', title: `${type === 'image' ? 'Images' : 'Videos'}: ${query}`, summary: `Visual discovery for "${query}"` });
+      playSound('success');
   };
 
   const handleReset = () => {
+    playSound('click');
     setActiveTab('home');
     setSearchState({ status: 'idle', query: '', summary: '', sources: [], media: [] });
     setSearchMode('web');
@@ -644,6 +668,7 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: any) => {
+    playSound('click');
     // Only save previous tab if not already on it
     if (activeTab !== tab && tab !== 'recipe' && tab !== 'article') {
         setPreviousTab(activeTab as any); 
