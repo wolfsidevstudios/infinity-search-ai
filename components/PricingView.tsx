@@ -1,14 +1,27 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, Sparkles, Zap, Shield, Crown, ArrowRight, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Zap, Shield, Crown, ArrowRight, Loader2, Star } from 'lucide-react';
 import { createCheckoutSession } from '../services/polarService';
 
 const PricingView: React.FC = () => {
   const DEFAULT_CHECKOUT_URL = "https://sandbox.polar.sh/checkout/polar_c_af59j8QHCjJBb3uzWdbwOjuTbrftmGe3sLXWP26VUf6";
+  const FALLBACK_TOKEN = 'polar_oat_A3eSAxJk9CcPfFdmTxBYzY4YtXgOiBy5ULqa836FrZP';
   const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+      const status = localStorage.getItem('infinity_pro_status');
+      if (status === 'active') {
+          setIsPro(true);
+      }
+  }, []);
 
   const handleCheckout = async () => {
-      const polarToken = localStorage.getItem('polar_access_token');
+      if (isPro) return; // Already subscribed
+
+      // Prioritize saved token, otherwise use the hardcoded one provided by the user
+      const savedToken = localStorage.getItem('polar_access_token');
+      const polarToken = savedToken || FALLBACK_TOKEN;
       
       if (!polarToken) {
           window.open(DEFAULT_CHECKOUT_URL, '_blank');
@@ -37,6 +50,35 @@ const PricingView: React.FC = () => {
     "Custom Themes & Wallpapers",
     "Support Open Source Development"
   ];
+
+  if (isPro) {
+      return (
+        <div className="w-full h-full overflow-y-auto glass-scroll animate-fadeIn pb-20 flex items-center justify-center">
+            <div className="max-w-2xl w-full p-10 bg-zinc-900 border border-yellow-500/30 rounded-[40px] text-center shadow-[0_0_50px_rgba(234,179,8,0.1)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[80px] pointer-events-none"></div>
+                <div className="relative z-10">
+                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                        <Crown size={40} className="text-white" fill="currentColor" />
+                    </div>
+                    <h2 className="text-4xl font-bold text-white mb-4">You are a Pro Member</h2>
+                    <p className="text-zinc-400 text-lg mb-8">Thank you for supporting Infinity. You have full access to all premium features.</p>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-left max-w-lg mx-auto mb-8">
+                        {features.slice(0, 4).map((f, i) => (
+                            <div key={i} className="flex items-center gap-3 text-zinc-300">
+                                <Check size={16} className="text-yellow-500" /> <span className="text-sm">{f}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button className="px-8 py-3 bg-zinc-800 text-white rounded-full font-bold hover:bg-zinc-700 transition-colors">
+                        Manage Subscription
+                    </button>
+                </div>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="w-full h-full overflow-y-auto glass-scroll animate-fadeIn pb-20">

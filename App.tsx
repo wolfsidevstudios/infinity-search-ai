@@ -142,7 +142,31 @@ const App: React.FC = () => {
         setIsAuthChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         
-        // 1. Check Deep Link Path
+        // 1. Check for Payment Return Parameters First
+        const urlParams = new URLSearchParams(window.location.search);
+        const providerParam = urlParams.get('provider');
+
+        if (providerParam === 'polar') {
+            // Activate Pro Status
+            localStorage.setItem('infinity_pro_status', 'active');
+            setConnectedProvider('Polar Pro Plan');
+            setView('success');
+            // Clean URL so refresh doesn't re-trigger logic or keep ugly params
+            window.history.replaceState({}, '', window.location.pathname);
+            setIsAuthChecking(false);
+            
+            // If user was logged in, ensure session is set
+            if (session) {
+                setSessionUser(session.user);
+                restoreTokens();
+            } else {
+                // Ensure a session exists if they paid anonymously (demo flow)
+                setSessionUser({ id: 'pro-user', email: 'pro@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Pro User' }, aud: 'authenticated', created_at: '' } as User);
+            }
+            return;
+        }
+
+        // 2. Check Deep Link Path
         const path = window.location.pathname.replace('/', '');
         
         if (session) {
@@ -152,7 +176,7 @@ const App: React.FC = () => {
             // If connecting provider, we go to success page, otherwise restore path
             const connectingProvider = localStorage.getItem('connecting_provider');
             if (connectingProvider) {
-                 // handled in auth listener
+                 // handled in auth listener below
             } else {
                  setView('app');
                  
@@ -584,15 +608,11 @@ const App: React.FC = () => {
       setActiveTab('pricing');
   };
 
-  // UPDATED: Custom Background Image from Prompt
+  // UPDATED: Pure black background logic
   const bgStyle = () => {
      if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-     // User requested image as default background
-     return { 
-         backgroundImage: `url(https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png)`, 
-         backgroundSize: 'cover', 
-         backgroundPosition: 'center' 
-     };
+     // User requested pure black background
+     return { backgroundColor: '#000000' };
   };
 
   if (view === 'assets') return <AssetsPage onBack={() => setView('landing')} />;
@@ -628,8 +648,8 @@ const App: React.FC = () => {
         className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" 
         style={bgStyle()}
       >
-        {/* Heavy dark overlay for text readability over the custom image */}
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px] pointer-events-none z-0" />
+        {/* Use a simple overlay only if we have a wallpaper image to dim it */}
+        {currentWallpaper && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-0" />}
 
         {/* Quick Access Bar - Absolute Top Right */}
         {activeTab === 'home' && searchState.status === 'idle' && (

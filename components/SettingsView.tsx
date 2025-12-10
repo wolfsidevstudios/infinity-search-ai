@@ -46,9 +46,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
-  const [polarToken, setPolarToken] = useState('');
+  const [polarToken, setPolarToken] = useState('polar_oat_A3eSAxJk9CcPfFdmTxBYzY4YtXgOiBy5ULqa836FrZP'); // Pre-filled default
   const [isSaved, setIsSaved] = useState(false);
   const [isPolarSaved, setIsPolarSaved] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   
   // Bible Settings
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
@@ -66,6 +67,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     const savedBibleLang = localStorage.getItem('bible_lang') || 'en';
     setBibleVersion(savedBibleVersion);
     setBibleLang(savedBibleLang as 'en' | 'es');
+
+    const proStatus = localStorage.getItem('infinity_pro_status');
+    setIsPro(proStatus === 'active');
   }, []);
 
   const handleSaveKey = () => {
@@ -160,15 +164,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 </div>
                 <div className="relative z-10">
                   <h4 className="text-2xl font-bold text-white">{displayName}</h4>
-                  <p className="text-zinc-400 font-medium">Infinity Free Plan</p>
+                  <p className={`font-medium flex items-center gap-2 ${isPro ? 'text-yellow-400' : 'text-zinc-400'}`}>
+                      {isPro ? <><Crown size={14} fill="currentColor"/> Infinity Pro Plan</> : 'Infinity Free Plan'}
+                  </p>
                 </div>
                 
-                <button 
-                    onClick={onUpgradeClick}
-                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg z-20"
-                >
-                    <Crown size={14} /> Upgrade Plan
-                </button>
+                {!isPro && (
+                    <button 
+                        onClick={onUpgradeClick}
+                        className="absolute right-6 top-1/2 -translate-y-1/2 bg-white text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg z-20"
+                    >
+                        <Crown size={14} /> Upgrade Plan
+                    </button>
+                )}
               </div>
 
               <div className="grid gap-6">
