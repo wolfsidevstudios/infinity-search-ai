@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchNews } from '../services/newsService';
 import { fetchNasaNews } from '../services/nasaService';
@@ -7,15 +8,17 @@ import { Sparkles, Eye, LayoutGrid, Newspaper, Sun } from 'lucide-react';
 import DashboardWidgets from './DashboardWidgets';
 import ExploreWidgets from './ExploreWidgets';
 import AppStoreView from './AppStoreView';
+import { Recipe } from '../services/recipeService';
 
 interface DiscoverViewProps {
   onOpenArticle: (article: NewsArticle) => void;
   onSummarize: (url: string) => void;
+  onOpenRecipe: (recipe: Recipe) => void;
   initialTab?: 'news' | 'widgets' | 'whats_new' | 'brief';
   weatherUnit: 'c' | 'f';
 }
 
-const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize, initialTab, weatherUnit }) => {
+const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize, onOpenRecipe, initialTab, weatherUnit }) => {
   const [activeSubTab, setActiveSubTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>(initialTab || 'news');
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,7 +248,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                     <h2 className="text-4xl font-bold text-white mb-6">Discover</h2>
                     
                     {/* Dashboard Widgets at Top */}
-                    <DashboardWidgets weatherUnit={weatherUnit} />
+                    <DashboardWidgets weatherUnit={weatherUnit} onOpenRecipe={onOpenRecipe} />
                 </div>
 
                 {/* Grid */}

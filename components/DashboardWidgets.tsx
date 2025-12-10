@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, TrendingUp, TrendingDown, Newspaper, MapPin, Bone, Utensils, Trophy, PlayCircle, ArrowRight } from 'lucide-react';
+import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Newspaper, MapPin, Bone, Utensils, Trophy, ArrowRight } from 'lucide-react';
 import { fetchWeather, getWeatherIcon, WeatherData } from '../services/weatherService';
 import { fetchMarketData, StockData } from '../services/stockService';
 import { fetchNews } from '../services/newsService';
@@ -7,13 +8,13 @@ import { fetchRandomDog, DogData } from '../services/dogService';
 import { fetchSportsNews } from '../services/sportsService';
 import { fetchRandomRecipes, Recipe } from '../services/recipeService';
 import { NewsArticle } from '../types';
-import RecipeModal from './RecipeModal';
 
 interface DashboardWidgetsProps {
     weatherUnit?: 'c' | 'f';
+    onOpenRecipe: (recipe: Recipe) => void;
 }
 
-const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c' }) => {
+const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c', onOpenRecipe }) => {
   // Data State
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [stocks, setStocks] = useState<StockData[]>([]);
@@ -25,7 +26,6 @@ const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c' }
   // UI State
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [currentRecipeIndex, setCurrentRecipeIndex] = useState(0);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   useEffect(() => {
     // 1. Weather
@@ -160,7 +160,7 @@ const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c' }
         {/* 4. Recipes (4 cols) */}
         <div 
             className={`md:col-span-4 ${widgetClass} cursor-pointer`}
-            onClick={() => currentRecipe && setSelectedRecipe(currentRecipe)}
+            onClick={() => currentRecipe && onOpenRecipe(currentRecipe)}
         >
             {currentRecipe ? (
                 <>
@@ -295,12 +295,6 @@ const DashboardWidgets: React.FC<DashboardWidgetsProps> = ({ weatherUnit = 'c' }
             )}
         </div>
       </div>
-
-      {/* Recipe Modal */}
-      <RecipeModal 
-        recipe={selectedRecipe} 
-        onClose={() => setSelectedRecipe(null)} 
-      />
 
     </div>
   );

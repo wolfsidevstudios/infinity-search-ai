@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 
@@ -16,6 +17,7 @@ interface SettingsViewProps {
   onLogout: () => void;
   weatherUnit: 'c' | 'f';
   onToggleWeatherUnit: (unit: 'c' | 'f') => void;
+  onUpgradeClick: () => void;
 }
 
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected';
@@ -39,7 +41,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     user,
     onLogout,
     weatherUnit,
-    onToggleWeatherUnit
+    onToggleWeatherUnit,
+    onUpgradeClick
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -120,7 +123,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="mt-auto pl-4 text-xs text-zinc-500 font-medium">
-            Infinity v2.2.0
+            Infinity v2.3.0
         </div>
       </div>
 
@@ -132,18 +135,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">My Profile</h3>
               
-              <div className="flex items-center gap-6 p-6 bg-zinc-900 rounded-[32px] border border-zinc-800">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-black overflow-hidden">
+              <div className="flex items-center gap-6 p-6 bg-zinc-900 rounded-[32px] border border-zinc-800 relative overflow-hidden">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-black overflow-hidden relative z-10">
                    {avatarUrl ? (
                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                    ) : (
                        displayName.charAt(0).toUpperCase()
                    )}
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="text-2xl font-bold text-white">{displayName}</h4>
                   <p className="text-zinc-400 font-medium">Infinity Free Plan</p>
                 </div>
+                
+                <button 
+                    onClick={onUpgradeClick}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 bg-white text-black px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-yellow-400 transition-colors shadow-lg z-20"
+                >
+                    <Crown size={14} /> Upgrade Plan
+                </button>
               </div>
 
               <div className="grid gap-6">

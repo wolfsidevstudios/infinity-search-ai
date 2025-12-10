@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Recipe } from '../services/recipeService';
-import { Utensils, Clock, Globe, ArrowRight, ChefHat, Play } from 'lucide-react';
-import RecipeModal from './RecipeModal';
+import { Utensils, Globe, ArrowRight, ChefHat, Play } from 'lucide-react';
 
 interface RecipeResultsViewProps {
   recipes: Recipe[];
   query: string;
+  onOpenRecipe: (recipe: Recipe) => void;
 }
 
-const RecipeResultsView: React.FC<RecipeResultsViewProps> = ({ recipes, query }) => {
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+const RecipeResultsView: React.FC<RecipeResultsViewProps> = ({ recipes, query, onOpenRecipe }) => {
 
   if (recipes.length === 0) {
       return (
@@ -40,7 +40,7 @@ const RecipeResultsView: React.FC<RecipeResultsViewProps> = ({ recipes, query })
           {recipes.map((recipe) => (
               <div 
                 key={recipe.id}
-                onClick={() => setSelectedRecipe(recipe)}
+                onClick={() => onOpenRecipe(recipe)}
                 className="group relative bg-zinc-900 border border-zinc-800 rounded-[32px] overflow-hidden cursor-pointer hover:-translate-y-2 transition-all duration-500 hover:shadow-2xl hover:border-orange-500/30"
               >
                   {/* Image */}
@@ -84,12 +84,6 @@ const RecipeResultsView: React.FC<RecipeResultsViewProps> = ({ recipes, query })
               </div>
           ))}
       </div>
-
-      {/* Modal */}
-      <RecipeModal 
-        recipe={selectedRecipe} 
-        onClose={() => setSelectedRecipe(null)} 
-      />
     </div>
   );
 };

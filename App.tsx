@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import SearchInput from './components/SearchInput';
@@ -13,6 +14,7 @@ import BibleResultsView from './components/BibleResultsView';
 import PodcastResultsView from './components/PodcastResultsView';
 import CommunityView from './components/CommunityView';
 import RecipeResultsView from './components/RecipeResultsView';
+import RecipeDetailView from './components/RecipeModal'; 
 import ShoppingResultsView from './components/ShoppingResultsView';
 import FlightResultsView from './components/FlightResultsView';
 import SettingsView from './components/SettingsView';
@@ -23,7 +25,7 @@ import SuccessPage from './components/SuccessPage';
 import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
-import MailView from './components/MailView';
+import PricingView from './components/PricingView';
 import { searchWithGemini, getProductRecommendations } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -32,7 +34,7 @@ import { supabase } from './services/supabaseClient';
 import { searchNotion } from './services/notionService';
 import { fetchBiblePassage } from './services/bibleService';
 import { searchPodcasts } from './services/podcastService';
-import { searchRecipes } from './services/recipeService';
+import { searchRecipes, Recipe } from './services/recipeService';
 import { searchShopping, fetchGoogleImages } from './services/shoppingService';
 import { searchFlights } from './services/flightService';
 import { searchTwitter } from './services/twitterService';
@@ -68,7 +70,9 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'mail'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
+  const [previousTab, setPreviousTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'pricing'>('home');
+  
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
   
@@ -122,13 +126,14 @@ const App: React.FC = () => {
   // State for history
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // State for viewing an article
+  // State for viewing details
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
+  const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
 
   // Weather State for Home Greeting
   const [weather, setWeather] = useState<WeatherData | null>(null);
 
-  // State for Recipes
+  // State for Recipes Search Results
   const [recipes, setRecipes] = useState<any[]>([]);
 
   // -- INIT & ROUTING LOGIC --
@@ -156,7 +161,7 @@ const App: React.FC = () => {
                      setActiveTab('community');
                      const postId = path.split('/')[1];
                      if (postId) setInitialCommunityPostId(postId);
-                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'mail'].includes(path)) {
+                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -524,6 +529,10 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: any) => {
+    // Only save previous tab if not already on it
+    if (activeTab !== tab && tab !== 'recipe' && tab !== 'article') {
+        setPreviousTab(activeTab as any); 
+    }
     setActiveTab(tab);
     if (tab === 'community') {
         // Clear specific post state when clicking tab
@@ -535,9 +544,16 @@ const App: React.FC = () => {
   };
 
   const handleOpenArticle = (article: NewsArticle) => {
+      setPreviousTab('discover'); // Assume discovering
       setCurrentArticle(article);
       setActiveTab('article');
       addToHistory({ type: 'article', title: article.title, subtitle: article.source.name, data: article });
+  };
+
+  const handleOpenRecipe = (recipe: Recipe) => {
+      setPreviousTab(activeTab !== 'recipe' ? (activeTab as any) : 'home');
+      setCurrentRecipe(recipe);
+      setActiveTab('recipe');
   };
 
   const handleSummarizeArticle = (url: string) => {
@@ -562,6 +578,10 @@ const App: React.FC = () => {
   const handleViewDailyBrief = () => {
       setDiscoverViewTab('brief');
       setActiveTab('discover');
+  };
+
+  const handleUpgradeClick = () => {
+      setActiveTab('pricing');
   };
 
   // PURE BLACK BACKGROUND
@@ -623,7 +643,7 @@ const App: React.FC = () => {
             )}
         </div>
 
-        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'mail' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
+        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
             
             {activeTab === 'home' && (
               <>
@@ -684,7 +704,7 @@ const App: React.FC = () => {
                         ) : searchMode === 'community' ? (
                             <CommunityView user={sessionUser} initialQuery={searchState.query} />
                         ) : searchMode === 'recipe' ? (
-                            <RecipeResultsView recipes={recipes} query={searchState.query} />
+                            <RecipeResultsView recipes={recipes} query={searchState.query} onOpenRecipe={handleOpenRecipe} />
                         ) : searchMode === 'shopping' ? (
                             <ShoppingResultsView 
                                 products={searchState.shopping || []} 
@@ -720,6 +740,7 @@ const App: React.FC = () => {
                     <DiscoverView 
                         onOpenArticle={handleOpenArticle} 
                         onSummarize={handleSummarizeArticle} 
+                        onOpenRecipe={handleOpenRecipe}
                         initialTab={discoverViewTab} 
                         weatherUnit={weatherUnit} 
                     />
@@ -728,9 +749,10 @@ const App: React.FC = () => {
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
-            {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab('discover')} onSummarize={handleSummarizeArticle}/></div>}
+            {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab(previousTab as any)} onSummarize={handleSummarizeArticle}/></div>}
+            {activeTab === 'recipe' && currentRecipe && <div className="w-full h-full"><RecipeDetailView recipe={currentRecipe} onBack={() => setActiveTab(previousTab as any)} /></div>}
+            {activeTab === 'pricing' && <div className="w-full h-full"><PricingView /></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
-            {activeTab === 'mail' && <div className="w-full h-full"><MailView /></div>}
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 
@@ -740,6 +762,7 @@ const App: React.FC = () => {
                         currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser} onLogout={handleLogout}
                         weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange}
+                        onUpgradeClick={handleUpgradeClick}
                     />
                 </div>
             )}

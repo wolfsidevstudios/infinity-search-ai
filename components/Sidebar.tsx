@@ -1,9 +1,10 @@
+
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Mail } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'mail';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'mail') => void;
+  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing';
+  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'pricing') => void;
   onReset: () => void;
 }
 
@@ -42,13 +43,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             <button 
                 onClick={() => onTabChange('home')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'home' 
+                  activeTab === 'home' || activeTab === 'recipe' 
                     ? 'text-white' 
                     : 'text-zinc-500 hover:text-white'
                 }`}
                 title="Home"
             >
-                <Home size={activeTab === 'home' ? 28 : 24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+                <Home size={(activeTab === 'home' || activeTab === 'recipe') ? 28 : 24} strokeWidth={(activeTab === 'home' || activeTab === 'recipe') ? 2.5 : 2} />
             </button>
             
             <button 
@@ -76,18 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             </button>
 
             <button 
-                onClick={() => onTabChange('mail')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'mail' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
-                title="Infinity Mail"
-            >
-                <Mail size={activeTab === 'mail' ? 28 : 24} strokeWidth={activeTab === 'mail' ? 2.5 : 2} />
-            </button>
-
-            <button 
                 onClick={() => onTabChange('collections')}
                 className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
                   activeTab === 'collections' 
@@ -109,6 +98,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="History"
             >
                 <Clock size={activeTab === 'history' ? 28 : 24} strokeWidth={activeTab === 'history' ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('pricing')}
+                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                  activeTab === 'pricing' 
+                    ? 'text-yellow-400' 
+                    : 'text-zinc-500 hover:text-yellow-200'
+                }`}
+                title="Upgrade to Plus"
+            >
+                <Sparkles size={activeTab === 'pricing' ? 28 : 24} strokeWidth={activeTab === 'pricing' ? 2.5 : 2} fill={activeTab === 'pricing' ? 'currentColor' : 'none'} />
             </button>
       </div>
 
