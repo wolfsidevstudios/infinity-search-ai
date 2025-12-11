@@ -23,10 +23,10 @@ export const getAiClient = () => {
 // Clarifai Configuration Map
 const CLARIFAI_MODELS: Record<string, { userId: string; appId: string; modelId: string; versionId: string }> = {
     'gpt-oss-120b': {
-        userId: 'openai',
-        appId: 'chat-completion',
-        modelId: 'gpt-4-turbo', // Fallback mapping for existing ID
-        versionId: ''
+        userId: 'meta',
+        appId: 'llama-3',
+        modelId: 'llama-3_1-405b-instruct',
+        versionId: '' // Uses latest version automatically
     },
     'gemma-2-9b': {
         userId: 'google',
