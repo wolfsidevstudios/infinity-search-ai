@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
@@ -12,6 +12,18 @@ interface CommunityViewProps {
 }
 
 const INFINITY_LOGO_URL = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png';
+
+const ANNOUNCEMENT_POST: CommunityPost = {
+  id: 'official-announcement-dev',
+  user_id: 'infinity-official',
+  content: "🚀 Upcoming Updates!\n\nWe're actively working to improve the Infinity app. Our focus isn't just on the UI, but on making sure the app is completely error-free and bug-free, while making animations much smoother.\n\nThese improvements will be rolling out in future updates.\n\n🛠️ Plus, the Developer Console is coming soon in the following weeks! Stay tuned.",
+  hashtags: ['#roadmap', '#bugfree', '#developerconsole', '#infinity'],
+  created_at: new Date().toISOString(),
+  likes_count: 2048,
+  author_name: 'Infinity Team',
+  author_avatar: INFINITY_LOGO_URL,
+  image_url: 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=2070&auto=format&fit=crop'
+};
 
 const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -48,11 +60,13 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
         } else {
             // Fallback if ID invalid
             data = await fetchPosts();
+            data = [ANNOUNCEMENT_POST, ...data];
         }
     } else if (initialQuery) {
         data = await searchPosts(initialQuery);
     } else {
         data = await fetchPosts();
+        data = [ANNOUNCEMENT_POST, ...data];
     }
     
     setPosts(data);
@@ -84,7 +98,15 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
     const newPost = await createPost(content, hashtags as string[], imageFile || undefined, user);
     
     if (newPost) {
-      setPosts(prev => [newPost, ...prev]);
+      setPosts(prev => {
+          // Keep announcement at top if it exists
+          const hasAnnouncement = prev.some(p => p.id === ANNOUNCEMENT_POST.id);
+          if (hasAnnouncement) {
+              const others = prev.filter(p => p.id !== ANNOUNCEMENT_POST.id);
+              return [ANNOUNCEMENT_POST, newPost, ...others];
+          }
+          return [newPost, ...prev];
+      });
       setContent('');
       setImageFile(null);
       setImagePreview(null);
@@ -96,15 +118,21 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   const handleLike = async (post: CommunityPost) => {
       // Optimistic update
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 1 } : p));
-      await likePost(post.id, post.likes_count);
+      
+      // Only sync to DB if it's not the local announcement post
+      if (post.id !== ANNOUNCEMENT_POST.id) {
+          await likePost(post.id, post.likes_count);
+      }
   };
 
   const handleHype = async (post: CommunityPost) => {
       if (!isPro) return alert("Hyping posts is an Infinity Pro feature!");
       // Optimistic update with double increment for hype
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 5 } : p));
-      // Mock hype logic reusing like mechanism for demo simplicity
-      await likePost(post.id, post.likes_count + 4); 
+      
+      if (post.id !== ANNOUNCEMENT_POST.id) {
+          await likePost(post.id, post.likes_count + 4); 
+      }
   };
 
   const handleCopyLink = () => {
@@ -164,7 +192,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           window.history.pushState({}, '', '/community');
           setLoading(true);
           fetchPosts().then(data => {
-              setPosts(data);
+              setPosts([ANNOUNCEMENT_POST, ...data]);
               setLoading(false);
           });
       }
@@ -254,7 +282,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
               <div className="py-10 text-center text-zinc-500">No posts found.</div>
           ) : (
               posts.map((post) => (
-                  <div key={post.id} className="p-4 border-b border-zinc-800 hover:bg-zinc-900/30 transition-colors cursor-pointer animate-fadeIn">
+                  <div key={post.id} className={`p-4 border-b border-zinc-800 hover:bg-zinc-900/30 transition-colors cursor-pointer animate-fadeIn ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}`}>
                       <div className="flex gap-4">
                           <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 overflow-hidden shrink-0">
                               {post.author_avatar ? (
@@ -268,6 +296,11 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                   <div className="flex items-center gap-2 overflow-hidden">
                                       <span className="font-bold text-white truncate">{post.author_name}</span>
                                       <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
+                                      {post.id === ANNOUNCEMENT_POST.id && (
+                                          <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-bold flex items-center gap-1">
+                                              <Pin size={8} fill="currentColor" /> Pinned
+                                          </span>
+                                      )}
                                       <span className="text-zinc-600 text-xs">• {formatDate(post.created_at)}</span>
                                   </div>
                                   <button className="text-zinc-500 hover:text-blue-400">
