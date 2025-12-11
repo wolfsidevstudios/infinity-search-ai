@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin, AlertTriangle } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin, AlertTriangle, Newspaper, Users } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
@@ -13,12 +13,24 @@ interface CommunityViewProps {
 
 const INFINITY_LOGO_URL = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png';
 
+const NEW_MODEL_CHAT_POST: CommunityPost = {
+  id: 'new-model-chat-launch',
+  user_id: 'infinity-official',
+  content: "🚀 **Introducing the New Infinity Chat & AI Model**\n\nWe've completely reimagined the conversation experience. The new **Chat Page** is now live, featuring a floating input interface and deep integration with your App Data.\n\n**Meet the New Model:**\nOur latest reasoning engine is smarter, faster, and more context-aware. It knows your weather, collections, and can use widgets like Calculator and Clock directly in the chat.\n\n**What's New:**\n• 💬 **Dedicated Chat Interface**: Distraction-free deep thinking.\n• 🧠 **App Context**: The AI now understands your saved collections.\n• ⚡ **Widget Support**: Ask for a calculator or timer instantly.\n\nTry it out by clicking the \"New Chat\" button in the sidebar!",
+  hashtags: ['#Update', '#AI', '#NewFeatures', '#InfinityOS'],
+  created_at: new Date(Date.now() + 40000).toISOString(),
+  likes_count: 842,
+  author_name: 'Infinity HQ',
+  author_avatar: INFINITY_LOGO_URL,
+  image_url: 'https://images.unsplash.com/photo-1676299081847-824916de030a?q=80&w=1974&auto=format&fit=crop'
+};
+
 const PRESS_RELEASE_POST: CommunityPost = {
   id: 'infinity-os-26-release',
   user_id: 'infinity-official',
   content: "📣 **Press Release: Why Infinity OS 26.0?**\n\nToday marks a significant shift in our release strategy. We are officially rebranding our versioning from 2.0 to **Infinity OS 26.0**.\n\n**Why the jump?**\nWe believe software versions should be intuitive. By aligning our major release number with the year (2026), you will instantly know if your system is current without guessing if \"v2.4\" is newer than \"v2.3.9\".\n\n**What's New in 26.0:**\n• Complete UI overhaul to \"Spatial Glass\" design.\n• Local-first architecture for privacy.\n\n**Coming Soon:**\nInfinity OS 26.1 is already in the works with revolutionary features. Check Settings for a sneak peek.",
   hashtags: ['#InfinityOS', '#Rebrand', '#Update'],
-  created_at: new Date(Date.now() + 20000).toISOString(), // Always top
+  created_at: new Date(Date.now() + 20000).toISOString(), 
   likes_count: 15402,
   author_name: 'Infinity HQ',
   author_avatar: INFINITY_LOGO_URL,
@@ -30,7 +42,7 @@ const ANNOUNCEMENT_POST: CommunityPost = {
   user_id: 'infinity-official',
   content: "🚀 Upcoming Updates!\n\nWe're actively working to improve the Infinity app. Our focus isn't just on the UI, but on making sure the app is completely error-free and bug-free, while making animations much smoother.\n\nThese improvements will be rolling out in future updates.\n\n🛠️ Plus, the Developer Console is coming soon in the following weeks! Stay tuned.",
   hashtags: ['#roadmap', '#bugfree', '#developerconsole', '#infinity'],
-  created_at: new Date(Date.now() + 10000).toISOString(), // Ensure it stays top
+  created_at: new Date(Date.now() + 10000).toISOString(),
   likes_count: 2048,
   author_name: 'Infinity Team',
   author_avatar: INFINITY_LOGO_URL,
@@ -51,6 +63,7 @@ const NOTION_UPDATE_POST: CommunityPost = {
 const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'community' | 'press'>('community');
   
   // Compose State
   const [content, setContent] = useState('');
@@ -76,21 +89,28 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
     setLoading(true);
     let data = [];
     
+    // Official posts array
+    const officialPosts = [NEW_MODEL_CHAT_POST, PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST];
+
     if (initialPostId) {
         const singlePost = await fetchPostById(initialPostId);
         if (singlePost) {
             data = [singlePost];
         } else {
-            // Fallback if ID invalid
             data = await fetchPosts();
-            data = [PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
+            data = [...officialPosts, ...data];
         }
     } else if (initialQuery) {
         data = await searchPosts(initialQuery);
     } else {
         data = await fetchPosts();
-        data = [PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
+        // Prepend official posts
+        data = [...officialPosts, ...data];
     }
+    
+    // Sort all by date just in case
+    // data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); 
+    // Actually, createPost adds to top, mock posts have future dates to stay on top.
     
     setPosts(data);
     setLoading(false);
@@ -115,14 +135,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
 
     setIsPosting(true);
     
-    // Extract hashtags
     const hashtags = content.match(/#[a-z0-9_]+/gi) || [];
     
     const newPost = await createPost(content, hashtags as string[], imageFile || undefined, user);
     
     if (newPost) {
       setPosts(prev => {
-          // Keep announcements at top if they exist
           const officials = prev.filter(p => p.user_id === 'infinity-official');
           const others = prev.filter(p => p.user_id !== 'infinity-official');
           return [...officials, newPost, ...others];
@@ -136,10 +154,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
   };
 
   const handleLike = async (post: CommunityPost) => {
-      // Optimistic update
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 1 } : p));
-      
-      // Only sync to DB if it's not a local announcement post
       if (post.user_id !== 'infinity-official') {
           await likePost(post.id, post.likes_count);
       }
@@ -147,9 +162,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
 
   const handleHype = async (post: CommunityPost) => {
       if (!isPro) return alert("Hyping posts is an Infinity Pro feature!");
-      // Optimistic update with double increment for hype
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 5 } : p));
-      
       if (post.user_id !== 'infinity-official') {
           await likePost(post.id, post.likes_count + 4); 
       }
@@ -178,10 +191,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           const url = getQrUrl(transparent);
           const response = await fetch(url);
           if (!response.ok) throw new Error("Failed to fetch QR");
-          
           const blob = await response.blob();
           const objectUrl = URL.createObjectURL(blob);
-          
           const link = document.createElement('a');
           link.href = objectUrl;
           link.download = `infinity-post-${sharePost.id.slice(0,8)}-qr${transparent ? '-transparent' : ''}.png`;
@@ -211,33 +222,59 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       if (initialPostId) {
           window.history.pushState({}, '', '/community');
           setLoading(true);
+          const officialPosts = [NEW_MODEL_CHAT_POST, PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST];
           fetchPosts().then(data => {
-              setPosts([PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data]);
+              setPosts([...officialPosts, ...data]);
               setLoading(false);
           });
       }
   };
 
+  // Filter Posts Logic
+  const displayPosts = posts.filter(post => {
+      const isOfficial = post.user_id === 'infinity-official';
+      if (activeTab === 'press') return isOfficial;
+      return !isOfficial; // Community tab shows ONLY user posts to avoid clutter, since Press tab exists.
+  });
+
   return (
     <div className="w-full max-w-2xl mx-auto pb-20 animate-slideUp">
       
-      {/* Header */}
-      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex justify-between items-center mb-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              {initialPostId && (
-                  <button onClick={clearFilters} className="mr-2 hover:bg-zinc-800 p-1 rounded-full transition-colors"><ArrowLeft size={20}/></button>
+      {/* Header with Toggle */}
+      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex flex-col gap-4 mb-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
+          <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  {initialPostId && (
+                      <button onClick={clearFilters} className="mr-2 hover:bg-zinc-800 p-1 rounded-full transition-colors"><ArrowLeft size={20}/></button>
+                  )}
+                  Community
+              </h2>
+              {initialQuery && (
+                  <div className="text-sm text-blue-400 font-medium flex items-center gap-1">
+                      <Search size={14} /> Result for "{initialQuery}"
+                  </div>
               )}
-              Infinity Community
-          </h2>
-          {initialQuery && (
-              <div className="text-sm text-blue-400 font-medium flex items-center gap-1">
-                  <Search size={14} /> Result for "{initialQuery}"
-              </div>
-          )}
+          </div>
+
+          {/* Toggle Switch */}
+          <div className="flex p-1 bg-zinc-900 rounded-xl border border-zinc-800">
+              <button 
+                onClick={() => setActiveTab('community')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'community' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                  <Users size={16} /> Community
+              </button>
+              <button 
+                onClick={() => setActiveTab('press')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'press' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                  <Newspaper size={16} /> Press Releases
+              </button>
+          </div>
       </div>
 
-      {/* Compose Box */}
-      {!initialQuery && !initialPostId && (
+      {/* Compose Box (Only visible in Community Tab) */}
+      {!initialQuery && !initialPostId && activeTab === 'community' && (
           <div className="px-4 mb-8">
             <div className="flex gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
@@ -262,7 +299,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                 onClick={() => { setImageFile(null); setImagePreview(null); }}
                                 className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-red-500 transition-colors"
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                <X size={20} />
                             </button>
                         </div>
                     )}
@@ -297,13 +334,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       {/* Feed */}
       <div className="border-t border-zinc-800">
           {loading ? (
-              <div className="py-10 text-center text-zinc-500">Loading community...</div>
-          ) : posts.length === 0 ? (
-              <div className="py-10 text-center text-zinc-500">No posts found.</div>
+              <div className="py-10 text-center text-zinc-500">Loading {activeTab}...</div>
+          ) : displayPosts.length === 0 ? (
+              <div className="py-10 text-center text-zinc-500">No {activeTab} posts found.</div>
           ) : (
-              posts.map((post) => (
+              displayPosts.map((post) => (
                   <div key={post.id} 
                        className={`p-4 border-b border-zinc-800 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-zinc-900/40 cursor-pointer animate-fadeIn hover:scale-[1.01] active:scale-[0.99]
+                       ${post.id === NEW_MODEL_CHAT_POST.id ? 'bg-green-900/10 border-l-4 border-l-green-500' : ''}
                        ${post.id === PRESS_RELEASE_POST.id ? 'bg-zinc-900/30 border-l-4 border-l-white' : ''}
                        ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}
                        ${post.id === NOTION_UPDATE_POST.id ? 'bg-orange-900/10 border-l-4 border-l-orange-500' : ''}
@@ -323,6 +361,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                       <span className="font-bold text-white truncate">{post.author_name}</span>
                                       <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
                                       
+                                      {post.id === NEW_MODEL_CHAT_POST.id && (
+                                          <span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
+                                              <Zap size={8} fill="currentColor" /> New Model
+                                          </span>
+                                      )}
+
                                       {post.id === PRESS_RELEASE_POST.id && (
                                           <span className="bg-white/10 text-white text-[10px] px-1.5 py-0.5 rounded border border-white/20 font-bold flex items-center gap-1">
                                               <Zap size={8} fill="currentColor" /> Official Release
