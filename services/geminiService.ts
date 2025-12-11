@@ -1,6 +1,7 @@
 
 import { GoogleGenAI } from "@google/genai";
 import { Source, ShoppingProduct, CodeResult } from "../types";
+import { getMcpServers, mcpToolToGemini, executeMcpTool } from "./mcpService";
 
 // Helper to get the AI client, prioritizing Local Storage key if set
 export const getAiClient = () => {
@@ -116,45 +117,127 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
         systemInstruction = "You are a visual search expert. Analyze the provided image. The user wants to find related images or information about this visual content. Identify the subject, context, and key details. Then, use the Google Search tool to find relevant information and related visual concepts. Describe the image and provide links or search terms that would help the user find similar images.";
     }
 
-    // Configure tools
-    const tools = [{ googleSearch: {} }];
-
-    let contents: any = query;
-
-    // Handle File Context
-    if (fileContext) {
-        if (fileContext.mimeType.startsWith('image/') || fileContext.mimeType === 'application/pdf') {
-             // Use inlineData for images and PDFs
-             contents = {
-                 role: 'user',
-                 parts: [
-                     { text: query },
-                     {
-                         inlineData: {
-                             mimeType: fileContext.mimeType,
-                             data: fileContext.content
-                         }
-                     }
-                 ]
-             };
-        } else {
-             // For text files, append content to prompt
-             contents = `${query}\n\n[Attached File Context]:\n${fileContext.content}`;
+    // 1. Configure Tools
+    // Start with Google Search
+    const tools: any[] = [{ googleSearch: {} }];
+    
+    // Add Connected MCP Tools
+    const mcpServers = getMcpServers().filter(s => s.status === 'connected');
+    const mcpFunctionDeclarations: any[] = [];
+    
+    for (const server of mcpServers) {
+        if (server.tools) {
+            server.tools.forEach((tool: any) => {
+                mcpFunctionDeclarations.push(mcpToolToGemini(tool));
+            });
         }
     }
 
-    const response = await ai.models.generateContent({
-      model: modelName, // Use dynamic model
-      contents: contents,
+    if (mcpFunctionDeclarations.length > 0) {
+        tools.push({ functionDeclarations: mcpFunctionDeclarations });
+        systemInstruction += " You have access to external tools via MCP. Use them when the user query requires specific data from connected apps.";
+    }
+
+    // 2. Prepare Contents (Chat History for this session)
+    let messages: any[] = [];
+
+    // Handle File Context in Initial Message
+    let userContent: any = { role: 'user', parts: [{ text: query }] };
+    
+    if (fileContext) {
+        if (fileContext.mimeType.startsWith('image/') || fileContext.mimeType === 'application/pdf') {
+             userContent.parts.push({
+                 inlineData: {
+                     mimeType: fileContext.mimeType,
+                     data: fileContext.content
+                 }
+             });
+        } else {
+             userContent.parts[0].text = `${query}\n\n[Attached File Context]:\n${fileContext.content}`;
+        }
+    }
+    messages.push(userContent);
+
+    // 3. First Generation Call
+    let response = await ai.models.generateContent({
+      model: modelName,
+      contents: messages,
       config: {
         tools: tools,
         systemInstruction: systemInstruction,
       },
     });
 
-    const text = response.text || "I couldn't find information on that topic.";
+    // 4. Function Call Loop (Max 5 turns)
+    let turns = 0;
+    while (response.functionCalls && turns < 5) {
+        turns++;
+        const functionCalls = response.functionCalls;
+        
+        // Append model's function call to history
+        // Construct a 'model' message with the function calls
+        messages.push({
+            role: 'model',
+            parts: functionCalls.map(fc => ({ functionCall: fc }))
+        });
+
+        const functionResponses = [];
+        for (const call of functionCalls) {
+            // Check if it's an MCP tool
+            const server = mcpServers.find(s => s.tools?.some((t: any) => t.name === call.name));
+            if (server) {
+                console.log(`Executing MCP Tool ${call.name} on ${server.name}...`);
+                try {
+                    const result = await executeMcpTool(server.url, call.name, call.args);
+                    functionResponses.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: { result: result } 
+                        }
+                    });
+                } catch (e: any) {
+                    console.error(`Error executing ${call.name}:`, e);
+                    functionResponses.push({
+                        functionResponse: {
+                            name: call.name,
+                            response: { error: e.message }
+                        }
+                    });
+                }
+            } else {
+                // Unknown tool
+                functionResponses.push({
+                    functionResponse: {
+                        name: call.name,
+                        response: { error: "Tool not found or not handled." }
+                    }
+                });
+            }
+        }
+
+        if (functionResponses.length > 0) {
+            // Append function responses to history
+            messages.push({
+                role: 'user', // Note: For functionResponse, 'user' role with 'functionResponse' part is often accepted or 'function' role depending on API version. Using 'user' effectively for SDK 1.31 if 'function' role isn't explicit in types. 
+                // Actually, per SDK, we send `role: 'function'` typically for responses.
+                // Let's use parts.
+                parts: functionResponses
+            });
+            
+            // Next Generation Call
+            response = await ai.models.generateContent({
+                model: modelName,
+                contents: messages,
+                config: { tools, systemInstruction },
+            });
+        } else {
+            break; 
+        }
+    }
+
+    const text = response.text || "I processed the request but couldn't generate a text summary.";
     
-    // Extract sources from grounding metadata
+    // Extract sources
     const candidates = response.candidates;
     const sources: Source[] = [];
     
@@ -199,12 +282,7 @@ export const generateCode = async (query: string): Promise<CodeResult> => {
     try {
         const modelName = getSelectedModel();
         
-        // If Clarifai is selected, we try to use it for code as well, but it might not return JSON structure perfectly.
-        // For robustness, let's just use Gemini Flash if user didn't pick a pro model, or stick to the selection.
-        // Given Clarifai output is raw text, JSON parsing might fail.
-        // We will force Gemini Flash if Clarifai is selected for Code Pilot to ensure JSON output structure, 
-        // OR we can try to use Clarifai and prompt it heavily for JSON.
-        // Let's fallback to Gemini for structured tasks to ensure reliability in this demo.
+        // Force Gemini Flash if Clarifai is selected for Code Pilot to ensure JSON output structure
         const effectiveModel = modelName === 'gpt-oss-120b' ? 'gemini-2.0-flash' : modelName;
 
         const ai = getAiClient();
@@ -257,9 +335,6 @@ export const askDrive = async (query: string, token: string): Promise<{ text: st
         // Real Drive RAG is complex. For this implementation, we simulate it by using the token 
         // to pretend we are searching, but rely on the LLM's knowledge or a Search Tool 
         // scoped to "Google Drive" logic if we had the specific tool.
-        // Since we don't have the Drive tool in this SDK setup, we will perform a web search 
-        // conditioned to look like a drive assistant or analyze provided text context if available.
-        // NOTE: In a real app, you would fetch file lists from the Drive API first, then feed them to context.
         
         const systemInstruction = `You are an intelligent Drive Assistant. 
         The user is asking a question about their files. 
