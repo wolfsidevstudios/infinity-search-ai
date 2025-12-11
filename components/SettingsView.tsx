@@ -43,6 +43,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
+  const [clarifaiPat, setClarifaiPat] = useState('');
   const [polarToken, setPolarToken] = useState('polar_oat_A3eSAxJk9CcPfFdmTxBYzY4YtXgOiBy5ULqa836FrZP'); // Pre-filled default
   const [isSaved, setIsSaved] = useState(false);
   const [isPolarSaved, setIsPolarSaved] = useState(false);
@@ -60,6 +61,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     // Load saved key on mount
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) setApiKey(savedKey);
+
+    const savedClarifaiPat = localStorage.getItem('clarifai_pat');
+    if (savedClarifaiPat) setClarifaiPat(savedClarifaiPat);
 
     const savedPolarToken = localStorage.getItem('polar_access_token');
     if (savedPolarToken) setPolarToken(savedPolarToken);
@@ -84,12 +88,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       }
   }, [activeTab, updateStatus]);
 
-  const handleSaveKey = () => {
+  const handleSaveKeys = () => {
     if (apiKey.trim()) {
       localStorage.setItem('gemini_api_key', apiKey.trim());
     } else {
       localStorage.removeItem('gemini_api_key');
     }
+
+    if (clarifaiPat.trim()) {
+      localStorage.setItem('clarifai_pat', clarifaiPat.trim());
+    } else {
+      localStorage.removeItem('clarifai_pat');
+    }
+
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
@@ -105,7 +116,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleModelChange = (model: string) => {
-      if (model !== 'gemini-2.5-flash' && !isPro) return;
+      if (model !== 'gemini-2.5-flash' && model !== 'gpt-oss-120b' && !isPro) return;
       setSelectedModel(model);
       localStorage.setItem('infinity_ai_model', model);
   };
@@ -116,7 +127,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           setIsPro(false);
           alert("Subscription cancelled successfully.");
           // Reset model if on pro model
-          if (selectedModel !== 'gemini-2.5-flash') {
+          if (selectedModel !== 'gemini-2.5-flash' && selectedModel !== 'gpt-oss-120b') {
               handleModelChange('gemini-2.5-flash');
           }
       }
@@ -526,6 +537,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                           { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Fastest reasoning', isPro: false },
                           { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Balanced performance', isPro: true },
                           { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', desc: 'Maximum reasoning power', isPro: true },
+                          { id: 'gpt-oss-120b', name: 'GPT-OSS 120B (Clarifai)', desc: 'Open Source Powerhouse', isPro: false },
                       ].map((model) => (
                           <div 
                             key={model.id}
@@ -553,33 +565,58 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               <p className="text-blue-200 leading-relaxed font-medium bg-blue-900/20 p-6 rounded-[24px] border border-blue-900/50">
-                Unlock the full potential of Infinity by connecting your own Google Gemini API key. 
-                Your key is stored locally on your device and never sent to our servers.
+                Unlock the full potential of Infinity by connecting your own API keys. 
+                Keys are stored locally on your device and never sent to our servers.
               </p>
 
-              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl transition-all duration-500 hover:scale-[1.01]">
-                <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 mb-4 ml-2 uppercase tracking-wider">
-                    <Key size={14} /> Gemini API Key
-                </label>
-                <div className="flex flex-col md:flex-row gap-3">
-                    <input 
-                        type="password" 
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        className="flex-1 h-14 px-6 bg-black border border-zinc-800 rounded-full focus:ring-4 focus:ring-blue-900/50 focus:border-blue-700 outline-none font-mono text-sm shadow-inner transition-all text-white placeholder-zinc-700"
-                    />
-                    <button 
-                        onClick={handleSaveKey}
-                        className={`h-14 px-8 rounded-full font-bold text-white transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 ${isSaved ? 'bg-green-600' : 'bg-white text-black hover:bg-gray-200'}`}
-                    >
-                        {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
-                        {isSaved ? 'Saved' : 'Save'}
-                    </button>
+              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl transition-all duration-500 hover:scale-[1.01] space-y-6">
+                
+                {/* Gemini Key */}
+                <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 mb-4 ml-2 uppercase tracking-wider">
+                        <Key size={14} /> Gemini API Key
+                    </label>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input 
+                            type="password" 
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                            placeholder="AIzaSy..."
+                            className="flex-1 h-14 px-6 bg-black border border-zinc-800 rounded-full focus:ring-4 focus:ring-blue-900/50 focus:border-blue-700 outline-none font-mono text-sm shadow-inner transition-all text-white placeholder-zinc-700"
+                        />
+                    </div>
+                    <p className="text-xs text-blue-400 mt-2 ml-3 font-medium">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline hover:text-blue-300">Get one from Google AI Studio</a>.
+                    </p>
                 </div>
-                <p className="text-xs text-blue-400 mt-4 ml-3 font-medium">
-                    Don't have a key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline hover:text-blue-300">Get one from Google AI Studio</a>.
-                </p>
+
+                {/* Clarifai PAT */}
+                <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 mb-4 ml-2 uppercase tracking-wider">
+                        <Key size={14} /> Clarifai PAT (for GPT-OSS)
+                    </label>
+                    <div className="flex flex-col md:flex-row gap-3">
+                        <input 
+                            type="password" 
+                            value={clarifaiPat}
+                            onChange={(e) => setClarifaiPat(e.target.value)}
+                            placeholder="Clarifai Personal Access Token..."
+                            className="flex-1 h-14 px-6 bg-black border border-zinc-800 rounded-full focus:ring-4 focus:ring-blue-900/50 focus:border-blue-700 outline-none font-mono text-sm shadow-inner transition-all text-white placeholder-zinc-700"
+                        />
+                    </div>
+                    <p className="text-xs text-blue-400 mt-2 ml-3 font-medium">
+                        Required for GPT-OSS 120B model.
+                    </p>
+                </div>
+
+                <button 
+                    onClick={handleSaveKeys}
+                    className={`h-14 px-8 w-full rounded-full font-bold text-white transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 ${isSaved ? 'bg-green-600' : 'bg-white text-black hover:bg-gray-200'}`}
+                >
+                    {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
+                    {isSaved ? 'Keys Saved' : 'Save Keys'}
+                </button>
+
               </div>
             </div>
           )}
