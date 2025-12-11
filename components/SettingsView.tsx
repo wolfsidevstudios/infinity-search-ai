@@ -159,6 +159,26 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       localStorage.setItem('infinity_ai_model', model);
   };
 
+  const handleAddMcpServer = async () => {
+      if (!newMcpName || !newMcpUrl) return;
+      setAddingMcp(true);
+      await addMcpServer(newMcpName, newMcpUrl);
+      setMcpServers(getMcpServers());
+      setNewMcpName('');
+      setNewMcpUrl('');
+      setAddingMcp(false);
+  };
+
+  const handleRemoveMcpServer = (id: string) => {
+      removeMcpServer(id);
+      setMcpServers(getMcpServers());
+  };
+
+  const handleRefreshMcpServer = async (id: string) => {
+      await refreshMcpServer(id);
+      setMcpServers(getMcpServers());
+  };
+
   const handleCancelSubscription = () => {
       if (window.confirm("Are you sure you want to cancel your Infinity Pro subscription? You will lose access to premium features immediately.")) {
           localStorage.removeItem('infinity_pro_status');
