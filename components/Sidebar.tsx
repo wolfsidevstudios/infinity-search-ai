@@ -9,6 +9,15 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) => {
+  
+  // Common class for icon buttons with iOS physics
+  const btnClass = (isActive: boolean) => `
+    w-10 h-10 flex items-center justify-center 
+    transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] 
+    hover:scale-110 active:scale-95
+    ${isActive ? 'text-white' : 'text-zinc-500 hover:text-white'}
+  `;
+
   return (
     <div className="fixed left-0 top-0 bottom-0 w-24 flex flex-col items-center justify-between py-8 z-50">
       
@@ -16,14 +25,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
       <div>
         <button 
           onClick={() => onTabChange('settings')}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all group shadow-sm border border-white/10 ${
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group shadow-sm border border-white/10 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] active:scale-95 ${
               activeTab === 'settings' 
               ? 'bg-white border-white scale-110' 
               : 'bg-zinc-900 border-zinc-800 hover:scale-105 hover:bg-zinc-800'
           }`}
           title="Settings"
         >
-          <User size={20} className={activeTab === 'settings' ? 'text-black' : 'text-zinc-400 group-hover:text-white'} />
+          <User size={20} className={`transition-colors duration-300 ${activeTab === 'settings' ? 'text-black' : 'text-zinc-400 group-hover:text-white'}`} />
         </button>
       </div>
 
@@ -32,21 +41,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             {/* New Chat (Reset) */}
             <button 
             onClick={onReset}
-            className="w-12 h-12 mb-4 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 group"
+            className="w-12 h-12 mb-4 rounded-full bg-white flex items-center justify-center shadow-lg hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] hover:scale-110 active:scale-90 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group"
             title="New Chat"
             >
-            <Plus size={24} className="text-black group-hover:rotate-90 transition-transform duration-300" />
+            <Plus size={24} className="text-black group-hover:rotate-90 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]" />
             </button>
 
             <div className="w-8 h-[1px] bg-zinc-800 rounded-full mb-2"></div>
 
             <button 
                 onClick={() => onTabChange('home')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'home' || activeTab === 'recipe' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
+                className={btnClass(activeTab === 'home' || activeTab === 'recipe')}
                 title="Home"
             >
                 <Home size={(activeTab === 'home' || activeTab === 'recipe') ? 28 : 24} strokeWidth={(activeTab === 'home' || activeTab === 'recipe') ? 2.5 : 2} />
@@ -54,11 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             
             <button 
                 onClick={() => onTabChange('discover')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'discover' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
+                className={btnClass(activeTab === 'discover')}
                 title="Discover"
             >
                 <Compass size={activeTab === 'discover' ? 28 : 24} strokeWidth={activeTab === 'discover' ? 2.5 : 2} />
@@ -66,11 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('community')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'community' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
+                className={btnClass(activeTab === 'community')}
                 title="Community"
             >
                 <Users size={activeTab === 'community' ? 28 : 24} strokeWidth={activeTab === 'community' ? 2.5 : 2} />
@@ -78,11 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('collections')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'collections' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
+                className={btnClass(activeTab === 'collections')}
                 title="Collections"
             >
                 <Bookmark size={activeTab === 'collections' ? 28 : 24} strokeWidth={activeTab === 'collections' ? 2.5 : 2} fill={activeTab === 'collections' ? 'currentColor' : 'none'} />
@@ -90,11 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
             
              <button 
                 onClick={() => onTabChange('history')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
-                  activeTab === 'history' 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-white'
-                }`}
+                className={btnClass(activeTab === 'history')}
                 title="History"
             >
                 <Clock size={activeTab === 'history' ? 28 : 24} strokeWidth={activeTab === 'history' ? 2.5 : 2} />
@@ -102,9 +91,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
 
             <button 
                 onClick={() => onTabChange('pricing')}
-                className={`w-10 h-10 flex items-center justify-center transition-all hover:scale-110 ${
+                className={`w-10 h-10 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-110 active:scale-95 ${
                   activeTab === 'pricing' 
-                    ? 'text-yellow-400' 
+                    ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]' 
                     : 'text-zinc-500 hover:text-yellow-200'
                 }`}
                 title="Upgrade to Plus"
@@ -117,9 +106,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
       <div className="pt-4">
         <button 
             onClick={() => onTabChange('images')}
-            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all hover:scale-105 shadow-sm border ${
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 shadow-sm border ${
                 activeTab === 'images' 
-                ? 'bg-blue-600 text-white border-blue-600 shadow-blue-500/20' 
+                ? 'bg-blue-600 text-white border-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
                 : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-blue-500 hover:border-blue-500/30'
             }`}
             title="Images"

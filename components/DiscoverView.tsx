@@ -118,6 +118,16 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
       return () => observer.disconnect();
   }, []);
 
+  // Animation Helper for Navigation
+  const getNavBtnClass = (isActive: boolean) => `
+    rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
+    ${isScrolled ? 'w-10 h-8' : 'w-12 h-10'}
+    ${isActive 
+      ? 'bg-white text-black shadow-lg scale-105' 
+      : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 hover:scale-105 active:scale-95'
+    }
+  `;
+
   return (
     <div className="w-full max-w-7xl mx-auto pb-20 animate-slideUp px-4 flex flex-col items-center relative min-h-screen">
       
@@ -125,46 +135,22 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
       <div ref={sentinelRef} className="absolute top-0 left-0 w-full h-1 pointer-events-none opacity-0" />
 
       {/* Floating Pill Navigation Bar */}
-      <div className={`sticky top-2 z-50 transition-all duration-500 ease-in-out mb-8 ${isScrolled ? 'scale-90' : 'scale-100 mt-2'}`}>
+      <div className={`sticky top-2 z-50 transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] mb-8 ${isScrolled ? 'translate-y-0 scale-90' : 'translate-y-2 scale-100'}`}>
           <div className={`flex items-center gap-2 rounded-full border shadow-2xl transition-all duration-500 ${
               isScrolled 
               ? 'p-1 bg-black/60 backdrop-blur-xl border-white/10' 
               : 'p-1.5 bg-zinc-900 border-zinc-800'
           }`}>
-              <button 
-                onClick={() => setActiveSubTab('widgets')}
-                className={`rounded-full flex items-center justify-center transition-all ${
-                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
-                } ${activeSubTab === 'widgets' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                title="Widgets"
-              >
+              <button onClick={() => setActiveSubTab('widgets')} className={getNavBtnClass(activeSubTab === 'widgets')} title="Widgets">
                   <LayoutGrid size={isScrolled ? 16 : 20} />
               </button>
-              <button 
-                onClick={() => setActiveSubTab('news')}
-                className={`rounded-full flex items-center justify-center transition-all ${
-                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
-                } ${activeSubTab === 'news' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                title="News"
-              >
+              <button onClick={() => setActiveSubTab('news')} className={getNavBtnClass(activeSubTab === 'news')} title="News">
                   <Newspaper size={isScrolled ? 16 : 20} />
               </button>
-              <button 
-                onClick={() => setActiveSubTab('brief')}
-                className={`rounded-full flex items-center justify-center transition-all ${
-                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
-                } ${activeSubTab === 'brief' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                title="Daily Brief"
-              >
+              <button onClick={() => setActiveSubTab('brief')} className={getNavBtnClass(activeSubTab === 'brief')} title="Daily Brief">
                   <Sun size={isScrolled ? 16 : 20} />
               </button>
-              <button 
-                onClick={() => setActiveSubTab('whats_new')}
-                className={`rounded-full flex items-center justify-center transition-all ${
-                    isScrolled ? 'w-10 h-8' : 'w-12 h-10'
-                } ${activeSubTab === 'whats_new' ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                title="App Store"
-              >
+              <button onClick={() => setActiveSubTab('whats_new')} className={getNavBtnClass(activeSubTab === 'whats_new')} title="App Store">
                   <Sparkles size={isScrolled ? 16 : 20} />
               </button>
           </div>
@@ -190,8 +176,8 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
               </div>
 
               {/* AI Summary Card (Expanded) */}
-                <div className="bg-gradient-to-br from-zinc-900 to-black backdrop-blur-xl border border-white/20 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                <div className="bg-gradient-to-br from-zinc-900 to-black backdrop-blur-xl border border-white/20 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]">
+                    <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity duration-1000 pointer-events-none">
                         <Sparkles size={120} className="text-purple-300" />
                     </div>
                     
@@ -225,7 +211,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                     <h3 className="text-xl font-bold text-white mb-6">Top Stories</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {articles.slice(0, 4).map((article, idx) => (
-                            <div key={idx} onClick={() => onOpenArticle(article)} className="flex gap-4 p-4 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800/50 hover:border-zinc-700 cursor-pointer transition-all">
+                            <div key={idx} onClick={() => onOpenArticle(article)} className="flex gap-4 p-4 rounded-2xl bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800/50 hover:border-zinc-700 cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
                                 <div className="w-24 h-24 rounded-xl overflow-hidden shrink-0">
                                     <img src={article.urlToImage || ''} className="w-full h-full object-cover" alt="Thumb" />
                                 </div>
@@ -256,7 +242,9 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                     {articles.map((article, index) => (
                     <div
                         key={`${article.url}-${index}`}
-                        className="group relative flex flex-col bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 hover:border-white/20 rounded-[32px] p-3 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl h-full"
+                        className="group relative flex flex-col bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-3 h-full
+                        transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]
+                        hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:shadow-2xl hover:-translate-y-1"
                     >
                         {/* Image Container - Padded and Rounded */}
                         <div className="relative aspect-[4/3] overflow-hidden rounded-[24px]">
@@ -264,13 +252,13 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                             src={article.urlToImage || ''} 
                             alt={article.title} 
                             loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:scale-105"
                             onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000&auto=format&fit=crop'; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         
                         {/* Badge with Verified Checkmark */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-md pl-3 pr-2 py-1.5 rounded-full shadow-lg transition-transform hover:scale-105">
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/90 backdrop-blur-md pl-3 pr-2 py-1.5 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105 origin-left">
                             <span className="text-black text-[10px] font-bold uppercase tracking-wider max-w-[120px] truncate">
                                 {article.source.name}
                             </span>
@@ -284,7 +272,7 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
 
                         {/* Content */}
                         <div className="p-4 flex flex-col flex-1">
-                        <h3 className="text-white text-xl font-bold leading-snug mb-3 line-clamp-2 group-hover:text-blue-300 transition-colors">
+                        <h3 className="text-white text-xl font-bold leading-snug mb-3 line-clamp-2 group-hover:text-blue-300 transition-colors duration-300">
                             {article.title}
                         </h3>
                         
@@ -293,16 +281,16 @@ const DiscoverView: React.FC<DiscoverViewProps> = ({ onOpenArticle, onSummarize,
                         </p>
 
                         {/* Actions */}
-                        <div className="mt-auto flex gap-3">
+                        <div className="mt-auto flex gap-3 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
                             <button 
                                 onClick={() => onOpenArticle(article)}
-                                className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white py-3 rounded-full text-sm font-medium transition-colors"
+                                className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white py-3 rounded-full text-sm font-medium transition-all duration-300 active:scale-95"
                             >
                                 <Eye size={16} /> Read
                             </button>
                             <button 
                                 onClick={() => onSummarize(article.url)}
-                                className="flex-1 flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 py-3 rounded-full text-sm font-bold transition-colors shadow-lg"
+                                className="flex-1 flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 py-3 rounded-full text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95"
                             >
                                 <Sparkles size={16} className="text-purple-600" /> Summarize
                             </button>

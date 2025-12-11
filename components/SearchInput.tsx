@@ -50,6 +50,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showModeMenu, setShowModeMenu] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -153,8 +154,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
   return (
     <div 
-      className={`transition-all duration-700 ease-in-out w-full max-w-3xl mx-auto flex flex-col items-center z-30 ${
-        centered ? 'translate-y-0 opacity-100' : '-translate-y-8 opacity-0 pointer-events-none absolute'
+      className={`transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] w-full max-w-3xl mx-auto flex flex-col items-center z-30 ${
+        centered ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-8 opacity-0 pointer-events-none scale-95 absolute'
       }`}
     >
       <div className="w-full relative">
@@ -164,23 +165,30 @@ const SearchInput: React.FC<SearchInputProps> = ({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`relative flex items-center w-full h-14 rounded-full border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] transition-all duration-300 bg-[#1a1a1a]/90 backdrop-blur-xl hover:bg-[#202020] ${isDragging ? 'ring-2 ring-blue-500 bg-blue-900/20' : ''}`}
+            className={`relative flex items-center w-full h-14 rounded-full border transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
+                ${isDragging 
+                    ? 'ring-2 ring-blue-500 bg-blue-900/20 scale-105 border-blue-400' 
+                    : isFocused 
+                        ? 'border-white/30 bg-[#1a1a1a] shadow-[0_0_30px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-white/10' 
+                        : 'border-white/10 bg-[#1a1a1a]/90 backdrop-blur-xl shadow-lg hover:bg-[#202020] hover:border-white/20'
+                }
+            `}
           >
               {/* Mode Selector */}
               <div className="relative pl-2" ref={menuRef}>
                   <button 
                     type="button"
                     onClick={() => setShowModeMenu(!showModeMenu)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-all duration-300 active:scale-95"
                   >
                       <ActiveIcon size={18} className="text-blue-400" />
                       <span className="text-sm font-medium hidden sm:block">{MODES.find(m => m.id === activeMode)?.label || 'Web'}</span>
-                      <ChevronDown size={14} className={`transition-transform duration-300 ${showModeMenu ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${showModeMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
                   {showModeMenu && (
-                      <div className="absolute top-full left-0 mt-2 w-56 bg-[#1a1a1a] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-slideUp">
+                      <div className="absolute top-full left-0 mt-3 w-56 bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-scaleIn origin-top-left">
                           <div className="p-2 grid gap-1 max-h-[300px] overflow-y-auto glass-scroll">
                               {MODES.map((mode) => (
                                   <button
@@ -190,10 +198,10 @@ const SearchInput: React.FC<SearchInputProps> = ({
                                         onModeChange(mode.id as any);
                                         setShowModeMenu(false);
                                     }}
-                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-sm transition-all ${
+                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-sm transition-all duration-200 active:scale-95 ${
                                         activeMode === mode.id 
-                                        ? 'bg-blue-600 text-white' 
-                                        : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
+                                        : 'text-zinc-400 hover:bg-white/10 hover:text-white'
                                     }`}
                                   >
                                       <div className="flex items-center gap-3">
@@ -217,9 +225,11 @@ const SearchInput: React.FC<SearchInputProps> = ({
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
+                      onFocus={() => setIsFocused(true)}
+                      onBlur={() => setIsFocused(false)}
                       placeholder={getPlaceholder()}
                       disabled={isSearching}
-                      className="w-full bg-transparent border-none outline-none text-white text-lg placeholder-zinc-500 h-full"
+                      className="w-full bg-transparent border-none outline-none text-white text-lg placeholder-zinc-500 h-full transition-all"
                   />
                   {/* Hidden File Input */}
                   <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*,application/pdf,text/*" />
@@ -232,7 +242,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   <button
                       type="button"
                       onClick={onCameraClick}
-                      className="p-3 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+                      className="p-3 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-all duration-300 active:scale-90"
                       title="Visual Search"
                   >
                       <Camera size={20} />
@@ -241,7 +251,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   <button
                       type="button"
                       onClick={toggleListening}
-                      className={`p-3 rounded-full hover:bg-white/10 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
+                      className={`p-3 rounded-full hover:bg-white/10 transition-all duration-300 active:scale-90 ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
                   >
                       <Mic size={20} />
                   </button>
@@ -250,7 +260,11 @@ const SearchInput: React.FC<SearchInputProps> = ({
                   <button
                       onClick={handleSubmit}
                       disabled={!query.trim() && !attachedFile}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-white text-black hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed ml-1"
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ml-1 ${
+                          !query.trim() && !attachedFile 
+                          ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50' 
+                          : 'bg-white text-black hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                      }`}
                   >
                       <Search size={20} />
                   </button>
@@ -272,7 +286,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     </div>
                     <button 
                         onClick={onRemoveFile}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform scale-0 group-hover:scale-100 duration-200"
                     >
                         <X size={10} />
                     </button>
@@ -294,7 +308,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           {/* Drag Overlay Tip */}
           {isDragging && (
               <div className="absolute top-16 left-0 right-0 text-center animate-fadeIn">
-                  <div className="inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400">
+                  <div className="inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400 transform scale-110">
                       Drop image to search
                   </div>
               </div>

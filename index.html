@@ -12,55 +12,83 @@
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        /* Apple-style easing: Quick start, very smooth deceleration */
+        --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
+        /* Spring-style easing: Overshoots slightly */
+        --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
         margin: 0;
         overflow: hidden; /* Prevent body scroll, handle inside App */
+        background-color: #000;
+        -webkit-font-smoothing: antialiased;
       }
+      
       .font-serif-display {
         font-family: 'Playfair Display', serif;
       }
       .font-handwriting {
         font-family: 'Caveat', cursive;
       }
+      
       /* Custom scrollbar for glass panels */
       .glass-scroll::-webkit-scrollbar {
-        width: 6px;
+        width: 4px; /* Thinner for cleaner look */
       }
       .glass-scroll::-webkit-scrollbar-track {
         background: transparent;
       }
       .glass-scroll::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.15);
         border-radius: 10px;
+        transition: background 0.3s ease;
       }
       .glass-scroll::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.3);
       }
 
-      /* Animations */
+      /* Premium Animations */
+      
       @keyframes slideUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+        0% { transform: translateY(40px) scale(0.96); opacity: 0; filter: blur(4px); }
+        100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0); }
       }
       .animate-slideUp {
-        animation: slideUp 0.6s ease-out forwards;
+        animation: slideUp 0.8s var(--ease-apple) forwards;
       }
 
       @keyframes slideRight {
-        from { transform: translateX(-20px); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        0% { transform: translateX(-30px); opacity: 0; }
+        100% { transform: translateX(0); opacity: 1; }
       }
       .animate-slideRight {
-        animation: slideRight 0.4s ease-out forwards;
+        animation: slideRight 0.7s var(--ease-apple) forwards;
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+        0% { opacity: 0; filter: blur(12px); transform: scale(0.98); }
+        100% { opacity: 1; filter: blur(0); transform: scale(1); }
       }
       .animate-fadeIn {
-        animation: fadeIn 0.8s ease-out forwards;
+        animation: fadeIn 0.9s var(--ease-apple) forwards;
+      }
+
+      @keyframes scaleIn {
+        0% { transform: scale(0.9); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      .animate-scaleIn {
+        animation: scaleIn 0.5s var(--ease-spring) forwards;
+      }
+      
+      /* Utility for smooth transitions */
+      .transition-smooth {
+        transition-property: all;
+        transition-timing-function: var(--ease-apple);
+        transition-duration: 600ms;
       }
     </style>
   <script type="importmap">
