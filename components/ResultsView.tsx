@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Source, MediaItem } from '../types';
 import { ExternalLink, ImageIcon, Bookmark, Check, Volume2, Square } from 'lucide-react';
@@ -59,13 +60,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-6 pb-20 animate-slideUp">
       
       {/* 1. Summary Card */}
-      <div className="w-full bg-white/20 backdrop-blur-xl border border-white/30 rounded-[32px] p-8 shadow-2xl text-white relative group">
+      <div className="w-full bg-white/20 backdrop-blur-xl border border-white/30 rounded-[32px] p-8 shadow-2xl text-white relative group transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.01]">
         
         {/* Actions Row (Top Right) */}
         <div className="absolute top-6 right-6 flex gap-2">
             <button 
                 onClick={handleSpeak}
-                className={`p-2 rounded-full transition-all text-white ${isSpeaking ? 'bg-red-500/80 animate-pulse' : 'bg-black/20 hover:bg-black/40'}`}
+                className={`p-2 rounded-full transition-all text-white active:scale-90 duration-300 ${isSpeaking ? 'bg-red-500/80 animate-pulse' : 'bg-black/20 hover:bg-black/40'}`}
                 title={isSpeaking ? "Stop Speaking" : "Listen to Summary"}
             >
                 {isSpeaking ? <Square size={16} fill="currentColor" /> : <Volume2 size={16} />}
@@ -73,7 +74,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
 
             <button 
                 onClick={() => handleSave({ type: 'note', content: { text: summary, title: 'AI Summary' } }, 'summary')}
-                className="p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-opacity"
+                className="p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-all active:scale-90 duration-300"
                 title="Save Summary"
             >
                 {savedIds.has('summary') ? <Check size={16} className="text-green-400" /> : <Bookmark size={16} />}
@@ -101,7 +102,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
                     href={source.uri}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-lg border border-white/10 rounded-full py-3 px-5 transition-all duration-300 hover:scale-105 text-white min-w-[200px] max-w-[300px]"
+                    className="flex-shrink-0 flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-lg border border-white/10 rounded-full py-3 px-5 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 text-white min-w-[200px] max-w-[300px]"
                     >
                     <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         <img 
@@ -120,7 +121,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
                     {/* Tiny Save Button */}
                      <button 
                         onClick={() => handleSave({ type: 'web', content: source }, source.uri)}
-                        className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity scale-0 group-hover:scale-100"
+                        className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity scale-0 group-hover:scale-100 duration-300"
                     >
                         {savedIds.has(source.uri) ? <Check size={10} /> : <Bookmark size={10} />}
                     </button>
@@ -139,13 +140,13 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
               className="relative aspect-square group cursor-pointer"
             >
               <div 
-                  className="absolute inset-0 bg-black/20 rounded-[24px] group-hover:scale-95 transition-transform duration-500" 
+                  className="absolute inset-0 bg-black/20 rounded-[24px] group-hover:scale-95 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]" 
                   onClick={onOpenImageGrid}
               />
               <img 
                 src={img.thumbnailUrl} 
                 alt={img.title} 
-                className="w-full h-full object-cover rounded-[24px] border-2 border-white/20 shadow-lg group-hover:scale-105 group-hover:rotate-1 transition-all duration-500 ease-out"
+                className="w-full h-full object-cover rounded-[24px] border-2 border-white/20 shadow-lg group-hover:scale-105 group-hover:rotate-1 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
                 onClick={onOpenImageGrid}
               />
               
@@ -154,7 +155,7 @@ const ResultsView: React.FC<ResultsViewProps> = ({ summary, sources, images, onO
                     e.stopPropagation();
                     handleSave({ type: 'image', content: img }, String(img.id));
                 }}
-                className="absolute top-2 right-2 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600"
+                className="absolute top-2 right-2 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 hover:scale-110 active:scale-90 duration-200"
               >
                   {savedIds.has(String(img.id)) ? <Check size={14} /> : <Bookmark size={14} />}
               </button>

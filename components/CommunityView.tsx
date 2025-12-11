@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin, AlertTriangle } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
@@ -18,11 +18,22 @@ const ANNOUNCEMENT_POST: CommunityPost = {
   user_id: 'infinity-official',
   content: "🚀 Upcoming Updates!\n\nWe're actively working to improve the Infinity app. Our focus isn't just on the UI, but on making sure the app is completely error-free and bug-free, while making animations much smoother.\n\nThese improvements will be rolling out in future updates.\n\n🛠️ Plus, the Developer Console is coming soon in the following weeks! Stay tuned.",
   hashtags: ['#roadmap', '#bugfree', '#developerconsole', '#infinity'],
-  created_at: new Date().toISOString(),
+  created_at: new Date(Date.now() + 10000).toISOString(), // Ensure it stays top
   likes_count: 2048,
   author_name: 'Infinity Team',
   author_avatar: INFINITY_LOGO_URL,
   image_url: 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?q=80&w=2070&auto=format&fit=crop'
+};
+
+const NOTION_UPDATE_POST: CommunityPost = {
+  id: 'official-notion-update',
+  user_id: 'infinity-official',
+  content: "⚠️ Important Notice: Notion Integration\n\nAs we streamline our architecture to focus on local-first privacy and speed, the Notion integration will be discontinued in upcoming updates.\n\nWe are developing a new, faster local file connector to replace it, ensuring your data remains completely on your device.",
+  hashtags: ['#update', '#notion', '#privacy'],
+  created_at: new Date().toISOString(),
+  likes_count: 892,
+  author_name: 'Infinity Team',
+  author_avatar: INFINITY_LOGO_URL,
 };
 
 const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
@@ -60,13 +71,13 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
         } else {
             // Fallback if ID invalid
             data = await fetchPosts();
-            data = [ANNOUNCEMENT_POST, ...data];
+            data = [ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
         }
     } else if (initialQuery) {
         data = await searchPosts(initialQuery);
     } else {
         data = await fetchPosts();
-        data = [ANNOUNCEMENT_POST, ...data];
+        data = [ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
     }
     
     setPosts(data);
@@ -99,13 +110,10 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
     
     if (newPost) {
       setPosts(prev => {
-          // Keep announcement at top if it exists
-          const hasAnnouncement = prev.some(p => p.id === ANNOUNCEMENT_POST.id);
-          if (hasAnnouncement) {
-              const others = prev.filter(p => p.id !== ANNOUNCEMENT_POST.id);
-              return [ANNOUNCEMENT_POST, newPost, ...others];
-          }
-          return [newPost, ...prev];
+          // Keep announcements at top if they exist
+          const officials = prev.filter(p => p.user_id === 'infinity-official');
+          const others = prev.filter(p => p.user_id !== 'infinity-official');
+          return [...officials, newPost, ...others];
       });
       setContent('');
       setImageFile(null);
@@ -119,8 +127,8 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       // Optimistic update
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 1 } : p));
       
-      // Only sync to DB if it's not the local announcement post
-      if (post.id !== ANNOUNCEMENT_POST.id) {
+      // Only sync to DB if it's not a local announcement post
+      if (post.user_id !== 'infinity-official') {
           await likePost(post.id, post.likes_count);
       }
   };
@@ -130,7 +138,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       // Optimistic update with double increment for hype
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + 5 } : p));
       
-      if (post.id !== ANNOUNCEMENT_POST.id) {
+      if (post.user_id !== 'infinity-official') {
           await likePost(post.id, post.likes_count + 4); 
       }
   };
@@ -192,7 +200,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           window.history.pushState({}, '', '/community');
           setLoading(true);
           fetchPosts().then(data => {
-              setPosts([ANNOUNCEMENT_POST, ...data]);
+              setPosts([ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data]);
               setLoading(false);
           });
       }
@@ -202,7 +210,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
     <div className="w-full max-w-2xl mx-auto pb-20 animate-slideUp">
       
       {/* Header */}
-      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex justify-between items-center mb-6">
+      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex justify-between items-center mb-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
               {initialPostId && (
                   <button onClick={clearFilters} className="mr-2 hover:bg-zinc-800 p-1 rounded-full transition-colors"><ArrowLeft size={20}/></button>
@@ -220,7 +228,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       {!initialQuery && !initialPostId && (
           <div className="px-4 mb-8">
             <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
                     {user?.user_metadata?.avatar_url ? (
                         <img src={user.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" />
                     ) : (
@@ -236,7 +244,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                     />
                     
                     {imagePreview && (
-                        <div className="relative mb-4 rounded-2xl overflow-hidden max-h-80 w-fit">
+                        <div className="relative mb-4 rounded-2xl overflow-hidden max-h-80 w-fit animate-scaleIn">
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             <button 
                                 onClick={() => { setImageFile(null); setImagePreview(null); }}
@@ -249,10 +257,10 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
 
                     <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
                         <div className="flex gap-2 text-blue-400">
-                            <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-blue-500/10 rounded-full transition-colors">
+                            <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-blue-500/10 rounded-full transition-all duration-300 active:scale-90">
                                 <ImageIcon size={20} />
                             </button>
-                            <button className="p-2 hover:bg-blue-500/10 rounded-full transition-colors">
+                            <button className="p-2 hover:bg-blue-500/10 rounded-full transition-all duration-300 active:scale-90">
                                 <Hash size={20} />
                             </button>
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
@@ -260,10 +268,10 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                         <button 
                             onClick={handlePost}
                             disabled={isPosting || (!content && !imageFile)}
-                            className={`px-5 py-2 rounded-full font-bold text-sm transition-all ${
+                            className={`px-5 py-2 rounded-full font-bold text-sm transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 ${
                                 isPosting || (!content && !imageFile) 
                                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
-                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/20'
                             }`}
                         >
                             {isPosting ? 'Posting...' : 'Post'}
@@ -282,9 +290,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
               <div className="py-10 text-center text-zinc-500">No posts found.</div>
           ) : (
               posts.map((post) => (
-                  <div key={post.id} className={`p-4 border-b border-zinc-800 hover:bg-zinc-900/30 transition-colors cursor-pointer animate-fadeIn ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}`}>
+                  <div key={post.id} 
+                       className={`p-4 border-b border-zinc-800 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-zinc-900/40 cursor-pointer animate-fadeIn hover:scale-[1.01] active:scale-[0.99]
+                       ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}
+                       ${post.id === NOTION_UPDATE_POST.id ? 'bg-orange-900/10 border-l-4 border-l-orange-500' : ''}
+                       `}
+                  >
                       <div className="flex gap-4">
-                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 overflow-hidden shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 overflow-hidden shrink-0 shadow-md">
                               {post.author_avatar ? (
                                   <img src={post.author_avatar} className="w-full h-full object-cover" />
                               ) : (
@@ -296,14 +309,22 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                   <div className="flex items-center gap-2 overflow-hidden">
                                       <span className="font-bold text-white truncate">{post.author_name}</span>
                                       <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
+                                      
                                       {post.id === ANNOUNCEMENT_POST.id && (
                                           <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-bold flex items-center gap-1">
                                               <Pin size={8} fill="currentColor" /> Pinned
                                           </span>
                                       )}
+                                      
+                                      {post.id === NOTION_UPDATE_POST.id && (
+                                          <span className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 font-bold flex items-center gap-1">
+                                              <AlertTriangle size={8} fill="currentColor" /> Notice
+                                          </span>
+                                      )}
+
                                       <span className="text-zinc-600 text-xs">• {formatDate(post.created_at)}</span>
                                   </div>
-                                  <button className="text-zinc-500 hover:text-blue-400">
+                                  <button className="text-zinc-500 hover:text-blue-400 p-1 rounded-full hover:bg-white/5 transition-colors">
                                       <MoreHorizontal size={16} />
                                   </button>
                               </div>
@@ -313,7 +334,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                               </p>
 
                               {post.image_url && (
-                                  <div className="mb-3 rounded-2xl overflow-hidden border border-zinc-800 max-h-[500px]">
+                                  <div className="mb-3 rounded-2xl overflow-hidden border border-zinc-800 max-h-[500px] shadow-lg">
                                       <img src={post.image_url} alt="Post media" className="w-full h-full object-cover" />
                                   </div>
                               )}
@@ -326,7 +347,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                       <span className="text-xs">0</span>
                                   </button>
                                   <button 
-                                    onClick={() => handleLike(post)}
+                                    onClick={(e) => { e.stopPropagation(); handleLike(post); }}
                                     className="flex items-center gap-2 group hover:text-pink-500 transition-colors"
                                   >
                                       <div className="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors">
@@ -335,7 +356,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                       <span className="text-xs">{post.likes_count}</span>
                                   </button>
                                   <button 
-                                    onClick={() => handleHype(post)}
+                                    onClick={(e) => { e.stopPropagation(); handleHype(post); }}
                                     className={`flex items-center gap-2 group transition-colors ${isPro ? 'hover:text-yellow-400' : 'opacity-50 hover:opacity-100'}`}
                                     title={isPro ? "Hype Post" : "Upgrade to Hype"}
                                   >
@@ -344,7 +365,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                       </div>
                                   </button>
                                   <button 
-                                    onClick={() => setSharePost(post)}
+                                    onClick={(e) => { e.stopPropagation(); setSharePost(post); }}
                                     className="flex items-center gap-2 group hover:text-green-400 transition-colors"
                                   >
                                       <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
@@ -371,7 +392,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                 
                 {/* QR Code - Display with White Background for visibility in Dark Mode */}
                 <div className="flex justify-center mb-6">
-                    <div className="p-3 bg-white rounded-xl shadow-lg relative group">
+                    <div className="p-3 bg-white rounded-xl shadow-lg relative group transition-transform duration-500 hover:scale-105">
                         <img 
                             src={getQrUrl(false)} 
                             alt="QR Code" 
@@ -385,14 +406,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                     <button 
                         onClick={() => handleDownloadQr(false)}
                         disabled={isDownloading}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
                     >
                         <Download size={14} /> Download PNG
                     </button>
                     <button 
                         onClick={() => handleDownloadQr(true)}
                         disabled={isDownloading}
-                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
                     >
                         <Download size={14} /> Transparent PNG
                     </button>
@@ -411,7 +432,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                     />
                     <button 
                         onClick={handleCopyLink}
-                        className={`p-2.5 rounded-lg text-white font-medium text-xs transition-all ${copied ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}
+                        className={`p-2.5 rounded-lg text-white font-medium text-xs transition-all duration-300 ${copied ? 'bg-green-600 scale-105' : 'bg-zinc-800 hover:bg-zinc-700 hover:scale-105'}`}
                     >
                         {copied ? 'Copied!' : 'Copy'}
                     </button>
@@ -423,7 +444,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-center gap-2 py-3 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl font-bold text-sm transition-colors"
+                        className="flex items-center justify-center gap-2 py-3 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105 active:scale-95"
                     >
                         <Facebook size={18} /> Facebook
                     </a>
@@ -431,7 +452,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                         href={`https://www.reddit.com/submit?url=${encodeURIComponent(`https://infinitysearch-ai.vercel.app/community/${sharePost.id}`)}&title=${encodeURIComponent("Check out this post on Infinity")}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center justify-center gap-2 py-3 bg-[#FF4500] hover:bg-[#e03d00] text-white rounded-xl font-bold text-sm transition-colors"
+                        className="flex items-center justify-center gap-2 py-3 bg-[#FF4500] hover:bg-[#e03d00] text-white rounded-xl font-bold text-sm transition-all duration-300 hover:scale-105 active:scale-95"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
                         Reddit

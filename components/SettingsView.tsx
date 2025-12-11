@@ -108,10 +108,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const navItemClass = (tab: Tab) => `
-    flex items-center gap-3 px-6 py-3.5 rounded-full transition-all cursor-pointer font-medium mb-1.5
+    flex items-center gap-3 px-6 py-3.5 rounded-full cursor-pointer font-medium mb-1.5
+    transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
     ${activeTab === tab 
         ? 'bg-white text-black shadow-lg transform scale-105' 
-        : 'text-zinc-500 hover:bg-zinc-900 hover:text-white'}
+        : 'text-zinc-500 hover:bg-zinc-900 hover:text-white hover:scale-[1.02] active:scale-[0.98]'}
   `;
 
   // Get user details or defaults
@@ -178,7 +179,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">My Profile</h3>
               
-              <div className="flex items-center gap-6 p-6 bg-zinc-900 rounded-[32px] border border-zinc-800 relative overflow-hidden">
+              <div className="flex items-center gap-6 p-6 bg-zinc-900 rounded-[32px] border border-zinc-800 relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.01]">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-black overflow-hidden relative z-10">
                    {avatarUrl ? (
                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -215,12 +216,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
                <div className="pt-8 flex gap-4">
-                  <button className="h-14 px-10 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform shadow-xl hover:shadow-2xl hover:bg-gray-200">
+                  <button className="h-14 px-10 bg-white text-black rounded-full font-bold transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl hover:bg-gray-200">
                       Update Profile
                   </button>
                   <button 
                     onClick={onLogout}
-                    className="h-14 px-10 bg-red-900/20 border border-red-900/50 text-red-500 rounded-full font-bold hover:bg-red-900/40 transition-all flex items-center gap-2"
+                    className="h-14 px-10 bg-red-900/20 border border-red-900/50 text-red-500 rounded-full font-bold transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-red-900/40 hover:scale-105 active:scale-95 flex items-center gap-2"
                   >
                       <LogOut size={18} /> Sign Out
                   </button>
@@ -234,7 +235,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-white">Subscription Management</h3>
               
               {isPro ? (
-                  <div className="bg-zinc-900 border border-yellow-500/30 rounded-[32px] p-8 relative overflow-hidden shadow-2xl">
+                  <div className="bg-zinc-900 border border-yellow-500/30 rounded-[32px] p-8 relative overflow-hidden shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.01]">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[80px] pointer-events-none"></div>
                       
                       <div className="flex items-center gap-6 mb-8 relative z-10">
@@ -268,7 +269,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <div className="flex gap-4 relative z-10">
                           <button 
                               onClick={handleCancelSubscription}
-                              className="flex-1 h-14 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-full font-bold transition-all flex items-center justify-center gap-2 group"
+                              className="flex-1 h-14 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 rounded-full font-bold transition-all flex items-center justify-center gap-2 group active:scale-95"
                           >
                               <AlertTriangle size={18} className="group-hover:scale-110 transition-transform"/> Cancel Subscription
                           </button>
@@ -279,7 +280,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                   </div>
               ) : (
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-10 text-center relative overflow-hidden group hover:border-zinc-700 transition-all">
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-10 text-center relative overflow-hidden group hover:border-zinc-700 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.01]">
                       <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
                           <User size={40} className="text-zinc-500 group-hover:text-white transition-colors" />
                       </div>
@@ -297,7 +298,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
                       <button 
                           onClick={onUpgradeClick}
-                          className="h-16 px-10 bg-white text-black rounded-full font-bold hover:scale-105 transition-transform shadow-2xl flex items-center justify-center gap-3 mx-auto text-lg"
+                          className="h-16 px-10 bg-white text-black rounded-full font-bold transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 shadow-2xl flex items-center justify-center gap-3 mx-auto text-lg"
                       >
                           <Crown size={20} className="text-yellow-600" fill="currentColor" /> Upgrade to Pro
                       </button>
@@ -311,7 +312,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-white">Customization</h3>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all">
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-black border border-zinc-800 text-white flex items-center justify-center"><Palette size={20}/></div>
                         <div>
@@ -324,7 +325,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                 </div>
 
-                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all">
+                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-blue-900/30 text-blue-400 flex items-center justify-center"><Smartphone size={20}/></div>
                         <div>
@@ -337,7 +338,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all">
+                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-orange-900/30 text-orange-400 flex items-center justify-center"><Thermometer size={20}/></div>
                         <div>
@@ -374,7 +375,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     <div 
                         key={wp.id}
                         onClick={() => { if (!wp.isPro || isPro) onWallpaperChange(wp.url); else onUpgradeClick(); }}
-                        className={`group cursor-pointer relative aspect-[9/16] rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-md ${
+                        className={`group cursor-pointer relative aspect-[9/16] rounded-2xl overflow-hidden border-4 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-md ${
                             currentWallpaper === wp.url ? 'border-white scale-105 shadow-xl' : 'border-transparent hover:scale-105'
                         }`}
                     >
@@ -417,7 +418,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-white">Feature AI</h3>
               
               {/* Model Switcher */}
-              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl mb-6 relative overflow-hidden">
+              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl mb-6 relative overflow-hidden transition-all duration-500 hover:scale-[1.01]">
                   <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                       <Cpu size={20} /> AI Model Selection
                   </h4>
@@ -430,10 +431,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                           <div 
                             key={model.id}
                             onClick={() => handleModelChange(model.id)}
-                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 ${
                                 selectedModel === model.id 
-                                ? 'bg-blue-900/20 border-blue-500/50' 
-                                : 'bg-black border-zinc-800 hover:border-zinc-700'
+                                ? 'bg-blue-900/20 border-blue-500/50 scale-[1.02] shadow-lg' 
+                                : 'bg-black border-zinc-800 hover:border-zinc-700 hover:scale-[1.01]'
                             }`}
                           >
                               <div>
@@ -457,7 +458,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                 Your key is stored locally on your device and never sent to our servers.
               </p>
 
-              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl">
+              <div className="bg-zinc-900 p-8 rounded-[32px] border border-zinc-800 shadow-xl transition-all duration-500 hover:scale-[1.01]">
                 <label className="flex items-center gap-2 text-xs font-bold text-zinc-500 mb-4 ml-2 uppercase tracking-wider">
                     <Key size={14} /> Gemini API Key
                 </label>
@@ -471,7 +472,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     />
                     <button 
                         onClick={handleSaveKey}
-                        className={`h-14 px-8 rounded-full font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg hover:scale-105 ${isSaved ? 'bg-green-600' : 'bg-white text-black hover:bg-gray-200'}`}
+                        className={`h-14 px-8 rounded-full font-bold text-white transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] flex items-center justify-center gap-2 shadow-lg hover:scale-105 active:scale-95 ${isSaved ? 'bg-green-600' : 'bg-white text-black hover:bg-gray-200'}`}
                     >
                         {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
                         {isSaved ? 'Saved' : 'Save'}
@@ -489,7 +490,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
               <p className="text-zinc-500">Sync your data across devices securely.</p>
               
-              <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-12 text-center flex flex-col items-center justify-center">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-12 text-center flex flex-col items-center justify-center transition-all hover:scale-[1.01]">
                   <div className="w-24 h-24 bg-zinc-800/50 rounded-full flex items-center justify-center mb-6 relative">
                       <Cloud size={40} className="text-zinc-400" />
                       <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">New</div>
@@ -513,7 +514,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="space-y-4">
                  
                  {/* Notion Card */}
-                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all">
+                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm hover:border-zinc-600 transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center gap-5">
                         <div className="w-14 h-14 bg-white border border-gray-200 rounded-2xl flex items-center justify-center shadow-sm p-3">
                              <svg viewBox="0 0 122.88 128.1" fill="currentColor" className="w-full h-full text-black">
@@ -527,15 +528,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                     <div>
                         {isNotionConnected ? (
-                             <button className="h-10 px-6 bg-red-900/20 text-red-400 rounded-full text-sm font-bold border border-red-900/50 hover:bg-red-900/40 transition-colors">Disconnect</button>
+                             <button className="h-10 px-6 bg-red-900/20 text-red-400 rounded-full text-sm font-bold border border-red-900/50 hover:bg-red-900/40 transition-colors active:scale-95">Disconnect</button>
                         ) : (
-                             <button onClick={onConnectNotion} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect</button>
+                             <button onClick={onConnectNotion} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200 active:scale-95 transition-transform">Connect</button>
                         )}
                     </div>
                 </div>
 
                 {/* Polar Card */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-6 shadow-sm hover:border-zinc-600 transition-all">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-6 shadow-sm hover:border-zinc-600 transition-all duration-300 hover:scale-[1.01]">
                     <div className="flex items-center gap-5 mb-6">
                         <div className="w-14 h-14 bg-black border border-white/20 rounded-2xl flex items-center justify-center shadow-sm">
                              <DollarSign size={24} className="text-white" />
@@ -560,7 +561,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                             />
                             <button 
                                 onClick={handleSavePolar}
-                                className={`h-12 px-6 rounded-full font-bold text-white transition-all flex items-center gap-2 ${isPolarSaved ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}
+                                className={`h-12 px-6 rounded-full font-bold text-white transition-all flex items-center gap-2 active:scale-95 ${isPolarSaved ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}
                             >
                                 {isPolarSaved ? <CheckCircle size={18} /> : <Save size={18} />}
                                 Save
