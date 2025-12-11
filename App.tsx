@@ -81,7 +81,7 @@ const App: React.FC = () => {
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
   const [isPro, setIsPro] = useState(false);
-  const [osVersion, setOsVersion] = useState<string>('26.0');
+  const [osVersion, setOsVersion] = useState<string>('26.1');
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({

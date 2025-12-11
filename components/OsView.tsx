@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { 
     Send, Mic, Paperclip, Camera, Image as ImageIcon, FileText, 
-    ChevronDown, Zap, Lightbulb, MessageSquare, Bot, Copy, Download, Check, Calculator, Clock
+    ChevronDown, Zap, Lightbulb, MessageSquare, Bot, Copy, Download, Check, Calculator, Clock, Sparkles
 } from 'lucide-react';
 import { chatWithGemini, getSelectedModel } from '../services/geminiService';
 import { HistoryItem, CollectionItem } from '../types';
@@ -28,10 +28,12 @@ interface Message {
 }
 
 const MODELS = [
+    { id: 'gemma-2-9b', name: 'Gemma 2', icon: <Sparkles size={14} className="text-green-300" /> },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', icon: <Zap size={14} className="text-yellow-400" /> },
     { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', icon: <Bot size={14} className="text-purple-400" /> },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', icon: <Bot size={14} className="text-blue-400" /> },
-    { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', icon: <Bot size={14} className="text-green-400" /> },
+    { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', icon: <Bot size={14} className="text-orange-400" /> },
+    { id: 'gpt-5-mini', name: 'GPT-5 Mini', icon: <Bot size={14} className="text-blue-400" /> },
+    { id: 'grok-3', name: 'Grok 3', icon: <Bot size={14} className="text-white" /> },
 ];
 
 const OsView: React.FC<OsViewProps> = ({ user, weather, collections, onSaveHistory }) => {
