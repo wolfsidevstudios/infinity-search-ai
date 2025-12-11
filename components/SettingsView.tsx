@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Terminal, Settings, Server, Trash2, Plus, Download, Sparkles } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Terminal, Settings, Server, Trash2, Plus, Download, Sparkles, Globe, Database, Radio, Utensils, ShoppingBag, Plane, Users } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 import { getMcpServers, addMcpServer, removeMcpServer, refreshMcpServer, McpServer } from '../services/mcpService';
@@ -31,7 +31,7 @@ const WALLPAPERS = [
   { id: 'minimal', url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2000&auto=format&fit=crop', name: 'Minimal Gray', isPro: false },
 ];
 
-// Updated Model List for 26.1 - Restored Missing Models
+// Updated Model List for 26.1
 const AVAILABLE_MODELS = [
     { id: 'gemma-2-9b', name: 'Google Gemma 2', desc: 'Fast, efficient, budget-friendly.', isPro: false, badge: 'NEW' },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Standard reasoning engine.', isPro: false, badge: 'DEFAULT' },
@@ -41,6 +41,18 @@ const AVAILABLE_MODELS = [
     { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', desc: 'Anthropic\'s most capable model.', isPro: true, badge: 'PREMIUM' },
     { id: 'gpt-5-mini', name: 'GPT-5 Mini', desc: 'OpenAI\'s next-gen efficient model.', isPro: true, badge: 'BETA' },
     { id: 'grok-3', name: 'Grok 3', desc: 'xAI\'s real-time reasoning model.', isPro: true, badge: 'NEW' },
+];
+
+// Search Modes for Display
+const SEARCH_MODES = [
+    { label: 'Web', icon: Globe, desc: 'Real-time internet search' },
+    { label: 'Scripture', icon: BookOpen, desc: 'Bible analysis' },
+    { label: 'Podcast', icon: Radio, desc: 'Audio episode finder' },
+    { label: 'Community', icon: Users, desc: 'Social discussions' },
+    { label: 'Recipes', icon: Utensils, desc: 'Cooking instructions' },
+    { label: 'Shopping', icon: ShoppingBag, desc: 'Product deals' },
+    { label: 'Flights', icon: Plane, desc: 'Travel booking' },
+    { label: 'Code Pilot', icon: Terminal, desc: 'Programming assistant' },
 ];
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
@@ -59,9 +71,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
   const [clarifaiPat, setClarifaiPat] = useState('');
-  const [polarToken, setPolarToken] = useState('polar_oat_A3eSAxJk9CcPfFdmTxBYzY4YtXgOiBy5ULqa836FrZP');
   const [isSaved, setIsSaved] = useState(false);
-  const [isPolarSaved, setIsPolarSaved] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
   
@@ -74,9 +84,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   // Update Simulation State
   const [updateStatus, setUpdateStatus] = useState<'available' | 'installing' | 'uptodate'>('available');
   const [installProgress, setInstallProgress] = useState(0);
-  
-  const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
-  const [bibleVersion, setBibleVersion] = useState<string>('kjv');
 
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
@@ -84,14 +91,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     const savedClarifaiPat = localStorage.getItem('clarifai_pat');
     if (savedClarifaiPat) setClarifaiPat(savedClarifaiPat);
-
-    const savedPolarToken = localStorage.getItem('polar_access_token');
-    if (savedPolarToken) setPolarToken(savedPolarToken);
-    
-    const savedBibleVersion = localStorage.getItem('bible_version') || 'kjv';
-    const savedBibleLang = localStorage.getItem('bible_lang') || 'en';
-    setBibleVersion(savedBibleVersion);
-    setBibleLang(savedBibleLang as 'en' | 'es');
 
     const proStatus = localStorage.getItem('infinity_pro_status');
     setIsPro(proStatus === 'active');
@@ -142,16 +141,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleSavePolar = () => {
-      if (polarToken.trim()) {
-          localStorage.setItem('polar_access_token', polarToken.trim());
-      } else {
-          localStorage.removeItem('polar_access_token');
-      }
-      setIsPolarSaved(true);
-      setTimeout(() => setIsPolarSaved(false), 2000);
-  };
-
   const handleModelChange = (model: string) => {
       const selected = AVAILABLE_MODELS.find(m => m.id === model);
       if (selected?.isPro && !isPro) return;
@@ -190,16 +179,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       }
   };
 
-  const handleBibleSettingsChange = (key: string, value: string) => {
-      if (key === 'version') {
-          setBibleVersion(value);
-          localStorage.setItem('bible_version', value);
-      } else {
-          setBibleLang(value as any);
-          localStorage.setItem('bible_lang', value);
-      }
-  };
-
   const navItemClass = (tab: Tab) => `
     flex items-center gap-3 px-6 py-3.5 rounded-full cursor-pointer font-medium mb-1.5
     transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
@@ -209,7 +188,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   `;
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
-  const displayEmail = user?.email || 'user@example.com';
   const avatarUrl = user?.user_metadata?.avatar_url;
 
   return (
@@ -515,91 +493,166 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           {activeTab === 'cloud' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
-              <p className="text-zinc-400">Connect your cloud provider to sync search history and files.</p>
+              <p className="text-zinc-400">Sync search history and files securely.</p>
               
-              <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shrink-0">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_Drive_logo_%282020%29.svg" alt="Drive" className="w-10 h-10" />
+              {/* Google Drive - Discontinued */}
+              <div className="bg-zinc-900 border border-red-900/30 rounded-3xl p-8 flex flex-col opacity-80">
+                  <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center shrink-0 grayscale opacity-50">
+                              <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_Drive_logo_%282020%29.svg" alt="Drive" className="w-10 h-10" />
+                          </div>
+                          <div>
+                              <h4 className="text-xl font-bold text-zinc-300">Google Drive (Discontinued)</h4>
+                              <p className="text-zinc-500">Google Drive integration has been discontinued.</p>
+                          </div>
                       </div>
-                      <div>
-                          <h4 className="text-xl font-bold text-white">Google Drive</h4>
-                          <p className="text-zinc-500">Sync history, images, and notes.</p>
-                      </div>
+                      <div className="px-4 py-1.5 bg-red-900/20 text-red-400 text-xs font-bold rounded-full border border-red-900/30">DEPRECATED</div>
                   </div>
-                  <button className="px-6 py-3 bg-zinc-800 text-white rounded-full font-bold hover:bg-zinc-700 transition-colors border border-zinc-700">
-                      Connect
+                  <button disabled className="w-full py-3 bg-zinc-800 text-zinc-600 rounded-xl font-bold cursor-not-allowed">
+                      Connection Unavailable
                   </button>
               </div>
 
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex items-center justify-between opacity-50 grayscale">
-                  <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 bg-[#0061FF] rounded-2xl flex items-center justify-center shrink-0">
-                          <Cloud size={32} className="text-white" />
+              {/* Infinity Cloud - Coming Soon */}
+              <div className="bg-gradient-to-br from-green-900/20 to-blue-900/20 border border-green-500/20 rounded-3xl p-8 flex flex-col relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[80px] pointer-events-none"></div>
+                  
+                  <div className="flex items-center gap-6 mb-6">
+                      <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center shrink-0 border border-green-500/30 shadow-lg shadow-green-900/20">
+                          <Database size={32} className="text-green-400" />
                       </div>
                       <div>
-                          <h4 className="text-xl font-bold text-white">Dropbox</h4>
-                          <p className="text-zinc-500">Coming soon in v26.2</p>
+                          <h4 className="text-xl font-bold text-white">Infinity Cloud</h4>
+                          <p className="text-green-400/80 text-sm font-medium">Powered by Supabase</p>
                       </div>
                   </div>
-                  <button disabled className="px-6 py-3 bg-transparent text-zinc-500 rounded-full font-bold cursor-not-allowed border border-zinc-800">
-                      Unavailable
+                  
+                  <p className="text-zinc-400 leading-relaxed mb-6">
+                      Coming soon in the next few months. A lightning-fast, encrypted storage solution built specifically for your Infinity workspace. Sync history, files, and preferences instantly across devices.
+                  </p>
+
+                  <button disabled className="w-full py-3 bg-green-500/10 text-green-400 border border-green-500/30 rounded-xl font-bold cursor-not-allowed flex items-center justify-center gap-2">
+                      <Sparkles size={16} /> Coming Soon
                   </button>
               </div>
             </div>
           )}
 
-          {/* TAB: CONNECTED APPS */}
+          {/* TAB: CONNECTED APPS & MCP */}
           {activeTab === 'connected' && (
-            <div className="space-y-8 animate-slideUp max-w-2xl">
-              <h3 className="text-3xl font-bold text-white">Connected Apps</h3>
+            <div className="space-y-8 animate-slideUp max-w-4xl">
+              <h3 className="text-3xl font-bold text-white">Capabilities</h3>
+              <p className="text-zinc-400">Manage search modes and connect external tools.</p>
               
-              <div className="space-y-4">
-                  {/* Notion */}
-                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                      <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M4.222 24C1.889 24 0 22.111 0 19.778V5.333C0 3 1.889 1.111 4.222 1.111h15.556C22.111 1.111 24 3 24 5.333v14.445C24 22.111 22.111 24 19.778 24H4.222zM19.111 6.667h-2.333l-4.556 8.333-2.778-5.333H7.556v10.666h2.444V12l3.444 6.778h1.667l6-10.778v9.333h2.222V6.667z"/></svg>
+              {/* Search Modes Grid */}
+              <div className="mb-8">
+                  <h4 className="text-lg font-bold text-white mb-4">Available Search Modes</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {SEARCH_MODES.map((mode, idx) => (
+                          <div key={idx} className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center text-center gap-3 hover:border-zinc-700 transition-all group">
+                              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                                  <mode.icon size={18} />
+                              </div>
+                              <div>
+                                  <div className="font-bold text-sm text-white">{mode.label}</div>
+                                  <div className="text-[10px] text-zinc-500 mt-1">{mode.desc}</div>
+                              </div>
                           </div>
-                          <div>
-                              <h4 className="font-bold text-white">Notion</h4>
-                              <p className="text-sm text-zinc-500">{isNotionConnected ? 'Workspace Connected' : 'Not Connected'}</p>
+                      ))}
+                  </div>
+              </div>
+
+              {/* Custom MCP Section */}
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-[32px] p-8">
+                  <div className="flex items-center justify-between mb-6">
+                      <h4 className="text-xl font-bold text-white flex items-center gap-3">
+                          <div className="p-2 bg-purple-900/20 rounded-lg text-purple-400">
+                              <Server size={20} />
                           </div>
-                      </div>
+                          Custom Tools (MCP)
+                      </h4>
                       <button 
-                        onClick={onConnectNotion}
-                        className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${isNotionConnected ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-white text-black hover:bg-gray-200'}`}
+                        onClick={() => setAddingMcp(!addingMcp)}
+                        className="flex items-center gap-2 text-xs font-bold bg-white text-black px-4 py-2 rounded-full hover:bg-zinc-200 transition-colors"
                       >
-                          {isNotionConnected ? 'Disconnect' : 'Connect'}
+                          {addingMcp ? 'Cancel' : <><Plus size={14} /> Add Server</>}
                       </button>
                   </div>
 
-                  {/* Spotify */}
-                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                      <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-[#1DB954] rounded-xl flex items-center justify-center">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.42c-.18.3-.55.39-.84.21-2.31-1.41-5.23-1.73-8.66-.95-.33.07-.66-.14-.74-.46-.07-.33.14-.66.46-.74 3.75-.85 7.02-.48 9.57 1.1.3.18.39.55.21.84zm1.2-3.19c-.23.37-.71.49-1.08.26-2.67-1.64-6.74-2.11-9.9-1.15-.4.12-.84-.1-.95-.51-.12-.4.1-.84.51-.95 3.63-1.1 8.16-.57 11.16 1.27.37.23.49.71.26 1.08zm.11-3.32c-3.19-1.89-8.45-2.07-11.5-1.14-.49.15-1.01-.12-1.16-.61-.15-.49.12-1.01.61-1.16 3.53-1.07 9.32-.87 13.01 1.33.44.26.58.83.32 1.27-.26.44-.83.58-1.27.32z"/></svg>
-                          </div>
-                          <div>
-                              <h4 className="font-bold text-white">Spotify</h4>
-                              <p className="text-sm text-zinc-500">Connect to control music</p>
-                          </div>
-                      </div>
-                      <button className="px-5 py-2 bg-zinc-800 text-white rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors">Connect</button>
-                  </div>
+                  <p className="text-sm text-zinc-400 mb-8 max-w-2xl leading-relaxed">
+                      Connect custom Model Context Protocol (MCP) servers to allow the AI to access local tools, databases, or internal APIs during chat sessions.
+                  </p>
 
-                  {/* Figma */}
-                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                      <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-[#2c2c2c] rounded-xl flex items-center justify-center border border-white/10">
-                              <svg width="24" height="24" viewBox="0 0 15 23" fill="none"><path d="M3.75 23C5.82107 23 7.5 21.3211 7.5 19.25V11.75H3.75C1.67893 11.75 0 13.4289 0 15.5C0 17.5711 1.67893 19.25 3.75 19.25V23ZM0 7.75C0 9.82107 1.67893 11.5 3.75 11.5H7.5V7.75C7.5 5.67893 5.82107 4 3.75 4C1.67893 4 0 5.67893 0 7.75ZM7.5 0V7.5H11.25C13.3211 7.5 15 5.82107 15 3.75C15 1.67893 13.3211 0 11.25 0H7.5ZM7.5 11.75V19.25C9.57107 19.25 11.25 17.5711 11.25 15.5C11.25 13.4289 9.57107 11.75 7.5 11.75Z" fill="white"/></svg>
+                  {/* Add New Server Form */}
+                  {addingMcp && (
+                      <div className="bg-black border border-zinc-800 rounded-2xl p-6 mb-6 animate-slideUp">
+                          <h5 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">New Connection</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <input 
+                                  type="text" 
+                                  placeholder="Server Name (e.g. Local Database)" 
+                                  value={newMcpName}
+                                  onChange={(e) => setNewMcpName(e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500 transition-colors"
+                              />
+                              <input 
+                                  type="text" 
+                                  placeholder="Server URL (e.g. ws://localhost:3000)" 
+                                  value={newMcpUrl}
+                                  onChange={(e) => setNewMcpUrl(e.target.value)}
+                                  className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-purple-500 transition-colors font-mono"
+                              />
                           </div>
-                          <div>
-                              <h4 className="font-bold text-white">Figma</h4>
-                              <p className="text-sm text-zinc-500">Search design files</p>
-                          </div>
+                          <button 
+                              onClick={handleAddMcpServer}
+                              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-purple-900/20"
+                          >
+                              Connect Server
+                          </button>
                       </div>
-                      <button className="px-5 py-2 bg-zinc-800 text-white rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors">Connect</button>
+                  )}
+
+                  {/* Server List */}
+                  <div className="space-y-4">
+                      {mcpServers.length === 0 ? (
+                          <div className="text-center py-8 border-2 border-dashed border-zinc-800 rounded-2xl">
+                              <Server size={32} className="mx-auto text-zinc-700 mb-2" />
+                              <p className="text-zinc-500 text-sm">No custom tools connected.</p>
+                          </div>
+                      ) : (
+                          mcpServers.map((server) => (
+                              <div key={server.id} className="flex items-center justify-between p-5 bg-black border border-zinc-800 rounded-2xl group hover:border-zinc-700 transition-all">
+                                  <div className="flex items-center gap-4">
+                                      <div className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${server.status === 'connected' ? 'bg-green-500 shadow-green-900' : 'bg-red-500 shadow-red-900'}`}></div>
+                                      <div>
+                                          <div className="font-bold text-white text-sm flex items-center gap-2">
+                                              {server.name}
+                                              {server.status === 'connected' && <span className="text-[10px] bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded border border-green-900/50">Active</span>}
+                                          </div>
+                                          <div className="text-xs text-zinc-500 font-mono mt-0.5">{server.url}</div>
+                                      </div>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button 
+                                          onClick={() => handleRefreshMcpServer(server.id)}
+                                          className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors"
+                                          title="Reconnect"
+                                      >
+                                          <RefreshCw size={16} />
+                                      </button>
+                                      <button 
+                                          onClick={() => handleRemoveMcpServer(server.id)}
+                                          className="p-2 bg-zinc-900 hover:bg-red-900/30 rounded-lg text-zinc-400 hover:text-red-400 transition-colors"
+                                          title="Remove"
+                                      >
+                                          <Trash2 size={16} />
+                                      </button>
+                                  </div>
+                              </div>
+                          ))
+                      )}
                   </div>
               </div>
             </div>
