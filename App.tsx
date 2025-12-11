@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import MobileNav from './components/MobileNav'; // Import MobileNav
 import SearchInput from './components/SearchInput';
 import ResultsView from './components/ResultsView';
 import DiscoverView from './components/DiscoverView';
@@ -27,7 +28,7 @@ import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
-import OsView from './components/OsView'; // Import New View
+import OsView from './components/OsView';
 import { searchWithGemini, getProductRecommendations, askDrive, generateCode } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -633,7 +634,7 @@ const App: React.FC = () => {
   const city = weather?.city || "your location";
 
   return (
-    <div className="relative h-screen w-full bg-black text-white flex overflow-hidden">
+    <div className="relative h-screen w-full bg-black text-white flex flex-col md:flex-row overflow-hidden">
       
       {showCamera && (
           <CameraView 
@@ -642,17 +643,23 @@ const App: React.FC = () => {
           />
       )}
 
+      {/* Desktop Sidebar */}
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
+      {/* Mobile Bottom Navigation */}
+      <MobileNav activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
+
       <main 
-        className="flex-1 m-3 ml-24 h-[calc(100vh-1.5rem)] relative rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border border-white/10" 
+        className="flex-1 w-full h-full md:h-[calc(100vh-1.5rem)] md:m-3 md:ml-24 relative md:rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border-x border-b md:border border-white/10 pb-20 md:pb-0" 
         style={bgStyle()}
       >
         {currentWallpaper && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-0" />}
 
         {activeTab === 'home' && searchState.status === 'idle' && (
             <div className="absolute top-6 right-8 z-50 flex items-center gap-4">
-                <QuickAccessBar />
+                <div className="hidden md:flex">
+                    <QuickAccessBar />
+                </div>
                 
                 {sessionUser && (
                     <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
@@ -697,7 +704,7 @@ const App: React.FC = () => {
                             <img 
                                 src="https://iili.io/fRRfoF9.png" 
                                 alt="Infinity Visual" 
-                                className="w-80 h-auto mb-4 drop-shadow-2xl" 
+                                className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" 
                             />
                         </a>
                         
@@ -716,8 +723,8 @@ const App: React.FC = () => {
                             />
                         </div>
 
-                        <div className="text-center space-y-3 mt-4">
-                            <p className="text-xl text-zinc-400 font-light">
+                        <div className="text-center space-y-3 mt-4 px-4">
+                            <p className="text-lg md:text-xl text-zinc-400 font-light">
                                 Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.
                             </p>
                             <button 

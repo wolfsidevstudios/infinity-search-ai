@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
   `;
 
   return (
-    <div className="fixed left-0 top-0 bottom-0 w-24 flex flex-col items-center justify-between py-8 z-50">
+    <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-24 flex-col items-center justify-between py-8 z-50">
       
       {/* Top: Profile / Settings */}
       <div>
