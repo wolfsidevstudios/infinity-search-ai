@@ -27,6 +27,7 @@ import CollectionsView from './components/CollectionsView';
 import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
+import OsView from './components/OsView'; // Import New View
 import { searchWithGemini, getProductRecommendations, askDrive, generateCode } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -69,8 +70,8 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
-  const [previousTab, setPreviousTab] = useState<'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
+  const [previousTab, setPreviousTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
   
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
@@ -191,7 +192,7 @@ const App: React.FC = () => {
                      setActiveTab('community');
                      const postId = path.split('/')[1];
                      if (postId) setInitialCommunityPostId(postId);
-                 } else if (['home', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing'].includes(path)) {
+                 } else if (['home', 'os', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -678,14 +679,14 @@ const App: React.FC = () => {
                     </div>
                 )}
             </div>
-            {!(activeTab === 'home' && searchState.status === 'idle') && (
+            {!(activeTab === 'home' && searchState.status === 'idle') && (activeTab !== 'os') && (
                 <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 text-white`}>
                     Infinity {osVersion}
                 </div>
             )}
         </div>
 
-        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
+        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' || activeTab === 'os' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
             
             {activeTab === 'home' && (
               <>
@@ -774,6 +775,18 @@ const App: React.FC = () => {
                     </div>
                 )}
               </>
+            )}
+
+            {/* NEW OS VIEW TAB */}
+            {activeTab === 'os' && (
+                <OsView 
+                    user={sessionUser}
+                    onLogout={handleLogout}
+                    weather={weather}
+                    history={history}
+                    collections={collections}
+                    onSearch={(q) => handleSearch(q, 'web')}
+                />
             )}
 
             {activeTab === 'discover' && (

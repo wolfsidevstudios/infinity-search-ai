@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles, Layout } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing';
-  onTabChange: (tab: 'home' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'pricing') => void;
+  activeTab: 'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing';
+  onTabChange: (tab: 'home' | 'os' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'pricing') => void;
   onReset: () => void;
 }
 
@@ -55,6 +55,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="Home"
             >
                 <Home size={(activeTab === 'home' || activeTab === 'recipe') ? 28 : 24} strokeWidth={(activeTab === 'home' || activeTab === 'recipe') ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('os')}
+                className={btnClass(activeTab === 'os')}
+                title="Infinity OS Dashboard"
+            >
+                <Layout size={activeTab === 'os' ? 28 : 24} strokeWidth={activeTab === 'os' ? 2.5 : 2} />
             </button>
             
             <button 
