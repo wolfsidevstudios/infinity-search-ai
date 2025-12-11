@@ -27,6 +27,8 @@ const WALLPAPERS = [
   { id: 'abstract', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000&auto=format&fit=crop', name: 'Neon Abstract', isPro: true },
   { id: 'user1', url: 'https://iili.io/fItvPs9.jpg', name: 'Dark Gradient', isPro: true },
   { id: 'user2', url: 'https://iili.io/fItv4xS.jpg', name: 'Soft Mesh', isPro: true },
+  { id: 'space', url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop', name: 'Deep Space', isPro: true },
+  { id: 'minimal', url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2000&auto=format&fit=crop', name: 'Minimal Gray', isPro: false },
 ];
 
 // Updated Model List for 26.1 - Restored Missing Models
@@ -157,26 +159,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       localStorage.setItem('infinity_ai_model', model);
   };
 
-  const handleAddMcpServer = async () => {
-      if (!newMcpName || !newMcpUrl) return;
-      setAddingMcp(true);
-      await addMcpServer(newMcpName, newMcpUrl);
-      setMcpServers(getMcpServers());
-      setNewMcpName('');
-      setNewMcpUrl('');
-      setAddingMcp(false);
-  };
-
-  const handleRemoveMcpServer = (id: string) => {
-      removeMcpServer(id);
-      setMcpServers(getMcpServers());
-  };
-
-  const handleRefreshMcpServer = async (id: string) => {
-      await refreshMcpServer(id);
-      setMcpServers(getMcpServers());
-  };
-
   const handleCancelSubscription = () => {
       if (window.confirm("Are you sure you want to cancel your Infinity Pro subscription? You will lose access to premium features immediately.")) {
           localStorage.removeItem('infinity_pro_status');
@@ -185,6 +167,16 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           const current = AVAILABLE_MODELS.find(m => m.id === selectedModel);
           if (current?.isPro) handleModelChange('gemini-2.5-flash');
           alert("Subscription cancelled successfully.");
+      }
+  };
+
+  const handleBibleSettingsChange = (key: string, value: string) => {
+      if (key === 'version') {
+          setBibleVersion(value);
+          localStorage.setItem('bible_version', value);
+      } else {
+          setBibleLang(value as any);
+          localStorage.setItem('bible_lang', value);
       }
   };
 
@@ -258,7 +250,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 h-full bg-black p-6 md:p-12 overflow-y-auto relative">
           
-          {/* TAB: UPDATES - The OS 26.1 Update Screen */}
+          {/* TAB: UPDATES */}
           {activeTab === 'updates' && (
               <div className="space-y-8 animate-slideUp max-w-2xl mx-auto pt-10">
                   <div className="flex justify-center mb-8">
@@ -322,7 +314,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
           )}
 
-          {/* TAB: PROFILE (Existing) */}
+          {/* TAB: PROFILE */}
           {activeTab === 'profile' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">My Profile</h3>
@@ -352,6 +344,244 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <LogOut size={18} /> Sign Out
                   </button>
                </div>
+            </div>
+          )}
+
+          {/* TAB: SUBSCRIPTION */}
+          {activeTab === 'subscription' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Subscription</h3>
+              
+              <div className="p-8 rounded-[32px] bg-gradient-to-br from-zinc-900 to-black border border-white/10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] pointer-events-none"></div>
+                  
+                  <div className="flex justify-between items-start mb-8 relative z-10">
+                      <div>
+                          <div className="text-sm text-zinc-500 font-bold uppercase tracking-wider mb-2">Current Plan</div>
+                          <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                              {isPro ? 'Infinity Pro' : 'Free Plan'}
+                              {isPro && <span className="bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">ACTIVE</span>}
+                          </h2>
+                      </div>
+                      <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                          {isPro ? <Crown size={24} className="text-yellow-400" fill="currentColor"/> : <User size={24} className="text-zinc-400"/>}
+                      </div>
+                  </div>
+
+                  {isPro ? (
+                      <div className="space-y-6">
+                          <div className="flex items-center gap-3 text-zinc-300">
+                              <CheckCircle size={20} className="text-green-500" />
+                              <span>Access to Gemini 3.0 Pro & Claude Opus</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-zinc-300">
+                              <CheckCircle size={20} className="text-green-500" />
+                              <span>Unlimited Cloud History Sync</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-zinc-300">
+                              <CheckCircle size={20} className="text-green-500" />
+                              <span>Early access to experimental features</span>
+                          </div>
+                          
+                          <div className="pt-6 border-t border-white/10 flex gap-4">
+                              <button className="flex-1 py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors">Manage Subscription</button>
+                              <button onClick={handleCancelSubscription} className="px-6 py-3 bg-red-900/20 text-red-400 rounded-xl font-bold hover:bg-red-900/30 transition-colors border border-red-900/50">Cancel</button>
+                          </div>
+                      </div>
+                  ) : (
+                      <div className="space-y-6">
+                          <p className="text-zinc-400">Upgrade to unlock the full potential of Infinity OS.</p>
+                          <button onClick={onUpgradeClick} className="w-full py-4 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors shadow-lg hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                              <Crown size={18} /> Upgrade to Pro - $20/mo
+                          </button>
+                      </div>
+                  )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CUSTOMIZATION */}
+          {activeTab === 'customization' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Customization</h3>
+              
+              <div className="space-y-4">
+                  {/* Weather Unit */}
+                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-blue-900/30 text-blue-400 flex items-center justify-center"><Thermometer size={20}/></div>
+                          <div>
+                              <h4 className="font-bold text-white">Temperature Unit</h4>
+                              <p className="text-sm text-zinc-500">Display weather in Celsius or Fahrenheit</p>
+                          </div>
+                      </div>
+                      <div className="flex bg-black rounded-lg p-1 border border-zinc-800">
+                          <button 
+                            onClick={() => onToggleWeatherUnit('c')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'c' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                          >
+                              °C
+                          </button>
+                          <button 
+                            onClick={() => onToggleWeatherUnit('f')}
+                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'f' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                          >
+                              °F
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* Reduced Motion */}
+                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl opacity-60 cursor-not-allowed" title="Coming in 26.2">
+                      <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-purple-900/30 text-purple-400 flex items-center justify-center"><Smartphone size={20}/></div>
+                          <div>
+                              <h4 className="font-bold text-white">Reduced Motion</h4>
+                              <p className="text-sm text-zinc-500">Minimize animations for faster feel</p>
+                          </div>
+                      </div>
+                      <div className="w-12 h-6 bg-zinc-800 rounded-full relative">
+                          <div className="absolute left-1 top-1 w-4 h-4 bg-zinc-600 rounded-full"></div>
+                      </div>
+                  </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: WALLPAPERS */}
+          {activeTab === 'wallpapers' && (
+            <div className="space-y-8 animate-slideUp max-w-4xl">
+              <div className="flex justify-between items-center">
+                  <h3 className="text-3xl font-bold text-white">Wallpapers</h3>
+                  <button className="bg-zinc-800 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-zinc-700 transition-colors">
+                      <Plus size={16} /> Upload
+                  </button>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {WALLPAPERS.map((wp) => (
+                      <div 
+                        key={wp.id} 
+                        onClick={() => {
+                            if (wp.isPro && !isPro) return;
+                            onWallpaperChange(wp.url);
+                        }}
+                        className={`aspect-video rounded-2xl overflow-hidden relative cursor-pointer group border-2 transition-all ${currentWallpaper === wp.url ? 'border-blue-500 scale-[1.02]' : 'border-transparent hover:scale-[1.02]'}`}
+                      >
+                          {wp.url ? (
+                              <img src={wp.url} alt={wp.name} className="w-full h-full object-cover" />
+                          ) : (
+                              <div className="w-full h-full bg-black flex items-center justify-center text-zinc-600 font-bold">Default Black</div>
+                          )}
+                          
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                              <span className="text-white font-bold">{wp.name}</span>
+                              {wp.isPro && !isPro && <span className="text-yellow-400 text-xs flex items-center gap-1"><Lock size={10}/> Pro Locked</span>}
+                          </div>
+
+                          {/* Lock Overlay */}
+                          {wp.isPro && !isPro && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                  <Lock size={24} className="text-white opacity-50" />
+                              </div>
+                          )}
+                      </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CLOUD STORAGE */}
+          {activeTab === 'cloud' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
+              <p className="text-zinc-400">Connect your cloud provider to sync search history and files.</p>
+              
+              <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shrink-0">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_Drive_logo_%282020%29.svg" alt="Drive" className="w-10 h-10" />
+                      </div>
+                      <div>
+                          <h4 className="text-xl font-bold text-white">Google Drive</h4>
+                          <p className="text-zinc-500">Sync history, images, and notes.</p>
+                      </div>
+                  </div>
+                  <button className="px-6 py-3 bg-zinc-800 text-white rounded-full font-bold hover:bg-zinc-700 transition-colors border border-zinc-700">
+                      Connect
+                  </button>
+              </div>
+
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex items-center justify-between opacity-50 grayscale">
+                  <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 bg-[#0061FF] rounded-2xl flex items-center justify-center shrink-0">
+                          <Cloud size={32} className="text-white" />
+                      </div>
+                      <div>
+                          <h4 className="text-xl font-bold text-white">Dropbox</h4>
+                          <p className="text-zinc-500">Coming soon in v26.2</p>
+                      </div>
+                  </div>
+                  <button disabled className="px-6 py-3 bg-transparent text-zinc-500 rounded-full font-bold cursor-not-allowed border border-zinc-800">
+                      Unavailable
+                  </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: CONNECTED APPS */}
+          {activeTab === 'connected' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Connected Apps</h3>
+              
+              <div className="space-y-4">
+                  {/* Notion */}
+                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M4.222 24C1.889 24 0 22.111 0 19.778V5.333C0 3 1.889 1.111 4.222 1.111h15.556C22.111 1.111 24 3 24 5.333v14.445C24 22.111 22.111 24 19.778 24H4.222zM19.111 6.667h-2.333l-4.556 8.333-2.778-5.333H7.556v10.666h2.444V12l3.444 6.778h1.667l6-10.778v9.333h2.222V6.667z"/></svg>
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white">Notion</h4>
+                              <p className="text-sm text-zinc-500">{isNotionConnected ? 'Workspace Connected' : 'Not Connected'}</p>
+                          </div>
+                      </div>
+                      <button 
+                        onClick={onConnectNotion}
+                        className={`px-5 py-2 rounded-lg text-sm font-bold transition-colors ${isNotionConnected ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-white text-black hover:bg-gray-200'}`}
+                      >
+                          {isNotionConnected ? 'Disconnect' : 'Connect'}
+                      </button>
+                  </div>
+
+                  {/* Spotify */}
+                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-[#1DB954] rounded-xl flex items-center justify-center">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.42c-.18.3-.55.39-.84.21-2.31-1.41-5.23-1.73-8.66-.95-.33.07-.66-.14-.74-.46-.07-.33.14-.66.46-.74 3.75-.85 7.02-.48 9.57 1.1.3.18.39.55.21.84zm1.2-3.19c-.23.37-.71.49-1.08.26-2.67-1.64-6.74-2.11-9.9-1.15-.4.12-.84-.1-.95-.51-.12-.4.1-.84.51-.95 3.63-1.1 8.16-.57 11.16 1.27.37.23.49.71.26 1.08zm.11-3.32c-3.19-1.89-8.45-2.07-11.5-1.14-.49.15-1.01-.12-1.16-.61-.15-.49.12-1.01.61-1.16 3.53-1.07 9.32-.87 13.01 1.33.44.26.58.83.32 1.27-.26.44-.83.58-1.27.32z"/></svg>
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white">Spotify</h4>
+                              <p className="text-sm text-zinc-500">Connect to control music</p>
+                          </div>
+                      </div>
+                      <button className="px-5 py-2 bg-zinc-800 text-white rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors">Connect</button>
+                  </div>
+
+                  {/* Figma */}
+                  <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                      <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-[#2c2c2c] rounded-xl flex items-center justify-center border border-white/10">
+                              <svg width="24" height="24" viewBox="0 0 15 23" fill="none"><path d="M3.75 23C5.82107 23 7.5 21.3211 7.5 19.25V11.75H3.75C1.67893 11.75 0 13.4289 0 15.5C0 17.5711 1.67893 19.25 3.75 19.25V23ZM0 7.75C0 9.82107 1.67893 11.5 3.75 11.5H7.5V7.75C7.5 5.67893 5.82107 4 3.75 4C1.67893 4 0 5.67893 0 7.75ZM7.5 0V7.5H11.25C13.3211 7.5 15 5.82107 15 3.75C15 1.67893 13.3211 0 11.25 0H7.5ZM7.5 11.75V19.25C9.57107 19.25 11.25 17.5711 11.25 15.5C11.25 13.4289 9.57107 11.75 7.5 11.75Z" fill="white"/></svg>
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white">Figma</h4>
+                              <p className="text-sm text-zinc-500">Search design files</p>
+                          </div>
+                      </div>
+                      <button className="px-5 py-2 bg-zinc-800 text-white rounded-lg text-sm font-bold hover:bg-zinc-700 transition-colors">Connect</button>
+                  </div>
+              </div>
             </div>
           )}
 
