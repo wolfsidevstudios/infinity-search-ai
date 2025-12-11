@@ -54,7 +54,7 @@ const OsView: React.FC<OsViewProps> = ({ user, onLogout, weather, history, colle
   const userAvatar = user?.user_metadata?.avatar_url;
 
   return (
-    <div className="w-full h-full flex flex-col justify-between p-8 relative overflow-hidden animate-fadeIn">
+    <div className="w-full h-full flex flex-col justify-between px-8 pb-8 pt-4 relative overflow-hidden animate-fadeIn">
       
       {/* --- TOP BAR --- */}
       <div className="flex justify-between items-start z-20">
