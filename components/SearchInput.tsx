@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Mic, Camera, X, ImageIcon, FileText, ChevronDown, Globe, Database, BookOpen, Radio, Users, Utensils, ShoppingBag, Plane, HardDrive, Terminal, Lock } from 'lucide-react';
+import { Search, Mic, Camera, X, ImageIcon, FileText, ChevronDown, Globe, Database, BookOpen, Radio, Users, Utensils, ShoppingBag, Plane, Terminal, Lock } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -32,7 +32,6 @@ const MODES = [
   { id: 'code', label: 'Code Pilot', icon: Terminal, isPro: false },
   { id: 'shopping', label: 'Shopping', icon: ShoppingBag, isPro: true },
   { id: 'flight', label: 'Flights', icon: Plane, isPro: true },
-  { id: 'drive', label: 'Drive', icon: HardDrive, isPro: true },
 ] as const;
 
 const SearchInput: React.FC<SearchInputProps> = ({ 
@@ -175,7 +174,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                     className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
                   >
                       <ActiveIcon size={18} className="text-blue-400" />
-                      <span className="text-sm font-medium hidden sm:block">{MODES.find(m => m.id === activeMode)?.label}</span>
+                      <span className="text-sm font-medium hidden sm:block">{MODES.find(m => m.id === activeMode)?.label || 'Web'}</span>
                       <ChevronDown size={14} className={`transition-transform duration-300 ${showModeMenu ? 'rotate-180' : ''}`} />
                   </button>
 

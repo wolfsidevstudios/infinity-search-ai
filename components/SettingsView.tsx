@@ -6,11 +6,7 @@ import { BIBLE_VERSIONS } from '../services/bibleService';
 
 interface SettingsViewProps {
   isNotionConnected: boolean;
-  isGoogleDriveConnected: boolean;
   onConnectNotion: () => void;
-  onConnectGoogleDrive: () => void;
-  isAutoSaveEnabled: boolean;
-  onToggleAutoSave: (enabled: boolean) => void;
   onWallpaperChange: (url: string | null) => void;
   currentWallpaper: string | null;
   user: SupabaseUser | null;
@@ -31,11 +27,7 @@ const WALLPAPERS = [
 
 const SettingsView: React.FC<SettingsViewProps> = ({ 
     isNotionConnected, 
-    isGoogleDriveConnected,
     onConnectNotion, 
-    onConnectGoogleDrive,
-    isAutoSaveEnabled,
-    onToggleAutoSave,
     onWallpaperChange,
     currentWallpaper,
     user,
@@ -482,66 +474,20 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           {activeTab === 'cloud' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
-              <p className="text-zinc-500">Connect to Google Drive to automatically back up your search history and notes.</p>
+              <p className="text-zinc-500">Sync your data across devices securely.</p>
               
-              <div className="space-y-6">
-                <div className={`flex items-center justify-between p-6 bg-zinc-900 border rounded-[32px] shadow-sm transition-all ${isGoogleDriveConnected ? 'border-green-500/30' : 'border-zinc-800'}`}>
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md">
-                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg text-white">Google Drive</h4>
-                            <p className="text-sm text-zinc-400">{isGoogleDriveConnected ? 'Connected via OAuth' : 'Not connected'}</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        {isGoogleDriveConnected ? (
-                             <>
-                                <a 
-                                    href="https://drive.google.com/drive/u/0/my-drive" 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 text-white font-bold bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700 hover:bg-zinc-700 transition-colors"
-                                >
-                                    Open Drive <ExternalLink size={14} />
-                                </a>
-                                <div className="flex items-center gap-2 text-green-400 font-bold bg-green-900/20 px-4 py-2 rounded-full border border-green-900/50">
-                                    <Check size={16} /> Connected
-                                </div>
-                             </>
-                        ) : (
-                             <button onClick={onConnectGoogleDrive} className="h-10 px-6 bg-white text-black rounded-full text-sm font-bold shadow-md hover:bg-gray-200">Connect Drive</button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Auto-Save Toggle */}
-                <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-[32px] shadow-sm relative overflow-hidden">
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${isAutoSaveEnabled ? 'bg-blue-900/30 text-blue-400 border-blue-900/50' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}>
-                            <RefreshCw size={20} className={isAutoSaveEnabled && isGoogleDriveConnected ? 'animate-spin-slow' : ''} />
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg text-white flex items-center gap-2">
-                                Auto-backup History
-                                {!isPro && <Lock size={14} className="text-yellow-500" />}
-                            </h4>
-                            <p className="text-sm text-zinc-400">Sync search history to 'infinity_search_history.json'</p>
-                        </div>
-                    </div>
-                    
-                    <button 
-                        onClick={() => {
-                            if (!isPro) onUpgradeClick();
-                            else onToggleAutoSave(!isAutoSaveEnabled);
-                        }}
-                        disabled={!isGoogleDriveConnected && isPro}
-                        className={`w-16 h-9 rounded-full relative transition-colors z-10 ${(!isGoogleDriveConnected && isPro) ? 'opacity-50 cursor-not-allowed bg-zinc-800' : isAutoSaveEnabled ? 'bg-blue-600' : 'bg-zinc-700'}`}
-                    >
-                        <div className={`absolute top-1 w-7 h-7 bg-white rounded-full shadow-md transition-all ${isAutoSaveEnabled ? 'left-[calc(100%-32px)]' : 'left-1'}`}></div>
-                    </button>
-                </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-12 text-center flex flex-col items-center justify-center">
+                  <div className="w-24 h-24 bg-zinc-800/50 rounded-full flex items-center justify-center mb-6 relative">
+                      <Cloud size={40} className="text-zinc-400" />
+                      <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full">New</div>
+                  </div>
+                  <h4 className="text-2xl font-bold text-white mb-3">Supabase Cloud Sync</h4>
+                  <p className="text-zinc-400 max-w-md mx-auto mb-8 leading-relaxed">
+                      We are migrating from Google Drive to Supabase Storage for faster, more secure, and seamless synchronization of your search history and collections.
+                  </p>
+                  <div className="inline-flex items-center gap-2 bg-zinc-800/50 border border-zinc-700 rounded-full px-5 py-2.5 text-zinc-300 font-medium text-sm">
+                      <RefreshCw size={14} className="animate-spin-slow" /> Development in Progress
+                  </div>
               </div>
             </div>
           )}

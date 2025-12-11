@@ -38,7 +38,6 @@ import { searchPodcasts } from './services/podcastService';
 import { searchRecipes, Recipe } from './services/recipeService';
 import { searchShopping, fetchGoogleImages } from './services/shoppingService';
 import { searchFlights } from './services/flightService';
-import { syncHistoryToDrive } from './services/googleDriveService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
@@ -108,10 +107,6 @@ const App: React.FC = () => {
   // Auth State (Legacy/Direct Connections)
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [showNotionModal, setShowNotionModal] = useState(false);
-
-  // Google Drive
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
-  const [isAutoSaveEnabled, setIsAutoSaveEnabled] = useState(false);
 
   // Connection Success State
   const [connectedProvider, setConnectedProvider] = useState<string>('');
@@ -219,12 +214,9 @@ const App: React.FC = () => {
     };
     loadWeather();
 
-    // Load Collections & AutoSave
+    // Load Collections
     const savedCollections = localStorage.getItem('infinity_collections');
     if (savedCollections) setCollections(JSON.parse(savedCollections));
-
-    const savedAutoSave = localStorage.getItem('autosave_history');
-    if (savedAutoSave === 'true') setIsAutoSaveEnabled(true);
 
     const savedWeatherUnit = localStorage.getItem('weather_unit');
     if (savedWeatherUnit) setWeatherUnit(savedWeatherUnit as 'c' | 'f');
@@ -267,8 +259,6 @@ const App: React.FC = () => {
   }, [activeTab, view, initialCommunityPostId]);
 
   const restoreTokens = () => {
-        const savedDriveToken = localStorage.getItem('google_drive_token');
-        if (savedDriveToken) setGoogleAccessToken(savedDriveToken);
         const savedNotionToken = localStorage.getItem('notion_token');
         if (savedNotionToken) setNotionToken(savedNotionToken);
   };
@@ -280,10 +270,6 @@ const App: React.FC = () => {
                setNotionToken(session.provider_token);
                localStorage.setItem('notion_token', session.provider_token);
            }
-           if (provider === 'google') {
-               setGoogleAccessToken(session.provider_token);
-               localStorage.setItem('google_drive_token', session.provider_token);
-           }
       }
   };
 
@@ -291,28 +277,6 @@ const App: React.FC = () => {
   useEffect(() => {
       localStorage.setItem('infinity_collections', JSON.stringify(collections));
   }, [collections]);
-
-  // History Sync Logic
-  useEffect(() => {
-      if (isAutoSaveEnabled && isPro && googleAccessToken && history.length > 0) {
-          const timeout = setTimeout(() => {
-              syncHistoryToDrive(history, googleAccessToken)
-                  .then(res => {
-                      if (!res.success && res.message === "Token expired") {
-                          setGoogleAccessToken(null);
-                          localStorage.removeItem('google_drive_token');
-                      }
-                  })
-                  .catch(err => console.error("Sync failed", err));
-          }, 5000); 
-          return () => clearTimeout(timeout);
-      }
-  }, [history, isAutoSaveEnabled, googleAccessToken, isPro]);
-
-  const handleToggleAutoSave = (enabled: boolean) => {
-      setIsAutoSaveEnabled(enabled);
-      localStorage.setItem('autosave_history', String(enabled));
-  };
 
   const handleWeatherUnitChange = (unit: 'c' | 'f') => {
       setWeatherUnit(unit);
@@ -333,7 +297,6 @@ const App: React.FC = () => {
       });
       // Clear tokens
       setNotionToken(null);
-      setGoogleAccessToken(null);
       localStorage.clear(); 
       window.history.pushState({}, '', '/');
   };
@@ -352,22 +315,6 @@ const App: React.FC = () => {
           setView('success');
           localStorage.removeItem('connecting_provider');
           setShowNotionModal(false);
-      }
-  };
-  const initiateGoogleLogin = async () => {
-      saveReturnTab();
-      localStorage.setItem('connecting_provider', 'google');
-      try {
-          const { error } = await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: { redirectTo: window.location.origin, scopes: 'https://www.googleapis.com/auth/drive.file', queryParams: { access_type: 'offline', prompt: 'consent' } }
-          });
-          if (error) throw error;
-      } catch (e) {
-          setGoogleAccessToken("mock-google-token-demo");
-          setConnectedProvider('google');
-          setView('success');
-          localStorage.removeItem('connecting_provider');
       }
   };
   
@@ -459,24 +406,8 @@ const App: React.FC = () => {
       }
 
       if (mode === 'drive') {
-          if (!googleAccessToken) {
-              await initiateGoogleLogin(); 
-              return; 
-          }
-          const { text, sources } = await askDrive(query, googleAccessToken);
-          const mediaItems: MediaItem[] = sources.map((s, i) => ({
-              id: `drive-${i}`,
-              type: 'article',
-              thumbnailUrl: '', 
-              contentUrl: s.uri,
-              pageUrl: s.uri,
-              title: s.title,
-              source: 'Google Drive'
-          }));
-          
-          setSearchState({ status: 'results', query, summary: text, sources: sources, media: mediaItems });
-          addToHistory({ type: 'search', title: `Drive: ${query}`, summary: text, sources: [] });
-
+          // Google Drive Integration Removed - Fallback
+          setSearchState({ status: 'results', query, summary: "Google Drive integration is temporarily unavailable as we migrate to Supabase Storage.", sources: [], media: [] });
       } else if (mode === 'code') {
           // Code Pilot Mode
           const result = await generateCode(query);
@@ -857,9 +788,8 @@ const App: React.FC = () => {
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 
-                        isNotionConnected={!!notionToken} isGoogleDriveConnected={!!googleAccessToken}
-                        onConnectNotion={initiateNotionLogin} onConnectGoogleDrive={initiateGoogleLogin}
-                        isAutoSaveEnabled={isAutoSaveEnabled} onToggleAutoSave={handleToggleAutoSave}
+                        isNotionConnected={!!notionToken}
+                        onConnectNotion={initiateNotionLogin}
                         currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper}
                         user={sessionUser} onLogout={handleLogout}
                         weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange}
