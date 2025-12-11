@@ -29,10 +29,12 @@ const WALLPAPERS = [
   { id: 'user2', url: 'https://iili.io/fItv4xS.jpg', name: 'Soft Mesh', isPro: true },
 ];
 
-// Updated Model List for 26.1
+// Updated Model List for 26.1 - Restored Missing Models
 const AVAILABLE_MODELS = [
     { id: 'gemma-2-9b', name: 'Google Gemma 2', desc: 'Fast, efficient, budget-friendly.', isPro: false, badge: 'NEW' },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Standard reasoning engine.', isPro: false, badge: 'DEFAULT' },
+    { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', desc: 'Powerful open-source benchmark leader.', isPro: false, badge: 'OPEN' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Advanced complex reasoning.', isPro: true },
     { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', desc: 'Maximum reasoning power.', isPro: true },
     { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', desc: 'Anthropic\'s most capable model.', isPro: true, badge: 'PREMIUM' },
     { id: 'gpt-5-mini', name: 'GPT-5 Mini', desc: 'OpenAI\'s next-gen efficient model.', isPro: true, badge: 'BETA' },
@@ -380,7 +382,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                                   <div className="flex items-center gap-2">
                                       <div className={`font-bold ${selectedModel === model.id ? 'text-blue-400' : 'text-white'}`}>{model.name}</div>
                                       {model.badge && (
-                                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${model.badge === 'NEW' ? 'bg-green-900 text-green-400' : model.badge === 'PREMIUM' ? 'bg-purple-900 text-purple-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${model.badge === 'NEW' ? 'bg-green-900 text-green-400' : model.badge === 'PREMIUM' ? 'bg-purple-900 text-purple-400' : model.badge === 'OPEN' ? 'bg-pink-900 text-pink-400' : 'bg-zinc-800 text-zinc-400'}`}>
                                               {model.badge}
                                           </span>
                                       )}
