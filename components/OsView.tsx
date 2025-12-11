@@ -1,9 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { User, LogOut, Search, Clock, Calendar, Cloud, LayoutGrid, Cpu, History, Bookmark, Sparkles, Youtube, Mail, HardDrive, Music, Play, ArrowRight, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import { 
+    Send, Mic, Paperclip, Camera, Image as ImageIcon, FileText, 
+    ChevronDown, Zap, Lightbulb, MessageSquare, Bot, Copy, Download, Check
+} from 'lucide-react';
+import { chatWithGemini, getSelectedModel } from '../services/geminiService';
 import { HistoryItem, CollectionItem } from '../types';
-import { getWeatherDescription, WeatherData } from '../services/weatherService';
+import { WeatherData } from '../services/weatherService';
 
 interface OsViewProps {
   user: SupabaseUser | null;
@@ -14,199 +18,392 @@ interface OsViewProps {
   onSearch: (query: string) => void;
 }
 
-const OsView: React.FC<OsViewProps> = ({ user, onLogout, weather, history, collections, onSearch }) => {
-  const [time, setTime] = useState(new Date());
-  const [slideIndex, setSlideIndex] = useState(0);
-  const [query, setQuery] = useState('');
+interface Message {
+    id: string;
+    role: 'user' | 'model';
+    text: string;
+    timestamp: Date;
+}
 
-  // 1. Clock Logic
+const MODELS = [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', icon: <Zap size={14} className="text-yellow-400" /> },
+    { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', icon: <Bot size={14} className="text-purple-400" /> },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', icon: <Bot size={14} className="text-blue-400" /> },
+    { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', icon: <Bot size={14} className="text-green-400" /> },
+];
+
+const OsView: React.FC<OsViewProps> = ({ user }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(getSelectedModel());
+  const [showModelMenu, setShowModelMenu] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+      // Scroll to bottom on new messages
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
-  // 2. Carousel Data Construction
-  const cards = [
-      { id: 'welcome', type: 'system', title: 'Welcome Back', content: `Infinity OS 26.0 is ready.`, icon: <Cpu size={40} className="text-blue-400" /> },
-      ...history.slice(0, 3).map(h => ({ id: h.id, type: 'history', title: 'Recent Search', content: h.title, icon: <History size={40} className="text-purple-400" /> })),
-      ...collections.slice(0, 3).map(c => ({ id: c.id, type: 'collection', title: 'Saved Item', content: typeof c.content === 'object' ? c.content.title : 'Saved Note', icon: <Bookmark size={40} className="text-yellow-400" /> })),
-      { id: 'widget', type: 'system', title: 'System Status', content: 'All systems operational.', icon: <LayoutGrid size={40} className="text-green-400" /> }
-  ];
+  const handleSend = async () => {
+      if (!input.trim() || isLoading) return;
 
-  // 3. Carousel Auto-Slide
-  useEffect(() => {
-      const interval = setInterval(() => {
-          setSlideIndex((prev) => (prev + 1) % cards.length);
-      }, 4000);
-      return () => clearInterval(interval);
-  }, [cards.length]);
+      const userMsg: Message = {
+          id: Date.now().toString(),
+          role: 'user',
+          text: input,
+          timestamp: new Date()
+      };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (query.trim()) {
-          onSearch(query);
+      setMessages(prev => [...prev, userMsg]);
+      setInput('');
+      setIsLoading(true);
+
+      // Build History for API
+      const apiHistory = messages.map(m => ({
+          role: m.role,
+          parts: [{ text: m.text }]
+      }));
+      apiHistory.push({ role: 'user', parts: [{ text: userMsg.text }] });
+
+      const responseText = await chatWithGemini(apiHistory, selectedModel);
+
+      const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          text: responseText,
+          timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, aiMsg]);
+      setIsLoading(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
       }
   };
 
-  const formattedDate = time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  const formattedTime = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  const userName = user?.user_metadata?.full_name || 'Guest User';
-  const userAvatar = user?.user_metadata?.avatar_url;
+  const selectModel = (id: string) => {
+      setSelectedModel(id);
+      localStorage.setItem('infinity_ai_model', id);
+      setShowModelMenu(false);
+  };
+
+  // Helper to render formatting
+  const renderMessageContent = (text: string) => {
+      // 1. Split Code Blocks
+      const parts = text.split(/```/g);
+      
+      return parts.map((part, index) => {
+          if (index % 2 === 1) {
+              // CODE BLOCK
+              const lines = part.split('\n');
+              const language = lines[0].trim() || 'code';
+              const code = lines.slice(1).join('\n').trim();
+              return <CodeBlock key={index} language={language} code={code} />;
+          } else {
+              // TEXT BLOCK (Process basic markdown)
+              // Detect Tables first? Complex. Let's do simple formatting first.
+              
+              // Tables: Identify simple markdown table structure
+              if (part.includes('|') && part.includes('---')) {
+                  // Very basic table detection
+                  const tableMatch = part.match(/\|(.+)\|\n\|([-:| ]+)\|\n((?:\|.*\|\n?)+)/);
+                  if (tableMatch) {
+                      return <TableBlock key={index} content={tableMatch[0]} />;
+                  }
+              }
+
+              return (
+                  <div key={index} className="prose prose-invert max-w-none text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                      {part.split('\n').map((line, i) => {
+                          // Bold: **text**
+                          const boldParts = line.split(/(\*\*.*?\*\*)/g);
+                          return (
+                              <div key={i} className="min-h-[1.5em]">
+                                  {line.trim().startsWith('- ') || line.trim().startsWith('* ') ? (
+                                      <div className="flex gap-2 ml-4">
+                                          <span className="text-zinc-500">•</span>
+                                          <span>
+                                               {processInlineFormatting(line.substring(2))}
+                                          </span>
+                                      </div>
+                                  ) : (
+                                      processInlineFormatting(line)
+                                  )}
+                              </div>
+                          );
+                      })}
+                  </div>
+              );
+          }
+      });
+  };
+
+  const processInlineFormatting = (text: string) => {
+      const parts = text.split(/(\*\*.*?\*\*)/g);
+      return parts.map((p, idx) => {
+          if (p.startsWith('**') && p.endsWith('**')) {
+              return <strong key={idx} className="text-white font-bold">{p.slice(2, -2)}</strong>;
+          }
+          return p;
+      });
+  };
+
+  const currentModelName = MODELS.find(m => m.id === selectedModel)?.name || selectedModel;
 
   return (
-    <div className="w-full h-full flex flex-col justify-between px-8 pb-8 pt-4 relative overflow-hidden animate-fadeIn">
+    <div className="w-full h-full flex flex-col bg-black text-white relative animate-fadeIn">
       
-      {/* --- TOP BAR --- */}
-      <div className="flex justify-between items-start z-20">
-          {/* Top Left: Profile */}
-          <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-4 bg-zinc-900/50 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-full shadow-lg">
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/10">
-                      {userAvatar ? (
-                          <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                          <div className="w-full h-full bg-zinc-800 flex items-center justify-center text-white"><User size={20} /></div>
-                      )}
-                  </div>
-                  <div>
-                      <div className="text-white font-bold leading-tight">{userName}</div>
-                      <div className="text-xs text-green-400 flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"/> Online</div>
+      {/* Empty State / Header */}
+      {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-4xl mx-auto w-full">
+              {/* Logo / Avatar Orb */}
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-blue-500 p-[2px] shadow-[0_0_40px_rgba(34,197,94,0.3)] mb-8 animate-pulse">
+                  <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-b from-green-400/20 to-transparent flex items-center justify-center">
+                          <Bot size={40} className="text-white drop-shadow-lg" />
+                      </div>
                   </div>
               </div>
-              <button 
-                onClick={onLogout} 
-                className="ml-4 text-xs font-medium text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors group"
-              >
-                  <LogOut size={12} className="group-hover:-translate-x-0.5 transition-transform" /> Sign Out
-              </button>
+
+              <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 tracking-tight">
+                  Good evening, {user?.user_metadata?.full_name?.split(' ')[0] || 'User'}
+              </h1>
+              <h2 className="text-2xl md:text-3xl font-medium text-zinc-500 text-center mb-12">
+                  Can I help you with anything?
+              </h2>
+
+              {/* Suggestions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-12">
+                  {[
+                      { icon: <Zap size={18} className="text-yellow-400" />, text: "Get fresh perspectives on tricky problems" },
+                      { icon: <Lightbulb size={18} className="text-purple-400" />, text: "Brainstorm creative ideas" },
+                      { icon: <FileText size={18} className="text-blue-400" />, text: "Rewrite message for maximum impact" },
+                      { icon: <MessageSquare size={18} className="text-green-400" />, text: "Summarize key points" }
+                  ].map((s, i) => (
+                      <button 
+                        key={i}
+                        onClick={() => setInput(s.text)}
+                        className="bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-800 rounded-2xl p-4 text-left transition-all hover:scale-[1.02] active:scale-95 group"
+                      >
+                          <div className="mb-3 p-2 bg-black rounded-lg w-fit group-hover:bg-zinc-700 transition-colors">
+                              {s.icon}
+                          </div>
+                          <p className="text-sm font-medium text-zinc-300 leading-snug">{s.text}</p>
+                      </button>
+                  ))}
+              </div>
           </div>
-
-          {/* Top Right: Time & Weather */}
-          <div className="flex flex-col items-end gap-2 text-right">
-              <div className="text-6xl font-light text-white tracking-tighter drop-shadow-xl font-serif-display">
-                  {formattedTime}
-              </div>
-              <div className="flex items-center gap-4 text-zinc-400 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/5">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                      <Calendar size={14} /> {formattedDate}
-                  </div>
-                  <div className="w-[1px] h-3 bg-white/20"></div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                      <Cloud size={14} /> {weather ? `${Math.round(weather.temperature)}°` : '--°'}
-                  </div>
-              </div>
-          </div>
-      </div>
-
-      {/* --- CENTER: CAROUSEL --- */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="relative w-full max-w-2xl aspect-[16/9] perspective-1000">
-              {cards.map((card, index) => {
-                  // Calculate positioning
-                  const diff = (index - slideIndex + cards.length) % cards.length;
-                  const isCenter = diff === 0;
-                  const isNext = diff === 1;
-                  const isPrev = diff === cards.length - 1;
-                  
-                  let className = "absolute inset-0 bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-[40px] p-10 flex flex-col justify-between shadow-2xl transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-auto";
-                  let style: React.CSSProperties = {};
-
-                  if (isCenter) {
-                      style = { transform: 'scale(1) translateZ(0)', opacity: 1, zIndex: 10 };
-                  } else if (isNext) {
-                      style = { transform: 'scale(0.8) translateX(60%) rotateY(-15deg)', opacity: 0.4, zIndex: 5 };
-                  } else if (isPrev) {
-                      style = { transform: 'scale(0.8) translateX(-60%) rotateY(15deg)', opacity: 0.4, zIndex: 5 };
-                  } else {
-                      style = { transform: 'scale(0.5) translateZ(-500px)', opacity: 0, zIndex: 0 };
-                  }
-
-                  return (
-                      <div key={card.id + index} className={className} style={style}>
-                          <div className="flex justify-between items-start">
-                              <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                  {card.icon}
+      ) : (
+          <div className="flex-1 overflow-y-auto px-4 md:px-0 scroll-smooth">
+              <div className="max-w-4xl mx-auto py-8 space-y-10">
+                  {messages.map((msg) => (
+                      <div key={msg.id} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${msg.role === 'user' ? 'bg-zinc-800 border-zinc-700' : 'bg-green-900/20 border-green-500/20'}`}>
+                              {msg.role === 'user' ? (
+                                  <div className="text-sm font-bold">{user?.email?.[0].toUpperCase() || 'U'}</div>
+                              ) : (
+                                  <Bot size={20} className="text-green-400" />
+                              )}
+                          </div>
+                          
+                          <div className={`flex-1 max-w-[85%] ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                              <div className="text-xs text-zinc-500 font-bold mb-2 uppercase tracking-wider">
+                                  {msg.role === 'user' ? 'You' : 'ThinkAI'}
                               </div>
-                              <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{card.type}</span>
-                          </div>
-                          <div>
-                              <h3 className="text-3xl font-bold text-white mb-2 line-clamp-2">{card.content}</h3>
-                              <p className="text-zinc-400 font-medium">{card.title}</p>
-                          </div>
-                          <div className="h-1 w-full bg-zinc-800 rounded-full overflow-hidden mt-6">
-                              {isCenter && <div className="h-full bg-white animate-[progress_4s_linear]" />}
+                              <div className={`text-[16px] leading-7 ${msg.role === 'user' ? 'text-white' : 'text-zinc-200'}`}>
+                                  {msg.role === 'user' ? msg.text : renderMessageContent(msg.text)}
+                              </div>
                           </div>
                       </div>
-                  );
-              })}
+                  ))}
+                  
+                  {isLoading && (
+                      <div className="flex gap-6">
+                          <div className="w-10 h-10 rounded-full bg-green-900/20 border border-green-500/20 flex items-center justify-center shrink-0 animate-pulse">
+                              <Bot size={20} className="text-green-400" />
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce delay-100"></div>
+                              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce delay-200"></div>
+                          </div>
+                      </div>
+                  )}
+                  <div ref={chatEndRef} className="h-4" />
+              </div>
           </div>
-      </div>
+      )}
 
-      {/* --- BOTTOM BAR --- */}
-      <div className="flex flex-col items-center z-20 w-full max-w-5xl mx-auto">
-          
-          <div className="flex items-end w-full gap-6">
+      {/* Input Area (Bottom Fixed) */}
+      <div className="w-full bg-black/90 backdrop-blur-xl border-t border-zinc-800 p-6 z-20">
+          <div className="max-w-4xl mx-auto relative">
               
-              {/* Left Quick Apps */}
-              <div className="flex gap-3 pb-1">
-                  <a href="https://mail.google.com" target="_blank" rel="noreferrer" className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <Mail size={20} className="text-red-400 group-hover:text-white transition-colors"/>
-                  </a>
-                  <a href="https://drive.google.com" target="_blank" rel="noreferrer" className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <HardDrive size={20} className="text-blue-400 group-hover:text-white transition-colors"/>
-                  </a>
-                  <a href="https://open.spotify.com" target="_blank" rel="noreferrer" className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <Music size={20} className="text-green-400 group-hover:text-white transition-colors"/>
-                  </a>
-              </div>
+              {/* Input Container */}
+              <div className="bg-zinc-900/80 border border-zinc-700 rounded-3xl p-2 shadow-2xl relative transition-all focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600">
+                  <textarea 
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="How can ThinkAI help you today?"
+                      className="w-full bg-transparent text-white text-lg px-4 py-3 min-h-[60px] max-h-[200px] outline-none resize-none placeholder-zinc-500 custom-scrollbar"
+                      rows={1}
+                      style={{ height: 'auto', minHeight: '60px' }}
+                  />
+                  
+                  {/* Bottom Controls */}
+                  <div className="flex items-center justify-between px-2 pb-1 pt-2">
+                      
+                      {/* Left: Model Switcher & Tools */}
+                      <div className="flex items-center gap-2">
+                          <div className="relative">
+                              <button 
+                                onClick={() => setShowModelMenu(!showModelMenu)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs font-bold text-zinc-300 hover:text-white hover:border-zinc-500 transition-all"
+                              >
+                                  {MODELS.find(m => m.id === selectedModel)?.icon}
+                                  {currentModelName}
+                                  <ChevronDown size={12} className={`transition-transform ${showModelMenu ? 'rotate-180' : ''}`}/>
+                              </button>
 
-              {/* Center Search Input */}
-              <form onSubmit={handleSearchSubmit} className="flex-1 relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full blur opacity-20 group-hover:opacity-60 transition duration-500"></div>
-                  <div className="relative flex items-center bg-black rounded-full border border-white/10 shadow-2xl overflow-hidden h-12 px-4 transition-all focus-within:border-white/30">
-                      <Sparkles size={16} className="text-zinc-500 mr-3 animate-pulse" />
-                      <input 
-                          type="text" 
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="Ask Infinity Assistant about your data..."
-                          className="flex-1 bg-transparent text-sm font-mono text-white placeholder-zinc-600 outline-none h-full"
-                      />
-                      <button type="submit" className="p-1.5 bg-white rounded-full text-black hover:scale-110 transition-transform">
-                          <ArrowRight size={14} />
-                      </button>
+                              {showModelMenu && (
+                                  <div className="absolute bottom-full left-0 mb-2 w-56 bg-[#1a1a1a] border border-zinc-700 rounded-xl shadow-xl overflow-hidden z-50 animate-scaleIn origin-bottom-left">
+                                      {MODELS.map((model) => (
+                                          <button
+                                            key={model.id}
+                                            onClick={() => selectModel(model.id)}
+                                            className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-zinc-800 transition-colors ${selectedModel === model.id ? 'bg-zinc-800 text-white' : 'text-zinc-400'}`}
+                                          >
+                                              {model.icon}
+                                              {model.name}
+                                              {selectedModel === model.id && <Check size={14} className="ml-auto text-green-500" />}
+                                          </button>
+                                      ))}
+                                  </div>
+                              )}
+                          </div>
+
+                          <button className="p-2 text-zinc-500 hover:text-white transition-colors" title="Attach">
+                              <Paperclip size={18} />
+                          </button>
+                          <button className="p-2 text-zinc-500 hover:text-white transition-colors" title="Visual Search">
+                              <Camera size={18} />
+                          </button>
+                      </div>
+
+                      {/* Right: Send */}
+                      <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-zinc-600 font-medium hidden md:inline">Use shift + return for new line</span>
+                          <button 
+                            onClick={handleSend}
+                            disabled={!input.trim() || isLoading}
+                            className={`p-3 rounded-full transition-all ${
+                                input.trim() && !isLoading
+                                ? 'bg-white text-black hover:bg-zinc-200 hover:scale-105 active:scale-95' 
+                                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                            }`}
+                          >
+                              <Send size={18} fill={input.trim() ? "currentColor" : "none"} />
+                          </button>
+                      </div>
                   </div>
-              </form>
-
-              {/* Right Quick Apps */}
-              <div className="flex gap-3 pb-1">
-                  <a href="https://youtube.com" target="_blank" rel="noreferrer" className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <Youtube size={20} className="text-red-500 group-hover:text-white transition-colors"/>
-                  </a>
-                  <button onClick={() => {}} className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <Play size={20} className="text-zinc-400 group-hover:text-white transition-colors fill-current"/>
-                  </button>
-                  <button onClick={() => {}} className="w-12 h-12 bg-zinc-900/80 border border-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-zinc-800 hover:scale-110 transition-all hover:-translate-y-2 duration-300 shadow-lg group">
-                      <LayoutGrid size={20} className="text-orange-400 group-hover:text-white transition-colors"/>
-                  </button>
               </div>
 
+              {/* Footer Disclaimer */}
+              <p className="text-center text-[10px] text-zinc-600 mt-4">
+                  ThinkAI can make mistakes. Please double-check responses.
+              </p>
           </div>
-          
-          <div className="mt-4 text-[10px] text-zinc-600 font-mono tracking-widest uppercase">
-              Infinity OS v26.0 • System Ready
-          </div>
-
       </div>
 
-      <style>{`
-        @keyframes progress {
-            0% { width: 0% }
-            100% { width: 100% }
-        }
-      `}</style>
     </div>
   );
+};
+
+// --- SUB-COMPONENTS ---
+
+const CodeBlock: React.FC<{ language: string; code: string }> = ({ language, code }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleDownload = () => {
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `snippet.${language === 'javascript' ? 'js' : language === 'python' ? 'py' : 'txt'}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <div className="my-6 rounded-xl overflow-hidden border border-zinc-700 bg-[#1e1e1e] shadow-lg">
+            <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-black">
+                <span className="text-xs font-mono text-zinc-400 uppercase">{language}</span>
+                <div className="flex gap-2">
+                    <button onClick={handleCopy} className="p-1.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5 text-xs">
+                        {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                        {copied ? 'Copied' : 'Copy'}
+                    </button>
+                    <button onClick={handleDownload} className="p-1.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors" title="Download">
+                        <Download size={14} />
+                    </button>
+                </div>
+            </div>
+            <div className="p-4 overflow-x-auto custom-scrollbar">
+                <pre className="font-mono text-sm text-[#d4d4d4] leading-relaxed">
+                    <code>{code}</code>
+                </pre>
+            </div>
+        </div>
+    );
+};
+
+const TableBlock: React.FC<{ content: string }> = ({ content }) => {
+    // Parse Markdown Table (Basic)
+    const rows = content.trim().split('\n');
+    const headerRow = rows[0].split('|').filter(c => c.trim()).map(c => c.trim());
+    const dataRows = rows.slice(2).map(r => r.split('|').filter(c => c.trim()).map(c => c.trim()));
+
+    return (
+        <div className="my-6 overflow-hidden rounded-xl border border-zinc-700 shadow-lg bg-zinc-900/50">
+            <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border-b border-zinc-700">
+                <Zap size={14} className="text-green-400" />
+                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Data Sheet</span>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-zinc-400 uppercase bg-black/40">
+                        <tr>
+                            {headerRow.map((h, i) => (
+                                <th key={i} className="px-6 py-3 border-b border-zinc-800">{h}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {dataRows.map((row, i) => (
+                            <tr key={i} className="border-b border-zinc-800 hover:bg-zinc-800/30 transition-colors">
+                                {row.map((cell, j) => (
+                                    <td key={j} className="px-6 py-4 font-mono text-zinc-300">{cell}</td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 };
 
 export default OsView;
