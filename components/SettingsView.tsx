@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Terminal } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Terminal, Settings } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
 import DeveloperConsoleView from './DeveloperConsoleView';
@@ -15,9 +15,11 @@ interface SettingsViewProps {
   weatherUnit: 'c' | 'f';
   onToggleWeatherUnit: (unit: 'c' | 'f') => void;
   onUpgradeClick: () => void;
+  osVersion?: string;
+  onUpdateOS?: (version: string) => void;
 }
 
-type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription' | 'developer';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription' | 'updates' | 'developer';
 
 const WALLPAPERS = [
   { id: 'default', url: null, name: 'Default Black', isPro: false },
@@ -35,7 +37,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onLogout,
     weatherUnit,
     onToggleWeatherUnit,
-    onUpgradeClick
+    onUpgradeClick,
+    osVersion = '26.0',
+    onUpdateOS
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -44,6 +48,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [isPolarSaved, setIsPolarSaved] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash');
+  
+  // Update Simulation State
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'installing' | 'completed'>('idle');
+  const [downloadProgress, setDownloadProgress] = useState(0);
   
   // Bible Settings
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
@@ -68,6 +76,34 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     const savedModel = localStorage.getItem('infinity_ai_model') || 'gemini-2.5-flash';
     setSelectedModel(savedModel);
   }, [user]);
+
+  // Update Logic Effect
+  useEffect(() => {
+      if (activeTab === 'updates' && updateStatus === 'idle' && osVersion === '26.0') {
+          setUpdateStatus('checking');
+          setTimeout(() => setUpdateStatus('available'), 2000);
+      }
+  }, [activeTab, updateStatus, osVersion]);
+
+  const handleStartUpdate = () => {
+      setUpdateStatus('downloading');
+      
+      // Simulate Download
+      const interval = setInterval(() => {
+          setDownloadProgress(prev => {
+              if (prev >= 100) {
+                  clearInterval(interval);
+                  setUpdateStatus('installing');
+                  setTimeout(() => {
+                      if (onUpdateOS) onUpdateOS('26.1 Beta');
+                      setUpdateStatus('completed');
+                  }, 2000);
+                  return 100;
+              }
+              return prev + Math.random() * 15;
+          });
+      }, 500);
+  };
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
@@ -134,6 +170,19 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div onClick={() => setActiveTab('subscription')} className={navItemClass('subscription')}>
                 <CreditCard size={20} /> Subscription
             </div>
+            
+            <div className="h-[1px] bg-zinc-900 my-2 mx-4"></div>
+
+            <div onClick={() => setActiveTab('updates')} className={navItemClass('updates')}>
+                <div className="relative">
+                    <Settings size={20} />
+                    {osVersion === '26.0' && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black"></div>}
+                </div>
+                Software Updates
+            </div>
+
+            <div className="h-[1px] bg-zinc-900 my-2 mx-4"></div>
+
             <div onClick={() => setActiveTab('customization')} className={navItemClass('customization')}>
                 <Palette size={20} /> Customization
             </div>
@@ -162,7 +211,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="mt-auto pl-4 text-xs text-zinc-500 font-medium">
-            Infinity v2.4.0
+            Infinity OS {osVersion}
         </div>
       </div>
 
@@ -172,6 +221,93 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           {/* TAB: DEVELOPER */}
           {activeTab === 'developer' && (
               <DeveloperConsoleView />
+          )}
+
+          {/* TAB: UPDATES */}
+          {activeTab === 'updates' && (
+              <div className="space-y-8 animate-slideUp max-w-2xl mx-auto pt-10">
+                  
+                  {/* Status Icon */}
+                  <div className="flex justify-center mb-8">
+                      <div className="w-32 h-32 bg-zinc-900 rounded-[32px] flex items-center justify-center shadow-2xl border border-zinc-800">
+                          {updateStatus === 'checking' || updateStatus === 'downloading' || updateStatus === 'installing' ? (
+                              <Settings size={64} className="text-blue-500 animate-spin-slow" />
+                          ) : (
+                              <div className="w-16 h-16 bg-white rounded-xl shadow-lg flex items-center justify-center">
+                                  <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="OS" className="w-12 h-12 object-cover rounded-lg" />
+                              </div>
+                          )}
+                      </div>
+                  </div>
+
+                  {/* Checking / Up to Date */}
+                  {(updateStatus === 'checking' || (updateStatus === 'idle' && osVersion !== '26.0')) && (
+                      <div className="text-center">
+                          <h3 className="text-2xl font-bold text-white mb-2">
+                              {updateStatus === 'checking' ? 'Checking for updates...' : `Infinity OS ${osVersion}`}
+                          </h3>
+                          {updateStatus !== 'checking' && (
+                              <p className="text-zinc-500">Your software is up to date.</p>
+                          )}
+                      </div>
+                  )}
+
+                  {/* Available Update */}
+                  {(updateStatus === 'available' || updateStatus === 'downloading' || updateStatus === 'installing') && (
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 shadow-xl animate-fadeIn">
+                          <div className="flex justify-between items-start mb-4">
+                              <div>
+                                  <h3 className="text-2xl font-bold text-white">Infinity OS 26.1 Beta</h3>
+                                  <p className="text-zinc-500 text-sm font-medium mt-1">Infinity Inc. • 345.2 MB</p>
+                              </div>
+                          </div>
+                          
+                          <div className="prose prose-invert prose-sm max-w-none text-zinc-400 mb-8">
+                              <p>
+                                  Infinity OS 26.1 introduces a refined spatial design language, deeper integration with next-gen reasoning models, and significant stability improvements.
+                              </p>
+                              <ul className="list-disc pl-4 space-y-1 mt-2">
+                                  <li>New "Fluid Physics" animation engine.</li>
+                                  <li>Improved "Deep Think" latency.</li>
+                                  <li>Security patches for local storage encryption.</li>
+                              </ul>
+                          </div>
+
+                          {updateStatus === 'available' ? (
+                              <button 
+                                  onClick={handleStartUpdate}
+                                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-900/20"
+                              >
+                                  Download and Install
+                              </button>
+                          ) : (
+                              <div className="space-y-3">
+                                  <div className="flex justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                      <span>{updateStatus === 'downloading' ? 'Downloading...' : 'Installing...'}</span>
+                                      <span>{Math.round(downloadProgress)}%</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
+                                      <div 
+                                          className="h-full bg-blue-500 transition-all duration-300 ease-linear" 
+                                          style={{ width: `${downloadProgress}%` }} 
+                                      />
+                                  </div>
+                                  <p className="text-center text-xs text-zinc-600 mt-2">
+                                      Do not close this tab.
+                                  </p>
+                              </div>
+                          )}
+                      </div>
+                  )}
+
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
+                      <span className="text-white font-medium">Automatic Updates</span>
+                      <div className="w-12 h-7 bg-green-500 rounded-full relative cursor-pointer">
+                          <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full shadow-sm"></div>
+                      </div>
+                  </div>
+
+              </div>
           )}
 
           {/* TAB: PROFILE */}

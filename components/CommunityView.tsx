@@ -13,6 +13,18 @@ interface CommunityViewProps {
 
 const INFINITY_LOGO_URL = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png';
 
+const PRESS_RELEASE_POST: CommunityPost = {
+  id: 'infinity-os-26-release',
+  user_id: 'infinity-official',
+  content: "📣 **Press Release: Introducing Infinity OS 26.0**\n\nWe are proud to unveil Infinity OS 26.0, a quantum leap in web app capabilities. Redesigned from the ground up to feel less like a website and more like a living operating system.\n\n**What's New:**\n✨ All-new Fluid Animation Engine\n🛡️ Enhanced Privacy Core\n🧠 Deep Think 2.0 Integration\n\nExperience the future today. Check **Settings > Software Updates** to download the latest beta.",
+  hashtags: ['#InfinityOS', '#Keynote2025', '#Redesign'],
+  created_at: new Date(Date.now() + 20000).toISOString(), // Always top
+  likes_count: 15402,
+  author_name: 'Infinity HQ',
+  author_avatar: INFINITY_LOGO_URL,
+  image_url: 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=1974&auto=format&fit=crop'
+};
+
 const ANNOUNCEMENT_POST: CommunityPost = {
   id: 'official-announcement-dev',
   user_id: 'infinity-official',
@@ -71,13 +83,13 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
         } else {
             // Fallback if ID invalid
             data = await fetchPosts();
-            data = [ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
+            data = [PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
         }
     } else if (initialQuery) {
         data = await searchPosts(initialQuery);
     } else {
         data = await fetchPosts();
-        data = [ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
+        data = [PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data];
     }
     
     setPosts(data);
@@ -200,7 +212,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
           window.history.pushState({}, '', '/community');
           setLoading(true);
           fetchPosts().then(data => {
-              setPosts([ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data]);
+              setPosts([PRESS_RELEASE_POST, ANNOUNCEMENT_POST, NOTION_UPDATE_POST, ...data]);
               setLoading(false);
           });
       }
@@ -292,6 +304,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
               posts.map((post) => (
                   <div key={post.id} 
                        className={`p-4 border-b border-zinc-800 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-zinc-900/40 cursor-pointer animate-fadeIn hover:scale-[1.01] active:scale-[0.99]
+                       ${post.id === PRESS_RELEASE_POST.id ? 'bg-zinc-900/30 border-l-4 border-l-white' : ''}
                        ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}
                        ${post.id === NOTION_UPDATE_POST.id ? 'bg-orange-900/10 border-l-4 border-l-orange-500' : ''}
                        `}
@@ -310,6 +323,12 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
                                       <span className="font-bold text-white truncate">{post.author_name}</span>
                                       <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
                                       
+                                      {post.id === PRESS_RELEASE_POST.id && (
+                                          <span className="bg-white/10 text-white text-[10px] px-1.5 py-0.5 rounded border border-white/20 font-bold flex items-center gap-1">
+                                              <Zap size={8} fill="currentColor" /> Official Release
+                                          </span>
+                                      )}
+
                                       {post.id === ANNOUNCEMENT_POST.id && (
                                           <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-bold flex items-center gap-1">
                                               <Pin size={8} fill="currentColor" /> Pinned

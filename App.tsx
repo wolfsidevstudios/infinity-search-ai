@@ -79,6 +79,7 @@ const App: React.FC = () => {
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
   const [isPro, setIsPro] = useState(false);
+  const [osVersion, setOsVersion] = useState<string>('26.0');
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
@@ -140,6 +141,9 @@ const App: React.FC = () => {
         
         const proStatus = localStorage.getItem('infinity_pro_status');
         if (proStatus === 'active') setIsPro(true);
+
+        const savedVersion = localStorage.getItem('infinity_os_version');
+        if (savedVersion) setOsVersion(savedVersion);
 
         // 1. Check for Payment Return Parameters First
         const urlParams = new URLSearchParams(window.location.search);
@@ -393,6 +397,11 @@ const App: React.FC = () => {
 
   const handleRemoveFromCollections = (id: string) => {
       setCollections(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleOsUpdate = (version: string) => {
+      setOsVersion(version);
+      localStorage.setItem('infinity_os_version', version);
   };
 
   // --- SEARCH LOGIC ---
@@ -671,7 +680,7 @@ const App: React.FC = () => {
             </div>
             {!(activeTab === 'home' && searchState.status === 'idle') && (
                 <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 text-white`}>
-                    Infinity 2.0
+                    Infinity {osVersion}
                 </div>
             )}
         </div>
@@ -794,6 +803,8 @@ const App: React.FC = () => {
                         user={sessionUser} onLogout={handleLogout}
                         weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange}
                         onUpgradeClick={handleUpgradeClick}
+                        osVersion={osVersion}
+                        onUpdateOS={handleOsUpdate}
                     />
                 </div>
             )}
