@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle } from 'lucide-react';
+import { User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone, Image as ImageIcon, Check, BookOpen, LogOut, Cloud, RefreshCw, ExternalLink, Thermometer, Crown, DollarSign, Lock, CreditCard, AlertTriangle, Terminal } from 'lucide-react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { BIBLE_VERSIONS } from '../services/bibleService';
+import DeveloperConsoleView from './DeveloperConsoleView';
 
 interface SettingsViewProps {
   isNotionConnected: boolean;
@@ -16,7 +17,7 @@ interface SettingsViewProps {
   onUpgradeClick: () => void;
 }
 
-type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription';
+type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription' | 'developer';
 
 const WALLPAPERS = [
   { id: 'default', url: null, name: 'Default Black', isPro: false },
@@ -150,6 +151,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div onClick={() => setActiveTab('connected')} className={navItemClass('connected')}>
                 <LinkIcon size={20} /> Connected Apps
             </div>
+            
+            {/* Developer Section Divider */}
+            <div className="h-[1px] bg-zinc-900 my-4 mx-4"></div>
+            
+            <div onClick={() => setActiveTab('developer')} className={navItemClass('developer')}>
+                <Terminal size={20} /> Developer
+            </div>
         </div>
 
         <div className="mt-auto pl-4 text-xs text-zinc-500 font-medium">
@@ -160,6 +168,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Main Content Area - Full Height & Black */}
       <div className="flex-1 h-full bg-black p-6 md:p-12 overflow-y-auto relative">
           
+          {/* TAB: DEVELOPER */}
+          {activeTab === 'developer' && (
+              <DeveloperConsoleView />
+          )}
+
           {/* TAB: PROFILE */}
           {activeTab === 'profile' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
