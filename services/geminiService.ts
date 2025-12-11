@@ -52,7 +52,7 @@ export const searchWithClarifai = async (query: string, fileContext?: any): Prom
         }
     }
 
-    const raw = JSON.stringify({
+    const rawPayload = {
         "user_app_id": {
             "user_id": USER_ID,
             "app_id": APP_ID
@@ -66,27 +66,40 @@ export const searchWithClarifai = async (query: string, fileContext?: any): Prom
                 }
             }
         ]
-    });
-
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Key ' + PAT
-        },
-        body: raw
     };
 
     try {
-        const response = await fetch("https://api.clarifai.com/v2/models/" + MODEL_ID + "/versions/" + MODEL_VERSION_ID + "/outputs", requestOptions);
+        // Use local proxy to bypass CORS
+        const response = await fetch('/api/clarifai', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                pat: PAT,
+                modelId: MODEL_ID,
+                modelVersionId: MODEL_VERSION_ID,
+                payload: rawPayload
+            })
+        });
+
         const data = await response.json();
 
-        if (data.status.code !== 10000) {
+        if (data.status && data.status.code !== 10000) {
             console.error("Clarifai Error", data.status);
             return { text: "Error calling Clarifai model: " + (data.status.description || "Unknown error"), sources: [] };
         }
+        
+        if (data.error) {
+             return { text: "Error calling Clarifai model: " + data.error, sources: [] };
+        }
 
-        const text = data['outputs'][0]['data']['text']['raw'];
+        const text = data['outputs']?.[0]?.['data']?.['text']?.['raw'];
+        
+        if (!text) {
+             return { text: "No response from Clarifai model.", sources: [] };
+        }
+
         return { text, sources: [] }; // No sources for this model
     } catch (error) {
         console.error("Clarifai Fetch Error", error);
