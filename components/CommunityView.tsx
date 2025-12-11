@@ -2,8 +2,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { CommunityPost } from '../types';
 import { fetchPosts, createPost, searchPosts, likePost, fetchPostById } from '../services/communityService';
+import { chatWithGemini } from '../services/geminiService';
 import { User } from '@supabase/supabase-js';
-import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin, AlertTriangle, Newspaper, Users } from 'lucide-react';
+import { Image as ImageIcon, Send, Hash, Heart, MessageCircle, Share2, MoreHorizontal, Search, X, Copy, Facebook, Link as LinkIcon, ArrowLeft, Download, Zap, Pin, AlertTriangle, Newspaper, Users, Gift, Wand2, Sparkles, BrainCircuit, Layout, Database, ShieldCheck } from 'lucide-react';
 
 interface CommunityViewProps {
   user: User | null;
@@ -60,16 +61,63 @@ const NOTION_UPDATE_POST: CommunityPost = {
   author_avatar: INFINITY_LOGO_URL,
 };
 
+const DROPS_26_0 = [
+    {
+        title: "Deep Think 2.0 Engine",
+        desc: "Our new reasoning kernel breaks down complex queries into steps, verifies facts, and synthesizes answers with citations.",
+        icon: BrainCircuit,
+        color: "text-purple-400",
+        bg: "bg-purple-500/10"
+    },
+    {
+        title: "Infinity Chat Experience",
+        desc: "A dedicated conversational interface separate from search, featuring app context awareness and persistent history.",
+        icon: MessageCircle,
+        color: "text-blue-400",
+        bg: "bg-blue-500/10"
+    },
+    {
+        title: "Spatial Glass UI",
+        desc: "A complete visual overhaul introducing a refined dark mode, glassmorphism effects, and fluid physics animations.",
+        icon: Layout,
+        color: "text-pink-400",
+        bg: "bg-pink-500/10"
+    },
+    {
+        title: "Widget Ecosystem",
+        desc: "Interactive widgets for weather, stocks, and tools like calculators directly within search results and chat.",
+        icon: Zap,
+        color: "text-yellow-400",
+        bg: "bg-yellow-500/10"
+    },
+    {
+        title: "Local-First Privacy",
+        desc: "Enhanced privacy architecture where search history and app tokens are encrypted and stored locally on your device.",
+        icon: ShieldCheck,
+        color: "text-green-400",
+        bg: "bg-green-500/10"
+    },
+    {
+        title: "Database Connectors",
+        desc: "Beta support for connecting custom MCP servers and local databases via the Developer Console.",
+        icon: Database,
+        color: "text-orange-400",
+        bg: "bg-orange-500/10"
+    }
+];
+
 const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initialPostId }) => {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'community' | 'press'>('community');
+  const [activeTab, setActiveTab] = useState<'community' | 'press' | 'drops'>('community');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Compose State
   const [content, setContent] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   
   // Share State
   const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
@@ -108,10 +156,6 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
         data = [...officialPosts, ...data];
     }
     
-    // Sort all by date just in case
-    // data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); 
-    // Actually, createPost adds to top, mock posts have future dates to stay on top.
-    
     setPosts(data);
     setLoading(false);
   };
@@ -124,6 +168,29 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
       reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleAiEnhance = async (type: 'fix' | 'tone' | 'expand') => {
+      if (!content.trim()) return;
+      setIsEnhancing(true);
+      
+      let prompt = "";
+      if (type === 'fix') prompt = `Fix grammar and spelling mistakes in this text, keep it natural: "${content}"`;
+      if (type === 'tone') prompt = `Rewrite this text to sound more exciting and engaging for a social media post: "${content}"`;
+      if (type === 'expand') prompt = `Expand this short thought into a slightly more detailed paragraph: "${content}"`;
+
+      try {
+          const enhancedText = await chatWithGemini(
+              [{ role: 'user', parts: [{ text: prompt }] }], 
+              'gemini-2.0-flash', 
+              'You are a helpful writing assistant. Return ONLY the enhanced text, no explanations.'
+          );
+          setContent(enhancedText.replace(/^"|"$/g, ''));
+      } catch (e) {
+          console.error("AI Enhance failed", e);
+      } finally {
+          setIsEnhancing(false);
+      }
   };
 
   const handlePost = async () => {
@@ -232,16 +299,24 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
 
   // Filter Posts Logic
   const displayPosts = posts.filter(post => {
+      const matchesSearch = searchQuery 
+          ? post.content.toLowerCase().includes(searchQuery.toLowerCase()) || post.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
+          : true;
+          
+      if (!matchesSearch) return false;
+
       const isOfficial = post.user_id === 'infinity-official';
       if (activeTab === 'press') return isOfficial;
-      return !isOfficial; // Community tab shows ONLY user posts to avoid clutter, since Press tab exists.
+      // In community tab, show everything or just user posts? Let's show user posts primarily but official ones pinned.
+      // For clarity based on prompts: Community = User Content, Press = Official content.
+      return !isOfficial; 
   });
 
   return (
     <div className="w-full max-w-2xl mx-auto pb-20 animate-slideUp">
       
-      {/* Header with Toggle */}
-      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 py-4 flex flex-col gap-4 mb-6 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
+      {/* Header Area */}
+      <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-zinc-800 z-30 px-4 pt-4 pb-2 flex flex-col gap-4 mb-6 transition-all">
           <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   {initialPostId && (
@@ -256,192 +331,259 @@ const CommunityView: React.FC<CommunityViewProps> = ({ user, initialQuery, initi
               )}
           </div>
 
-          {/* Toggle Switch */}
-          <div className="flex p-1 bg-zinc-900 rounded-xl border border-zinc-800">
+          {/* Search Bar */}
+          <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+              <input 
+                  type="text" 
+                  placeholder="Search posts..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-full py-2 pl-10 pr-4 text-sm text-white focus:border-zinc-700 outline-none transition-colors placeholder-zinc-600"
+              />
+          </div>
+
+          {/* Pill-Shaped Tab Switcher */}
+          <div className="flex p-1 bg-zinc-900 rounded-full border border-zinc-800">
               <button 
                 onClick={() => setActiveTab('community')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'community' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'community' ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
-                  <Users size={16} /> Community
+                  <Users size={14} /> Community
               </button>
               <button 
                 onClick={() => setActiveTab('press')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'press' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'press' ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
-                  <Newspaper size={16} /> Press Releases
+                  <Newspaper size={14} /> Press
+              </button>
+              <button 
+                onClick={() => setActiveTab('drops')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'drops' ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                  <Gift size={14} /> Drops
               </button>
           </div>
       </div>
 
-      {/* Compose Box (Only visible in Community Tab) */}
-      {!initialQuery && !initialPostId && activeTab === 'community' && (
-          <div className="px-4 mb-8">
-            <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
-                    {user?.user_metadata?.avatar_url ? (
-                        <img src={user.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                        user?.email?.[0].toUpperCase() || '?'
-                    )}
-                </div>
-                <div className="flex-1">
-                    <textarea
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder="What's happening in your world?"
-                        className="w-full bg-transparent text-white text-lg placeholder-zinc-500 outline-none resize-none min-h-[100px]"
-                    />
-                    
-                    {imagePreview && (
-                        <div className="relative mb-4 rounded-2xl overflow-hidden max-h-80 w-fit animate-scaleIn">
-                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                            <button 
-                                onClick={() => { setImageFile(null); setImagePreview(null); }}
-                                className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-red-500 transition-colors"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                    )}
-
-                    <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
-                        <div className="flex gap-2 text-blue-400">
-                            <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-blue-500/10 rounded-full transition-all duration-300 active:scale-90">
-                                <ImageIcon size={20} />
-                            </button>
-                            <button className="p-2 hover:bg-blue-500/10 rounded-full transition-all duration-300 active:scale-90">
-                                <Hash size={20} />
-                            </button>
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
-                        </div>
-                        <button 
-                            onClick={handlePost}
-                            disabled={isPosting || (!content && !imageFile)}
-                            className={`px-5 py-2 rounded-full font-bold text-sm transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 ${
-                                isPosting || (!content && !imageFile) 
-                                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
-                                : 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg shadow-blue-500/20'
-                            }`}
-                        >
-                            {isPosting ? 'Posting...' : 'Post'}
-                        </button>
-                    </div>
-                </div>
-            </div>
+      {/* DROPS TAB CONTENT */}
+      {activeTab === 'drops' && (
+          <div className="px-4 animate-fadeIn">
+              <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">Infinity OS 26.0</h3>
+                  <p className="text-zinc-500 text-sm">Monthly Drop • February 2025</p>
+              </div>
+              
+              <div className="space-y-4">
+                  {DROPS_26_0.map((drop, idx) => (
+                      <div key={idx} className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-5 flex gap-4 hover:bg-zinc-900 transition-colors cursor-default">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${drop.bg} ${drop.color}`}>
+                              <drop.icon size={24} />
+                          </div>
+                          <div>
+                              <h4 className={`text-lg font-bold mb-1 ${drop.color}`}>{drop.title}</h4>
+                              <p className="text-zinc-400 text-sm leading-relaxed">{drop.desc}</p>
+                          </div>
+                      </div>
+                  ))}
+              </div>
+              
+              <div className="mt-12 p-6 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-3xl border border-white/5 text-center">
+                  <h4 className="text-white font-bold mb-2">Missed previous drops?</h4>
+                  <p className="text-zinc-500 text-sm mb-4">Check the archive to see how Infinity has evolved.</p>
+                  <button className="px-6 py-2 bg-zinc-800 text-white rounded-full text-sm font-bold hover:bg-zinc-700 transition-colors">View Archive</button>
+              </div>
           </div>
       )}
 
-      {/* Feed */}
-      <div className="border-t border-zinc-800">
-          {loading ? (
-              <div className="py-10 text-center text-zinc-500">Loading {activeTab}...</div>
-          ) : displayPosts.length === 0 ? (
-              <div className="py-10 text-center text-zinc-500">No {activeTab} posts found.</div>
-          ) : (
-              displayPosts.map((post) => (
-                  <div key={post.id} 
-                       className={`p-4 border-b border-zinc-800 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-zinc-900/40 cursor-pointer animate-fadeIn hover:scale-[1.01] active:scale-[0.99]
-                       ${post.id === NEW_MODEL_CHAT_POST.id ? 'bg-green-900/10 border-l-4 border-l-green-500' : ''}
-                       ${post.id === PRESS_RELEASE_POST.id ? 'bg-zinc-900/30 border-l-4 border-l-white' : ''}
-                       ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}
-                       ${post.id === NOTION_UPDATE_POST.id ? 'bg-orange-900/10 border-l-4 border-l-orange-500' : ''}
-                       `}
-                  >
-                      <div className="flex gap-4">
-                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 overflow-hidden shrink-0 shadow-md">
-                              {post.author_avatar ? (
-                                  <img src={post.author_avatar} className="w-full h-full object-cover" />
-                              ) : (
-                                  post.author_name?.[0].toUpperCase()
-                              )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                      <span className="font-bold text-white truncate">{post.author_name}</span>
-                                      <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
-                                      
-                                      {post.id === NEW_MODEL_CHAT_POST.id && (
-                                          <span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
-                                              <Zap size={8} fill="currentColor" /> New Model
-                                          </span>
-                                      )}
+      {/* COMMUNITY TAB CONTENT */}
+      {activeTab !== 'drops' && (
+        <>
+            {/* Compose Box (Only visible in Community Tab) */}
+            {!initialQuery && !initialPostId && activeTab === 'community' && (
+                <div className="px-4 mb-8">
+                    <div className="flex gap-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shrink-0 shadow-lg">
+                            {user?.user_metadata?.avatar_url ? (
+                                <img src={user.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                                user?.email?.[0].toUpperCase() || '?'
+                            )}
+                        </div>
+                        <div className="flex-1 bg-zinc-900/30 rounded-2xl p-4 border border-zinc-800/50 focus-within:border-zinc-700 focus-within:bg-zinc-900 transition-all">
+                            <textarea
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="What's happening in your world?"
+                                className="w-full bg-transparent text-white text-base placeholder-zinc-500 outline-none resize-none min-h-[80px]"
+                            />
+                            
+                            {imagePreview && (
+                                <div className="relative mb-4 rounded-xl overflow-hidden max-h-60 w-fit animate-scaleIn border border-zinc-700">
+                                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                    <button 
+                                        onClick={() => { setImageFile(null); setImagePreview(null); }}
+                                        className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-red-500 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
 
-                                      {post.id === PRESS_RELEASE_POST.id && (
-                                          <span className="bg-white/10 text-white text-[10px] px-1.5 py-0.5 rounded border border-white/20 font-bold flex items-center gap-1">
-                                              <Zap size={8} fill="currentColor" /> Official Release
-                                          </span>
-                                      )}
+                            {/* AI Tools */}
+                            <div className="flex gap-2 overflow-x-auto py-2 mb-2 scrollbar-hide">
+                                <button onClick={() => handleAiEnhance('fix')} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/50 hover:bg-purple-900/30 text-purple-300 text-xs rounded-lg transition-colors border border-purple-500/20 whitespace-nowrap">
+                                    <Wand2 size={12} /> Fix Grammar
+                                </button>
+                                <button onClick={() => handleAiEnhance('tone')} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/50 hover:bg-blue-900/30 text-blue-300 text-xs rounded-lg transition-colors border border-blue-500/20 whitespace-nowrap">
+                                    <Sparkles size={12} /> Hype It
+                                </button>
+                                <button onClick={() => handleAiEnhance('expand')} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/50 hover:bg-green-900/30 text-green-300 text-xs rounded-lg transition-colors border border-green-500/20 whitespace-nowrap">
+                                    <Zap size={12} /> Expand
+                                </button>
+                                {isEnhancing && <div className="text-zinc-500 text-xs flex items-center animate-pulse">Thinking...</div>}
+                            </div>
 
-                                      {post.id === ANNOUNCEMENT_POST.id && (
-                                          <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-bold flex items-center gap-1">
-                                              <Pin size={8} fill="currentColor" /> Pinned
-                                          </span>
-                                      )}
-                                      
-                                      {post.id === NOTION_UPDATE_POST.id && (
-                                          <span className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 font-bold flex items-center gap-1">
-                                              <AlertTriangle size={8} fill="currentColor" /> Notice
-                                          </span>
-                                      )}
+                            <div className="flex items-center justify-between border-t border-zinc-800 pt-3 mt-1">
+                                <div className="flex gap-1 text-zinc-400">
+                                    <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-zinc-800 hover:text-white rounded-full transition-colors">
+                                        <ImageIcon size={18} />
+                                    </button>
+                                    <button className="p-2 hover:bg-zinc-800 hover:text-white rounded-full transition-colors">
+                                        <Hash size={18} />
+                                    </button>
+                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
+                                </div>
+                                <button 
+                                    onClick={handlePost}
+                                    disabled={isPosting || (!content && !imageFile)}
+                                    className={`px-5 py-2 rounded-full font-bold text-sm transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-105 active:scale-95 ${
+                                        isPosting || (!content && !imageFile) 
+                                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' 
+                                        : 'bg-white text-black hover:bg-gray-200 shadow-lg'
+                                    }`}
+                                >
+                                    {isPosting ? 'Posting...' : 'Post'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                                      <span className="text-zinc-600 text-xs">• {formatDate(post.created_at)}</span>
-                                  </div>
-                                  <button className="text-zinc-500 hover:text-blue-400 p-1 rounded-full hover:bg-white/5 transition-colors">
-                                      <MoreHorizontal size={16} />
-                                  </button>
-                              </div>
-                              
-                              <p className="text-white/90 text-[15px] whitespace-pre-wrap leading-relaxed mb-3">
-                                  {post.content}
-                              </p>
+            {/* Feed */}
+            <div className="border-t border-zinc-800">
+                {loading ? (
+                    <div className="py-10 text-center text-zinc-500">Loading {activeTab}...</div>
+                ) : displayPosts.length === 0 ? (
+                    <div className="py-10 text-center text-zinc-500">No posts found matching "{searchQuery}".</div>
+                ) : (
+                    displayPosts.map((post) => (
+                        <div key={post.id} 
+                            className={`p-4 border-b border-zinc-800 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:bg-zinc-900/40 cursor-pointer animate-fadeIn hover:scale-[1.01] active:scale-[0.99]
+                            ${post.id === NEW_MODEL_CHAT_POST.id ? 'bg-green-900/10 border-l-4 border-l-green-500' : ''}
+                            ${post.id === PRESS_RELEASE_POST.id ? 'bg-zinc-900/30 border-l-4 border-l-white' : ''}
+                            ${post.id === ANNOUNCEMENT_POST.id ? 'bg-blue-900/10 border-l-4 border-l-blue-500' : ''}
+                            ${post.id === NOTION_UPDATE_POST.id ? 'bg-orange-900/10 border-l-4 border-l-orange-500' : ''}
+                            `}
+                        >
+                            <div className="flex gap-4">
+                                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 overflow-hidden shrink-0 shadow-md">
+                                    {post.author_avatar ? (
+                                        <img src={post.author_avatar} className="w-full h-full object-cover" />
+                                    ) : (
+                                        post.author_name?.[0].toUpperCase()
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <span className="font-bold text-white truncate">{post.author_name}</span>
+                                            <span className="text-zinc-500 text-sm truncate">@{post.author_name?.replace(/\s+/g, '').toLowerCase()}</span>
+                                            
+                                            {post.id === NEW_MODEL_CHAT_POST.id && (
+                                                <span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded border border-green-500/30 font-bold flex items-center gap-1">
+                                                    <Zap size={8} fill="currentColor" /> New Model
+                                                </span>
+                                            )}
 
-                              {post.image_url && (
-                                  <div className="mb-3 rounded-2xl overflow-hidden border border-zinc-800 max-h-[500px] shadow-lg">
-                                      <img src={post.image_url} alt="Post media" className="w-full h-full object-cover" />
-                                  </div>
-                              )}
+                                            {post.id === PRESS_RELEASE_POST.id && (
+                                                <span className="bg-white/10 text-white text-[10px] px-1.5 py-0.5 rounded border border-white/20 font-bold flex items-center gap-1">
+                                                    <Zap size={8} fill="currentColor" /> Official Release
+                                                </span>
+                                            )}
 
-                              <div className="flex items-center justify-between text-zinc-500 max-w-md mt-3">
-                                  <button className="flex items-center gap-2 group hover:text-blue-400 transition-colors">
-                                      <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
-                                          <MessageCircle size={18} />
-                                      </div>
-                                      <span className="text-xs">0</span>
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); handleLike(post); }}
-                                    className="flex items-center gap-2 group hover:text-pink-500 transition-colors"
-                                  >
-                                      <div className="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors">
-                                          <Heart size={18} />
-                                      </div>
-                                      <span className="text-xs">{post.likes_count}</span>
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); handleHype(post); }}
-                                    className={`flex items-center gap-2 group transition-colors ${isPro ? 'hover:text-yellow-400' : 'opacity-50 hover:opacity-100'}`}
-                                    title={isPro ? "Hype Post" : "Upgrade to Hype"}
-                                  >
-                                      <div className="p-2 rounded-full group-hover:bg-yellow-500/10 transition-colors">
-                                          <Zap size={18} className={isPro ? 'text-zinc-500 group-hover:text-yellow-400' : 'text-zinc-600'} fill={isPro ? 'none' : 'currentColor'} />
-                                      </div>
-                                  </button>
-                                  <button 
-                                    onClick={(e) => { e.stopPropagation(); setSharePost(post); }}
-                                    className="flex items-center gap-2 group hover:text-green-400 transition-colors"
-                                  >
-                                      <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
-                                          <Share2 size={18} />
-                                      </div>
-                                  </button>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              ))
-          )}
-      </div>
+                                            {post.id === ANNOUNCEMENT_POST.id && (
+                                                <span className="bg-blue-500/20 text-blue-400 text-[10px] px-1.5 py-0.5 rounded border border-blue-500/30 font-bold flex items-center gap-1">
+                                                    <Pin size={8} fill="currentColor" /> Pinned
+                                                </span>
+                                            )}
+                                            
+                                            {post.id === NOTION_UPDATE_POST.id && (
+                                                <span className="bg-orange-500/20 text-orange-400 text-[10px] px-1.5 py-0.5 rounded border border-orange-500/30 font-bold flex items-center gap-1">
+                                                    <AlertTriangle size={8} fill="currentColor" /> Notice
+                                                </span>
+                                            )}
+
+                                            <span className="text-zinc-600 text-xs">• {formatDate(post.created_at)}</span>
+                                        </div>
+                                        <button className="text-zinc-500 hover:text-blue-400 p-1 rounded-full hover:bg-white/5 transition-colors">
+                                            <MoreHorizontal size={16} />
+                                        </button>
+                                    </div>
+                                    
+                                    <p className="text-white/90 text-[15px] whitespace-pre-wrap leading-relaxed mb-3">
+                                        {post.content}
+                                    </p>
+
+                                    {post.image_url && (
+                                        <div className="mb-3 rounded-2xl overflow-hidden border border-zinc-800 max-h-[500px] shadow-lg">
+                                            <img src={post.image_url} alt="Post media" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between text-zinc-500 max-w-md mt-3">
+                                        <button className="flex items-center gap-2 group hover:text-blue-400 transition-colors">
+                                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                                                <MessageCircle size={18} />
+                                            </div>
+                                            <span className="text-xs">0</span>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleLike(post); }}
+                                            className="flex items-center gap-2 group hover:text-pink-500 transition-colors"
+                                        >
+                                            <div className="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors">
+                                                <Heart size={18} />
+                                            </div>
+                                            <span className="text-xs">{post.likes_count}</span>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); handleHype(post); }}
+                                            className={`flex items-center gap-2 group transition-colors ${isPro ? 'hover:text-yellow-400' : 'opacity-50 hover:opacity-100'}`}
+                                            title={isPro ? "Hype Post" : "Upgrade to Hype"}
+                                        >
+                                            <div className="p-2 rounded-full group-hover:bg-yellow-500/10 transition-colors">
+                                                <Zap size={18} className={isPro ? 'text-zinc-500 group-hover:text-yellow-400' : 'text-zinc-600'} fill={isPro ? 'none' : 'currentColor'} />
+                                            </div>
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setSharePost(post); }}
+                                            className="flex items-center gap-2 group hover:text-green-400 transition-colors"
+                                        >
+                                            <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
+                                                <Share2 size={18} />
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </>
+      )}
 
       {/* Share Modal */}
       {sharePost && (
