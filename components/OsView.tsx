@@ -160,7 +160,7 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
       
       {/* Empty State / Header */}
       {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-4xl mx-auto w-full">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 max-w-4xl mx-auto w-full pb-40">
               {/* Logo / Avatar Orb */}
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-blue-500 p-[2px] shadow-[0_0_40px_rgba(34,197,94,0.3)] mb-8 animate-pulse">
                   <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
@@ -199,7 +199,7 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
               </div>
           </div>
       ) : (
-          <div className="flex-1 overflow-y-auto px-4 md:px-0 scroll-smooth">
+          <div className="flex-1 overflow-y-auto px-4 md:px-0 scroll-smooth pb-40">
               <div className="max-w-4xl mx-auto py-8 space-y-10">
                   {messages.map((msg) => (
                       <div key={msg.id} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
@@ -239,12 +239,12 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
           </div>
       )}
 
-      {/* Input Area (Bottom Fixed) */}
-      <div className="w-full bg-black/90 backdrop-blur-xl border-t border-zinc-800 p-6 z-20">
-          <div className="max-w-4xl mx-auto relative">
+      {/* Input Area (Floating Bottom) */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 z-20 pointer-events-none bg-gradient-to-t from-black via-black/80 to-transparent pb-8 pt-12">
+          <div className="max-w-3xl mx-auto relative pointer-events-auto">
               
               {/* Input Container */}
-              <div className="bg-zinc-900/80 border border-zinc-700 rounded-3xl p-2 shadow-2xl relative transition-all focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-600">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-2 shadow-[0_10px_40px_rgba(0,0,0,0.6)] relative transition-all focus-within:border-zinc-600 focus-within:ring-1 focus-within:ring-zinc-700 backdrop-blur-xl">
                   <textarea 
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
@@ -314,7 +314,7 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
               </div>
 
               {/* Footer Disclaimer */}
-              <p className="text-center text-[10px] text-zinc-600 mt-4">
+              <p className="text-center text-[10px] text-zinc-500 mt-4 font-medium opacity-60">
                   ThinkAI can make mistakes. Please double-check responses.
               </p>
           </div>
