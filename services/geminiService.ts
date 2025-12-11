@@ -115,7 +115,7 @@ interface FileContext {
 export const chatWithGemini = async (
     history: { role: 'user' | 'model'; parts: { text: string }[] }[], 
     model: string,
-    onStream?: (chunk: string) => void
+    customSystemInstruction?: string
 ): Promise<string> => {
     try {
         // Handle Clarifai redirection for Chat
@@ -129,14 +129,16 @@ export const chatWithGemini = async (
 
         const ai = getAiClient();
         
-        const systemInstruction = `You are Infinity AI, a helpful and intelligent assistant.
+        const defaultSystemInstruction = `You are Infinity AI, a helpful and intelligent assistant.
         - Respond with **organized text**.
         - Use **bold** for important key phrases and headers.
         - Use emojis 🌟 to make the text engaging.
         - Use bullet points (dots) to explain lists or steps.
         - If providing code, use markdown code blocks \`\`\`language ... \`\`\`.
-        - If providing tabular data, use markdown tables.
+        - If providing tabular data, lists, or comparisons, YOU MUST use Markdown tables.
         - Be concise but helpful.`;
+
+        const systemInstruction = customSystemInstruction || defaultSystemInstruction;
 
         // Configure Tools (Google Search)
         const tools: any[] = [{ googleSearch: {} }];

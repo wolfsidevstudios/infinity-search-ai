@@ -608,23 +608,63 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
          </ScrollReveal>
       </section>
 
-      {/* 11. Final CTA */}
-      <section className="py-32 px-6 bg-[#0a0a0a] text-center relative overflow-hidden z-20">
-           <div className="absolute inset-0 bg-dot-pattern opacity-50 pointer-events-none"></div>
-           <ScrollReveal>
-           <div className="relative z-10 max-w-4xl mx-auto">
-               <h2 className="text-5xl md:text-7xl font-bold tracking-tighter mb-8 text-white">
-                   Ready to organize <br/> your digital chaos?
-               </h2>
-               <button 
-                   onClick={onGetStarted}
-                   className="px-10 py-5 bg-white text-black text-xl font-bold rounded-full hover:scale-105 transition-transform shadow-2xl"
-               >
-                   Boot Infinity OS
-               </button>
-               <p className="mt-6 text-zinc-500 text-sm">No credit card required</p>
-           </div>
-           </ScrollReveal>
+      {/* 11. Final CTA - Redesigned */}
+      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
+          <ScrollReveal>
+          <div className="max-w-5xl mx-auto relative rounded-[40px] overflow-hidden bg-[#050505] border border-white/10 text-center py-20 px-6">
+               
+               {/* Background Gradients */}
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-3xl bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
+               <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-purple-900/10 to-transparent pointer-events-none"></div>
+               
+               {/* Grid Pattern at Bottom */}
+               <div className="absolute bottom-0 left-0 right-0 h-64 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)] pointer-events-none"></div>
+
+               {/* Content Container */}
+               <div className="relative z-10 flex flex-col items-center">
+                   
+                   {/* Icons Row */}
+                   <div className="flex items-center justify-center gap-8 mb-12 relative">
+                       {/* Connecting Line */}
+                       <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                       
+                       {/* Left Icon */}
+                       <div className="w-12 h-12 rounded-full bg-black border border-white/10 flex items-center justify-center relative z-10 text-zinc-400">
+                           <Layers size={20} />
+                       </div>
+
+                       {/* Center Icon (Logo) */}
+                       <div className="w-20 h-20 rounded-full bg-gradient-to-b from-zinc-800 to-black border border-purple-500/50 flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+                           <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-10 h-10" />
+                       </div>
+
+                       {/* Right Icon */}
+                       <div className="w-12 h-12 rounded-full bg-black border border-white/10 flex items-center justify-center relative z-10 text-zinc-400">
+                           <Shield size={20} />
+                       </div>
+                   </div>
+
+                   {/* Heading */}
+                   <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight max-w-3xl leading-tight">
+                       The simple way <br/> to organize your data
+                   </h2>
+
+                   {/* Subtext */}
+                   <p className="text-lg text-purple-200/60 max-w-xl mb-10 leading-relaxed">
+                       Fully managed AI workspace and agentic search platform for curious minds and modern teams.
+                   </p>
+
+                   {/* Button */}
+                   <button 
+                       onClick={onGetStarted}
+                       className="px-8 py-3 bg-white text-black text-sm font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                   >
+                       Get Started
+                   </button>
+
+               </div>
+          </div>
+          </ScrollReveal>
       </section>
 
       {/* 12. Footer */}

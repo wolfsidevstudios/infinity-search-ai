@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { 
     Send, Mic, Paperclip, Camera, Image as ImageIcon, FileText, 
-    ChevronDown, Zap, Lightbulb, MessageSquare, Bot, Copy, Download, Check
+    ChevronDown, Zap, Lightbulb, MessageSquare, Bot, Copy, Download, Check, Calculator, Clock
 } from 'lucide-react';
 import { chatWithGemini, getSelectedModel } from '../services/geminiService';
 import { HistoryItem, CollectionItem } from '../types';
@@ -16,6 +16,7 @@ interface OsViewProps {
   history: HistoryItem[];
   collections: CollectionItem[];
   onSearch: (query: string) => void;
+  onSaveHistory: (item: HistoryItem) => void;
 }
 
 interface Message {
@@ -23,6 +24,7 @@ interface Message {
     role: 'user' | 'model';
     text: string;
     timestamp: Date;
+    widget?: string; // e.g. 'CALCULATOR', 'WEATHER'
 }
 
 const MODELS = [
@@ -32,7 +34,7 @@ const MODELS = [
     { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', icon: <Bot size={14} className="text-green-400" /> },
 ];
 
-const OsView: React.FC<OsViewProps> = ({ user }) => {
+const OsView: React.FC<OsViewProps> = ({ user, weather, collections, onSaveHistory }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -66,17 +68,53 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
       }));
       apiHistory.push({ role: 'user', parts: [{ text: userMsg.text }] });
 
-      const responseText = await chatWithGemini(apiHistory, selectedModel);
+      // Create App Context for the AI
+      const appContext = `
+      Current User: ${user?.user_metadata?.full_name || 'User'}
+      Current Date: ${new Date().toLocaleString()}
+      Current Weather: ${weather ? `${weather.temperature}° in ${weather.city}` : 'Unknown'}
+      
+      User's Saved Collections (Knowledge Base):
+      ${collections.length > 0 
+          ? collections.slice(0, 20).map(c => `- [${c.type.toUpperCase()}] ${c.content.title || 'Untitled'}`).join('\n') 
+          : '(No items saved)'}
+      
+      Capabilities:
+      1. You know everything about the app state provided above. If the user asks "what's in my collections", list them.
+      2. If the user explicitly asks for a tool or widget (like "show me a calculator", "I need a timer", "check the weather widget"), respond with the tag [WIDGET:CALCULATOR] or [WIDGET:CLOCK] etc. anywhere in your response. Supported widgets: CALCULATOR, CLOCK.
+      3. CRITICAL: If you are presenting data, lists, comparisons, or structured information, YOU MUST USE MARKDOWN TABLES. Do not use plain lists for structured data.
+      `;
+
+      const responseText = await chatWithGemini(apiHistory, selectedModel, appContext);
+
+      // Detect Widgets in response
+      let widgetType = undefined;
+      if (responseText.includes('[WIDGET:CALCULATOR]')) widgetType = 'CALCULATOR';
+      if (responseText.includes('[WIDGET:CLOCK]')) widgetType = 'CLOCK';
+
+      // Clean text if needed (remove widget tags for cleaner UI if desired, but keeping them is fine too)
+      const cleanText = responseText.replace(/\[WIDGET:[A-Z]+\]/g, '');
 
       const aiMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          text: responseText,
-          timestamp: new Date()
+          text: cleanText,
+          timestamp: new Date(),
+          widget: widgetType
       };
 
       setMessages(prev => [...prev, aiMsg]);
       setIsLoading(false);
+
+      // Save to App History
+      onSaveHistory({
+          id: Date.now().toString(),
+          type: 'search',
+          title: userMsg.text, // User query
+          summary: cleanText, // AI response
+          timestamp: new Date(),
+          sources: [] 
+      });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -106,13 +144,11 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
               return <CodeBlock key={index} language={language} code={code} />;
           } else {
               // TEXT BLOCK (Process basic markdown)
-              // Detect Tables first? Complex. Let's do simple formatting first.
-              
-              // Tables: Identify simple markdown table structure
+              // Identify Table Structure (| Header | Header |)
               if (part.includes('|') && part.includes('---')) {
-                  // Very basic table detection
                   const tableMatch = part.match(/\|(.+)\|\n\|([-:| ]+)\|\n((?:\|.*\|\n?)+)/);
                   if (tableMatch) {
+                      // We found a table, render the special Sheet Card
                       return <TableBlock key={index} content={tableMatch[0]} />;
                   }
               }
@@ -180,10 +216,10 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
               {/* Suggestions */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-12">
                   {[
-                      { icon: <Zap size={18} className="text-yellow-400" />, text: "Get fresh perspectives on tricky problems" },
-                      { icon: <Lightbulb size={18} className="text-purple-400" />, text: "Brainstorm creative ideas" },
-                      { icon: <FileText size={18} className="text-blue-400" />, text: "Rewrite message for maximum impact" },
-                      { icon: <MessageSquare size={18} className="text-green-400" />, text: "Summarize key points" }
+                      { icon: <Zap size={18} className="text-yellow-400" />, text: "Show me my collections" },
+                      { icon: <Lightbulb size={18} className="text-purple-400" />, text: "Open the calculator" },
+                      { icon: <FileText size={18} className="text-blue-400" />, text: "Draft a comparison table of 2025 phones" },
+                      { icon: <MessageSquare size={18} className="text-green-400" />, text: "Check current weather" }
                   ].map((s, i) => (
                       <button 
                         key={i}
@@ -218,6 +254,18 @@ const OsView: React.FC<OsViewProps> = ({ user }) => {
                               <div className={`text-[16px] leading-7 ${msg.role === 'user' ? 'text-white' : 'text-zinc-200'}`}>
                                   {msg.role === 'user' ? msg.text : renderMessageContent(msg.text)}
                               </div>
+                              
+                              {/* Inline Widget Rendering */}
+                              {msg.widget === 'CALCULATOR' && (
+                                  <div className="mt-4 max-w-sm">
+                                      <SimpleCalculator />
+                                  </div>
+                              )}
+                              {msg.widget === 'CLOCK' && (
+                                  <div className="mt-4 max-w-sm">
+                                      <SimpleClock />
+                                  </div>
+                              )}
                           </div>
                       </div>
                   ))}
@@ -370,6 +418,7 @@ const CodeBlock: React.FC<{ language: string; code: string }> = ({ language, cod
     );
 };
 
+// The "Sheet Card" for Tables
 const TableBlock: React.FC<{ content: string }> = ({ content }) => {
     // Parse Markdown Table (Basic)
     const rows = content.trim().split('\n');
@@ -377,30 +426,62 @@ const TableBlock: React.FC<{ content: string }> = ({ content }) => {
     const dataRows = rows.slice(2).map(r => r.split('|').filter(c => c.trim()).map(c => c.trim()));
 
     return (
-        <div className="my-6 overflow-hidden rounded-xl border border-zinc-700 shadow-lg bg-zinc-900/50">
-            <div className="flex items-center gap-2 px-4 py-2 bg-zinc-800 border-b border-zinc-700">
-                <Zap size={14} className="text-green-400" />
-                <span className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Data Sheet</span>
+        <div className="my-6 overflow-hidden rounded-xl border border-zinc-700 shadow-2xl bg-[#1a1a1a]">
+            <div className="flex items-center gap-2 px-6 py-3 bg-zinc-800 border-b border-zinc-700 bg-gradient-to-r from-zinc-800 to-zinc-900">
+                <div className="bg-green-500/20 p-1.5 rounded-md">
+                    <Zap size={14} className="text-green-400" />
+                </div>
+                <span className="text-sm font-bold text-white uppercase tracking-wider">Data Sheet</span>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-zinc-400 uppercase bg-black/40">
                         <tr>
                             {headerRow.map((h, i) => (
-                                <th key={i} className="px-6 py-3 border-b border-zinc-800">{h}</th>
+                                <th key={i} className="px-6 py-4 border-b border-zinc-800 font-medium tracking-wide">{h}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {dataRows.map((row, i) => (
-                            <tr key={i} className="border-b border-zinc-800 hover:bg-zinc-800/30 transition-colors">
+                            <tr key={i} className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors last:border-0">
                                 {row.map((cell, j) => (
-                                    <td key={j} className="px-6 py-4 font-mono text-zinc-300">{cell}</td>
+                                    <td key={j} className="px-6 py-4 font-mono text-zinc-300 border-r border-zinc-800/30 last:border-r-0">{cell}</td>
                                 ))}
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    );
+};
+
+// Simple In-Chat Widgets
+const SimpleCalculator: React.FC = () => {
+    const [val, setVal] = useState('');
+    return (
+        <div className="bg-black border border-zinc-800 rounded-2xl p-4 shadow-lg">
+            <div className="flex items-center gap-2 mb-2 text-zinc-500 text-xs font-bold uppercase"><Calculator size={12}/> Calc</div>
+            <input className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-right text-white font-mono mb-2" value={val} readOnly />
+            <div className="grid grid-cols-4 gap-1">
+                {[7,8,9,'/',4,5,6,'*',1,2,3,'-',0,'C','=','+'].map(k => (
+                    <button key={k} onClick={() => k === '=' ? setVal(eval(val)||'') : k==='C' ? setVal('') : setVal(v=>v+k)} className="bg-zinc-800 text-zinc-300 hover:bg-zinc-700 h-8 rounded text-xs font-bold">{k}</button>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const SimpleClock: React.FC = () => {
+    const [time, setTime] = useState(new Date());
+    useEffect(() => { const i = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(i); }, []);
+    return (
+        <div className="bg-black border border-zinc-800 rounded-2xl p-4 shadow-lg flex items-center gap-4">
+            <Clock size={24} className="text-blue-500" />
+            <div>
+                <div className="text-2xl font-mono font-bold text-white">{time.toLocaleTimeString()}</div>
+                <div className="text-xs text-zinc-500">{time.toLocaleDateString()}</div>
             </div>
         </div>
     );

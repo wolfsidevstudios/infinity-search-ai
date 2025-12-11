@@ -793,6 +793,7 @@ const App: React.FC = () => {
                     history={history}
                     collections={collections}
                     onSearch={(q) => handleSearch(q, 'web')}
+                    onSaveHistory={addToHistory}
                 />
             )}
 
