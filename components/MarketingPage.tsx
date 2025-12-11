@@ -46,8 +46,8 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
   const faqs = [
     {
-        question: "Is Infinity really free?",
-        answer: "Yes! Infinity is a community-supported project. We don't charge subscription fees. You simply bring your own API keys for the services you use."
+        question: "Is Infinity OS really free?",
+        answer: "Yes! Infinity OS is a community-supported project. We don't charge subscription fees for the core OS. You simply bring your own API keys for the services you use."
     },
     {
         question: "Where is my data stored?",
@@ -103,11 +103,11 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-white cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
              <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm group-hover:scale-105 transition-transform" />
-             <span className="group-hover:opacity-80 transition-opacity">Infinity</span>
+             <span className="group-hover:opacity-80 transition-opacity">Infinity OS</span>
           </div>
           
           <div className="hidden md:flex items-center gap-10">
-            {['Product', 'Solutions', 'Pricing', 'Developers'].map((item) => (
+            {['OS 26', 'Intelligence', 'Privacy', 'Developers'].map((item) => (
                 <button key={item} className="text-sm font-semibold text-white/70 hover:text-white transition-colors">{item}</button>
             ))}
           </div>
@@ -123,7 +123,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               onClick={onGetStarted}
               className="bg-white text-black border border-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl"
             >
-              Get Started
+              Launch OS
             </button>
           </div>
         </div>
@@ -142,14 +142,14 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           <Command size={20} />
                       </div>
                       <div>
-                          <div className="text-white font-bold text-lg leading-tight">1000+ Searches</div>
-                          <div className="text-white/60 text-sm underline underline-offset-4 decoration-white/30 group-hover:decoration-white transition-all">Read Our Success Stories</div>
+                          <div className="text-white font-bold text-lg leading-tight">Infinity OS 26.0</div>
+                          <div className="text-white/60 text-sm underline underline-offset-4 decoration-white/30 group-hover:decoration-white transition-all">Read the Press Release</div>
                       </div>
                   </div>
 
                   {/* Headline */}
                   <h1 className="text-[5rem] md:text-[7rem] leading-[0.9] font-serif-display font-medium text-white mb-10 tracking-tight">
-                      Infinity<sup className="text-4xl align-top">+</sup>
+                      Infinity<sup className="text-4xl align-top text-blue-400">OS</sup>
                   </h1>
 
                   {/* Separator Line */}
@@ -157,15 +157,15 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
                   {/* Subheadline */}
                   <p className="text-xl md:text-2xl text-white/80 font-light max-w-lg mb-12 leading-relaxed">
-                      Drive Knowledge Growth, And Harness AI-Powered Deep Think — Up To 50x Faster.
+                      The Operating System for the Web. Harness AI-Powered Deep Think and fluid spatial computing in your browser.
                   </p>
 
                   {/* Review */}
                   <div className="flex items-center gap-4 mb-12 bg-white/5 pr-6 rounded-full border border-white/10 w-fit backdrop-blur-sm">
                       <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop" alt="User" className="w-12 h-12 rounded-full border-2 border-[#0a0a0a]" />
                       <div className="flex flex-col py-2">
-                          <span className="text-sm font-medium text-white">Loved the performance</span>
-                          <span className="text-xs text-white/50">100% Satisfied <span className="text-white ml-2">★ 5.0</span></span>
+                          <span className="text-sm font-medium text-white">"Feels like the future"</span>
+                          <span className="text-xs text-white/50">Early Beta User <span className="text-white ml-2">★ 5.0</span></span>
                       </div>
                   </div>
 
@@ -175,13 +175,13 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                         onClick={onGetStarted}
                         className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                       >
-                          Try Now — It's Free
+                          Try Infinity OS
                       </button>
                       <button 
                         onClick={() => window.scrollTo({ top: 2000, behavior: 'smooth' })}
                         className="flex items-center gap-2 text-white font-semibold border-b border-transparent hover:border-white transition-all pb-0.5"
                       >
-                          Our Pricing <ArrowRight size={16} className="-rotate-45" />
+                          View Pricing <ArrowRight size={16} className="-rotate-45" />
                       </button>
                   </div>
               </div>
@@ -192,10 +192,10 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    
                    {/* Top Right Floating Badge */}
                    <div className="absolute top-[10%] right-[10%] w-40 h-40 bg-white/5 backdrop-blur-md rounded-[30px] border border-white/10 p-4 flex flex-col justify-between shadow-2xl animate-pulse">
-                      <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Efficiency</span>
+                      <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Latency</span>
                       <div>
-                          <span className="text-4xl font-bold text-white">60%</span>
-                          <p className="text-xs text-white/80 leading-tight mt-1">Faster research this week</p>
+                          <span className="text-4xl font-bold text-white">12ms</span>
+                          <p className="text-xs text-white/80 leading-tight mt-1">Deep Think 2.0 Speed</p>
                       </div>
                    </div>
               </div>
@@ -208,9 +208,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           <ScrollReveal>
           <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Evolution</h2>
-              <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Search needed a brain upgrade.</h3>
+              <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Search needed an OS.</h3>
               <p className="text-xl text-zinc-400 leading-relaxed">
-                  Basic keywords aren't enough for complex problems. Infinity 2.0 introduces "Deep Think"—an agentic workflow that reads, verifies, and synthesizes answers before you even see the first link.
+                  Basic keywords are history. Infinity OS 26 introduces "Deep Think"—an agentic workflow that reads, verifies, and synthesizes answers before you even see the first link. It's not just search; it's a computation engine.
               </p>
           </div>
           </ScrollReveal>
@@ -225,7 +225,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           <ScrollReveal>
           <div className="max-w-7xl mx-auto">
               <div className="mb-20 text-center">
-                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">The 2.0 Experience.</h2>
+                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">The OS Experience.</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-6 min-h-[600px]">
@@ -236,16 +236,16 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           <div className="w-14 h-14 bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-2xl flex items-center justify-center mb-6 shadow-inner">
                               <BrainCircuit size={28} />
                           </div>
-                          <h3 className="text-3xl font-bold mb-3 text-white">Deep Think Engine</h3>
+                          <h3 className="text-3xl font-bold mb-3 text-white">Deep Think 2.0</h3>
                           <p className="text-zinc-400 max-w-sm text-lg leading-relaxed">
-                              Toggle "Deep Search" to unleash multi-step reasoning. Watch the AI break down complex queries in real-time.
+                              Toggle "Deep Search" to unleash multi-step reasoning. Watch the AI break down complex queries in real-time with our new fluid animation engine.
                           </p>
                       </div>
                       
                       {/* Abstract UI Representation */}
                       <div className="absolute top-1/2 right-[-5%] w-[60%] h-[120%] bg-black/40 backdrop-blur-md rounded-l-[40px] border-l border-t border-white/10 p-6 flex flex-col gap-4 transform rotate-[-6deg] group-hover:rotate-0 transition-all duration-700 ease-out shadow-2xl">
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Analyzing sources...</div>
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Cross-referencing data...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Kernel initialized...</div>
+                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Analyzing 14 sources...</div>
                           <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Synthesizing output...</div>
                       </div>
                   </div>
@@ -258,9 +258,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/30 text-white shadow-inner">
                               <Mic size={24} />
                           </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">Voice Command</h3>
+                          <h3 className="text-2xl font-bold mb-2 text-white">Natural Voice</h3>
                           <p className="text-zinc-300 text-sm leading-relaxed">
-                              Speak naturally. Infinity listens and responds with spoken audio summaries.
+                              Speak naturally. Infinity OS listens and responds with human-like spoken audio summaries.
                           </p>
                       </div>
                   </div>
@@ -273,9 +273,9 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           <div className="w-12 h-12 bg-blue-500/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 text-blue-400 shadow-inner">
                               <Bookmark size={24} />
                           </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">Collections</h3>
+                          <h3 className="text-2xl font-bold mb-2 text-white">FileSystem</h3>
                           <p className="text-zinc-400 text-sm leading-relaxed">
-                              Save images, links, and songs to your personal library. Build your knowledge base.
+                              Save images, links, and code snippets to your personal library. Your knowledge, organized.
                           </p>
                       </div>
                   </div>
@@ -292,11 +292,11 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                  <div className="flex flex-col lg:flex-row gap-16 items-center">
                      <div className="lg:w-1/2">
                          <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                            Inside the <br/>
-                            <span className="text-purple-400">Deep Think Engine</span>
+                            Powered by <br/>
+                            <span className="text-purple-400">Deep Think 2.0</span>
                          </h2>
                          <p className="text-xl text-zinc-400 mb-8 leading-relaxed">
-                             Most search engines give you blue links. Infinity creates answers. Our multi-modal engine processes your query through three distinct layers of cognition.
+                             Most search engines give you blue links. Infinity OS creates answers. Our multi-modal engine processes your query through three distinct layers of cognition.
                          </p>
                          
                          <div className="space-y-6">
@@ -305,7 +305,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                      <Globe size={24}/>
                                  </div>
                                  <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">1. Information Retrieval</h4>
+                                     <h4 className="text-lg font-bold text-white mb-1">1. Retrieval Layer</h4>
                                      <p className="text-zinc-500">Scans billions of pages, including your connected Notion docs and local files.</p>
                                  </div>
                              </div>
@@ -314,7 +314,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                      <BrainCircuit size={24}/>
                                  </div>
                                  <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">2. Reasoning & Verification</h4>
+                                     <h4 className="text-lg font-bold text-white mb-1">2. Reasoning Kernel</h4>
                                      <p className="text-zinc-500">Cross-references facts, detects hallucinations, and filters out clickbait.</p>
                                  </div>
                              </div>
@@ -323,7 +323,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                      <Sparkles size={24}/>
                                  </div>
                                  <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">3. Synthesis</h4>
+                                     <h4 className="text-lg font-bold text-white mb-1">3. Synthesis UI</h4>
                                      <p className="text-zinc-500">Generates a concise, cited, and actionable answer with relevant visuals.</p>
                                  </div>
                              </div>
@@ -343,7 +343,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                           <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                                           <div className="w-3 h-3 rounded-full bg-green-500"></div>
                                       </div>
-                                      <div className="text-xs font-mono text-zinc-500 ml-auto">agent_v2.0.log</div>
+                                      <div className="text-xs font-mono text-zinc-500 ml-auto">infinity_kernel.log</div>
                                   </div>
                                   <div className="space-y-3 font-mono text-xs">
                                       <div className="flex items-center gap-2 text-green-400">
@@ -434,7 +434,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           <ScrollReveal>
           <div className="max-w-5xl mx-auto">
               <div className="text-center mb-16">
-                  <h2 className="text-4xl font-bold mb-4">Why switch to Infinity?</h2>
+                  <h2 className="text-4xl font-bold mb-4">Why switch to Infinity OS?</h2>
                   <p className="text-zinc-400">See how we stack up against the giants.</p>
               </div>
 
@@ -443,7 +443,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                       <thead>
                           <tr className="border-b border-white/10">
                               <th className="py-6 px-4 text-zinc-500 font-medium">Feature</th>
-                              <th className="py-6 px-4 text-white font-bold text-lg bg-white/5 rounded-t-xl">Infinity 2.0</th>
+                              <th className="py-6 px-4 text-white font-bold text-lg bg-white/5 rounded-t-xl">Infinity OS 26</th>
                               <th className="py-6 px-4 text-zinc-500 font-medium">Traditional Search</th>
                               <th className="py-6 px-4 text-zinc-500 font-medium">Standard AI Chat</th>
                           </tr>
@@ -498,7 +498,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                
                <h2 className="text-3xl font-bold text-white mb-4">Your Data. Your Keys.</h2>
                <p className="text-zinc-400 text-lg leading-relaxed mb-8 max-w-2xl mx-auto">
-                   Unlike other platforms, Infinity is designed to be local-first. Bring your own Gemini API key for complete privacy. 
+                   Unlike other platforms, Infinity OS is designed to be local-first. Bring your own Gemini API key for complete privacy. 
                    Your search history and connected app tokens are stored encrypted on your device, not our servers.
                </p>
                
@@ -556,7 +556,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                            <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Coming Soon</span>
                        </div>
                        
-                       <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mb-2">Infinity+</h3>
+                       <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mb-2">Infinity OS Pro</h3>
                        <div className="text-5xl font-bold text-zinc-700 mb-6">$20<span className="text-lg text-zinc-800 font-normal">/mo</span></div>
                        <p className="text-zinc-500 mb-8">For power users who need the best models.</p>
 
@@ -585,7 +585,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
          <div className="max-w-3xl mx-auto">
              <div className="text-center mb-16">
                  <h2 className="text-4xl font-bold mb-4">Common Questions</h2>
-                 <p className="text-zinc-500">Everything you need to know about Infinity.</p>
+                 <p className="text-zinc-500">Everything you need to know about Infinity OS.</p>
              </div>
 
              <div className="space-y-4">
@@ -620,7 +620,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                    onClick={onGetStarted}
                    className="px-10 py-5 bg-white text-black text-xl font-bold rounded-full hover:scale-105 transition-transform shadow-2xl"
                >
-                   Start Searching Now
+                   Boot Infinity OS
                </button>
                <p className="mt-6 text-zinc-500 text-sm">No credit card required</p>
            </div>
@@ -634,7 +634,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   <div>
                       <div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-6 text-white">
                         <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
-                        Infinity 2.0
+                        Infinity OS 26
                       </div>
                       <p className="text-zinc-500 max-w-sm">
                           The intelligent search workspace for the modern internet.
@@ -642,7 +642,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                   </div>
               </div>
               <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <p className="text-zinc-600 text-sm">© 2025 Infinity Search Inc.</p>
+                  <p className="text-zinc-600 text-sm">© 2025 Infinity Search Inc. v26.0</p>
               </div>
           </div>
       </footer>

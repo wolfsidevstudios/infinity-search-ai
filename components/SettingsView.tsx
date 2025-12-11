@@ -50,8 +50,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.0-flash');
   
   // Update Simulation State
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'installing' | 'completed'>('idle');
-  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'uptodate'>('idle');
   
   // Bible Settings
   const [bibleLang, setBibleLang] = useState<'en' | 'es'>('en');
@@ -79,31 +78,11 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
   // Update Logic Effect
   useEffect(() => {
-      if (activeTab === 'updates' && updateStatus === 'idle' && osVersion === '26.0') {
+      if (activeTab === 'updates' && updateStatus === 'idle') {
           setUpdateStatus('checking');
-          setTimeout(() => setUpdateStatus('available'), 2000);
+          setTimeout(() => setUpdateStatus('uptodate'), 1500);
       }
-  }, [activeTab, updateStatus, osVersion]);
-
-  const handleStartUpdate = () => {
-      setUpdateStatus('downloading');
-      
-      // Simulate Download
-      const interval = setInterval(() => {
-          setDownloadProgress(prev => {
-              if (prev >= 100) {
-                  clearInterval(interval);
-                  setUpdateStatus('installing');
-                  setTimeout(() => {
-                      if (onUpdateOS) onUpdateOS('26.1 Beta');
-                      setUpdateStatus('completed');
-                  }, 2000);
-                  return 100;
-              }
-              return prev + Math.random() * 15;
-          });
-      }, 500);
-  };
+  }, [activeTab, updateStatus]);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
@@ -176,7 +155,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             <div onClick={() => setActiveTab('updates')} className={navItemClass('updates')}>
                 <div className="relative">
                     <Settings size={20} />
-                    {osVersion === '26.0' && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black"></div>}
                 </div>
                 Software Updates
             </div>
@@ -230,7 +208,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   {/* Status Icon */}
                   <div className="flex justify-center mb-8">
                       <div className="w-32 h-32 bg-zinc-900 rounded-[32px] flex items-center justify-center shadow-2xl border border-zinc-800">
-                          {updateStatus === 'checking' || updateStatus === 'downloading' || updateStatus === 'installing' ? (
+                          {updateStatus === 'checking' ? (
                               <Settings size={64} className="text-blue-500 animate-spin-slow" />
                           ) : (
                               <div className="w-16 h-16 bg-white rounded-xl shadow-lg flex items-center justify-center">
@@ -241,62 +219,47 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
 
                   {/* Checking / Up to Date */}
-                  {(updateStatus === 'checking' || (updateStatus === 'idle' && osVersion !== '26.0')) && (
-                      <div className="text-center">
-                          <h3 className="text-2xl font-bold text-white mb-2">
-                              {updateStatus === 'checking' ? 'Checking for updates...' : `Infinity OS ${osVersion}`}
-                          </h3>
-                          {updateStatus !== 'checking' && (
-                              <p className="text-zinc-500">Your software is up to date.</p>
-                          )}
-                      </div>
-                  )}
+                  <div className="text-center">
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                          {updateStatus === 'checking' ? 'Checking for updates...' : `Infinity OS ${osVersion}`}
+                      </h3>
+                      {updateStatus === 'uptodate' && (
+                          <p className="text-zinc-500">Your system is up to date.</p>
+                      )}
+                  </div>
 
-                  {/* Available Update */}
-                  {(updateStatus === 'available' || updateStatus === 'downloading' || updateStatus === 'installing') && (
-                      <div className="bg-zinc-900 border border-zinc-800 rounded-[32px] p-8 shadow-xl animate-fadeIn">
-                          <div className="flex justify-between items-start mb-4">
+                  {/* Upcoming 26.1 Preview */}
+                  {updateStatus === 'uptodate' && (
+                      <div className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-[32px] p-8 shadow-xl animate-fadeIn relative overflow-hidden group hover:border-zinc-700 transition-all">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] pointer-events-none"></div>
+                          
+                          <div className="flex justify-between items-start mb-4 relative z-10">
                               <div>
-                                  <h3 className="text-2xl font-bold text-white">Infinity OS 26.1 Beta</h3>
-                                  <p className="text-zinc-500 text-sm font-medium mt-1">Infinity Inc. • 345.2 MB</p>
+                                  <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="text-xl font-bold text-white">Infinity OS 26.1 Beta</h3>
+                                      <span className="bg-blue-900/30 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-500/20">SNEAK PEEK</span>
+                                  </div>
+                                  <p className="text-zinc-500 text-sm font-medium">Coming Soon</p>
                               </div>
                           </div>
                           
-                          <div className="prose prose-invert prose-sm max-w-none text-zinc-400 mb-8">
+                          <div className="prose prose-invert prose-sm max-w-none text-zinc-400 mb-8 relative z-10">
                               <p>
-                                  Infinity OS 26.1 introduces a refined spatial design language, deeper integration with next-gen reasoning models, and significant stability improvements.
+                                  Get ready for the next evolution. Infinity OS 26.1 will introduce deeper agentic capabilities and spatial UI enhancements.
                               </p>
                               <ul className="list-disc pl-4 space-y-1 mt-2">
-                                  <li>New "Fluid Physics" animation engine.</li>
-                                  <li>Improved "Deep Think" latency.</li>
-                                  <li>Security patches for local storage encryption.</li>
+                                  <li>Refined "Fluid Physics" engine.</li>
+                                  <li>Enhanced reasoning latency.</li>
+                                  <li>New widget ecosystem.</li>
                               </ul>
                           </div>
 
-                          {updateStatus === 'available' ? (
-                              <button 
-                                  onClick={handleStartUpdate}
-                                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-blue-900/20"
-                              >
-                                  Download and Install
-                              </button>
-                          ) : (
-                              <div className="space-y-3">
-                                  <div className="flex justify-between text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                                      <span>{updateStatus === 'downloading' ? 'Downloading...' : 'Installing...'}</span>
-                                      <span>{Math.round(downloadProgress)}%</span>
-                                  </div>
-                                  <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                                      <div 
-                                          className="h-full bg-blue-500 transition-all duration-300 ease-linear" 
-                                          style={{ width: `${downloadProgress}%` }} 
-                                      />
-                                  </div>
-                                  <p className="text-center text-xs text-zinc-600 mt-2">
-                                      Do not close this tab.
-                                  </p>
-                              </div>
-                          )}
+                          <button 
+                              disabled
+                              className="w-full py-4 bg-zinc-800 text-zinc-500 font-bold rounded-2xl cursor-not-allowed border border-zinc-700/50"
+                          >
+                              Coming Soon
+                          </button>
                       </div>
                   )}
 

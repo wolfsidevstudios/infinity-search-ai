@@ -16,8 +16,8 @@ const INFINITY_LOGO_URL = 'https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06
 const PRESS_RELEASE_POST: CommunityPost = {
   id: 'infinity-os-26-release',
   user_id: 'infinity-official',
-  content: "📣 **Press Release: Introducing Infinity OS 26.0**\n\nWe are proud to unveil Infinity OS 26.0, a quantum leap in web app capabilities. Redesigned from the ground up to feel less like a website and more like a living operating system.\n\n**What's New:**\n✨ All-new Fluid Animation Engine\n🛡️ Enhanced Privacy Core\n🧠 Deep Think 2.0 Integration\n\nExperience the future today. Check **Settings > Software Updates** to download the latest beta.",
-  hashtags: ['#InfinityOS', '#Keynote2025', '#Redesign'],
+  content: "📣 **Press Release: Why Infinity OS 26.0?**\n\nToday marks a significant shift in our release strategy. We are officially rebranding our versioning from 2.0 to **Infinity OS 26.0**.\n\n**Why the jump?**\nWe believe software versions should be intuitive. By aligning our major release number with the year (2026), you will instantly know if your system is current without guessing if \"v2.4\" is newer than \"v2.3.9\".\n\n**What's New in 26.0:**\n• Complete UI overhaul to \"Spatial Glass\" design.\n• Local-first architecture for privacy.\n\n**Coming Soon:**\nInfinity OS 26.1 is already in the works with revolutionary features. Check Settings for a sneak peek.",
+  hashtags: ['#InfinityOS', '#Rebrand', '#Update'],
   created_at: new Date(Date.now() + 20000).toISOString(), // Always top
   likes_count: 15402,
   author_name: 'Infinity HQ',
