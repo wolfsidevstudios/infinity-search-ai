@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
-import MobileNav from './components/MobileNav'; // Import MobileNav
+import MobileNav from './components/MobileNav'; 
 import SearchInput from './components/SearchInput';
 import ResultsView from './components/ResultsView';
 import DiscoverView from './components/DiscoverView';
@@ -29,8 +29,8 @@ import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
 import OsView from './components/OsView';
-import CanvasView from './components/CanvasView'; // New Import
-import VoiceOverlay from './components/VoiceOverlay'; // New Import
+import CanvasView from './components/CanvasView'; 
+import VoiceOverlay from './components/VoiceOverlay'; 
 import { searchWithGemini, getProductRecommendations, askDrive, generateCode } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -43,6 +43,7 @@ import { searchRecipes, Recipe } from './services/recipeService';
 import { searchShopping, fetchGoogleImages } from './services/shoppingService';
 import { searchFlights } from './services/flightService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
+import { enableInfinityCloud, disableInfinityCloud, syncData, loadFromCloud } from './services/infinityCloudService'; // NEW
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
 import { ChevronDown, Globe, Image as ImageIcon, ShoppingBag, Plane, Terminal, HardDrive, Newspaper } from 'lucide-react';
@@ -84,6 +85,10 @@ const App: React.FC = () => {
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
   const [isPro, setIsPro] = useState(false);
   const [osVersion, setOsVersion] = useState<string>('26.2 Beta');
+  
+  // Cloud State
+  const [isCloudEnabled, setIsCloudEnabled] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
@@ -149,6 +154,9 @@ const App: React.FC = () => {
 
         const savedVersion = localStorage.getItem('infinity_os_version');
         if (savedVersion) setOsVersion(savedVersion);
+        
+        const cloudEnabled = localStorage.getItem('infinity_cloud_enabled') === 'true';
+        setIsCloudEnabled(cloudEnabled);
 
         // 1. Check for Payment Return Parameters First
         const urlParams = new URLSearchParams(window.location.search);
@@ -156,22 +164,16 @@ const App: React.FC = () => {
         const successParam = urlParams.get('success');
 
         if (providerParam === 'polar' || successParam === 'true') {
-            console.log("Payment detected via URL params.");
-            // Activate Pro Status
             localStorage.setItem('infinity_pro_status', 'active');
             setIsPro(true);
             setConnectedProvider('Polar Pro Plan');
             setView('success');
-            // Clean URL so refresh doesn't re-trigger logic or keep ugly params
             window.history.replaceState({}, '', window.location.pathname);
             setIsAuthChecking(false);
-            
-            // If user was logged in, ensure session is set
             if (session) {
                 setSessionUser(session.user);
                 restoreTokens();
             } else {
-                // Ensure a session exists if they paid anonymously (demo flow)
                 setSessionUser({ id: 'pro-user', email: 'pro@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Pro User' }, aud: 'authenticated', created_at: '' } as User);
             }
             return;
@@ -184,14 +186,26 @@ const App: React.FC = () => {
             setSessionUser(session.user);
             restoreTokens();
             
-            // If connecting provider, we go to success page, otherwise restore path
+            // Cloud Logic: Attempt to Load Data
+            if (cloudEnabled) {
+                const cloudData = await loadFromCloud(session.user.id);
+                if (cloudData) {
+                    setCollections(cloudData.collections);
+                    setHistory(cloudData.history);
+                    if (cloudData.settings) {
+                        if (cloudData.settings.weather_unit) setWeatherUnit(cloudData.settings.weather_unit as 'c'|'f');
+                        if (cloudData.settings.wallpaper_url) setCurrentWallpaper(cloudData.settings.wallpaper_url);
+                        if (cloudData.settings.os_version) setOsVersion(cloudData.settings.os_version);
+                    }
+                    setLastSynced(new Date());
+                }
+            }
+
             const connectingProvider = localStorage.getItem('connecting_provider');
             if (connectingProvider) {
                  // handled in auth listener below
             } else {
                  setView('app');
-                 
-                 // Handle specific routes
                  if (path.startsWith('community/')) {
                      setActiveTab('community');
                      const postId = path.split('/')[1];
@@ -201,7 +215,6 @@ const App: React.FC = () => {
                  }
             }
         } else {
-             // If trying to access protected route without session, go to landing or login
              if (path === 'login') setView('login');
              else setView('landing');
         }
@@ -210,7 +223,6 @@ const App: React.FC = () => {
 
     initApp();
 
-    // Fetch Weather for Home Greeting
     const loadWeather = async () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -223,9 +235,8 @@ const App: React.FC = () => {
     };
     loadWeather();
 
-    // Load Collections
     const savedCollections = localStorage.getItem('infinity_collections');
-    if (savedCollections) setCollections(JSON.parse(savedCollections));
+    if (savedCollections && !isCloudEnabled) setCollections(JSON.parse(savedCollections)); // Only load local if cloud off
 
     const savedWeatherUnit = localStorage.getItem('weather_unit');
     if (savedWeatherUnit) setWeatherUnit(savedWeatherUnit as 'c' | 'f');
@@ -234,8 +245,6 @@ const App: React.FC = () => {
         if (session) {
             setSessionUser(session.user);
             captureProviderTokens(session);
-
-            // CHECK IF WE CAME FROM A "CONNECT" ACTION
             const connectingProvider = localStorage.getItem('connecting_provider');
             if (connectingProvider) {
                 setConnectedProvider(connectingProvider);
@@ -252,6 +261,28 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Sync Logic Hook
+  useEffect(() => {
+      const sync = async () => {
+          if (isCloudEnabled && sessionUser) {
+              const res = await syncData(sessionUser.id, collections, history, {
+                  weatherUnit,
+                  wallpaperUrl: currentWallpaper,
+                  osVersion
+              });
+              if (res?.success) {
+                  setLastSynced(new Date());
+              }
+          } else {
+              // Local Backup
+              localStorage.setItem('infinity_collections', JSON.stringify(collections));
+          }
+      };
+      
+      const timeout = setTimeout(sync, 2000); // Debounce
+      return () => clearTimeout(timeout);
+  }, [collections, history, weatherUnit, currentWallpaper, isCloudEnabled, sessionUser]);
 
   // Update URL on Tab Change
   useEffect(() => {
@@ -282,14 +313,29 @@ const App: React.FC = () => {
       }
   };
 
-  // Sync Collections
-  useEffect(() => {
-      localStorage.setItem('infinity_collections', JSON.stringify(collections));
-  }, [collections]);
-
   const handleWeatherUnitChange = (unit: 'c' | 'f') => {
       setWeatherUnit(unit);
       localStorage.setItem('weather_unit', unit);
+  };
+
+  const handleToggleCloud = async (enabled: boolean) => {
+      if (!sessionUser) return;
+      setIsCloudEnabled(enabled);
+      if (enabled) {
+          await enableInfinityCloud(sessionUser.id);
+          // Trigger immediate sync to upload current local data
+          const res = await syncData(sessionUser.id, collections, history, { weatherUnit, wallpaperUrl: currentWallpaper, osVersion });
+          if(res?.success) setLastSynced(new Date());
+      } else {
+          await disableInfinityCloud(sessionUser.id);
+      }
+  };
+
+  const handleManualSync = async () => {
+      if (isCloudEnabled && sessionUser) {
+          await syncData(sessionUser.id, collections, history, { weatherUnit, wallpaperUrl: currentWallpaper, osVersion });
+          setLastSynced(new Date());
+      }
   };
 
   const handleLogout = async () => {
@@ -304,7 +350,6 @@ const App: React.FC = () => {
           sources: [],
           media: [],
       });
-      // Clear tokens
       setNotionToken(null);
       localStorage.clear(); 
       window.history.pushState({}, '', '/');
@@ -328,13 +373,11 @@ const App: React.FC = () => {
   };
   
   const handleSuccessContinue = () => { 
-      // If we just came from Polar payment, show Pricing tab to confirm status
       if (connectedProvider === 'Polar Pro Plan') {
           setView('app');
           setActiveTab('pricing');
           return;
       }
-
       const returnTab = localStorage.getItem('return_tab');
       setView('app'); 
       if (returnTab) {
@@ -346,13 +389,11 @@ const App: React.FC = () => {
   };
 
   const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
-      // Logic retained for future extensibility even if UI is hidden
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
           alert(`Upgrade to Infinity Pro to access ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode!`);
           setActiveTab('pricing');
           return;
       }
-      
       if (mode === 'notion' && !notionToken) setShowNotionModal(true);
       else setSearchMode(mode);
   };
@@ -389,7 +430,6 @@ const App: React.FC = () => {
 
   const handleRemoveFile = () => setAttachedFile(null);
 
-  // --- COLLECTIONS LOGIC ---
   const handleSaveToCollections = (item: any) => {
       const newItem: CollectionItem = {
           id: Date.now().toString(),
@@ -412,7 +452,6 @@ const App: React.FC = () => {
   // --- SEARCH LOGIC ---
   const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
      try {
-      // Pro Gate Check inside search execution for safety
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
           setSearchState(prev => ({ ...prev, status: 'idle' }));
           setActiveTab('pricing');
@@ -420,10 +459,8 @@ const App: React.FC = () => {
       }
 
       if (mode === 'drive') {
-          // Google Drive Integration Removed - Fallback
           setSearchState({ status: 'results', query, summary: "Google Drive integration is temporarily unavailable as we migrate to Supabase Storage.", sources: [], media: [] });
       } else if (mode === 'code') {
-          // Code Pilot Mode
           const result = await generateCode(query);
           setSearchState({ 
               status: 'results', 
@@ -455,20 +492,17 @@ const App: React.FC = () => {
           setSearchState({ status: 'results', query, summary: `Found ${podcasts.length} podcasts.`, sources: [], media: podcasts });
           addToHistory({ type: 'search', title: `Podcast: ${query}`, summary: `Audio search for ${query}`, sources: [] });
       } else if (mode === 'community') {
-          // Just set state to results, the view will handle the fetching
           setSearchState({ status: 'results', query, summary: `Searching community...`, sources: [], media: [] });
       } else if (mode === 'recipe') {
           const results = await searchRecipes(query);
-          setRecipes(results); // Store in dedicated recipe state
+          setRecipes(results); 
           setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
           addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
       } else if (mode === 'shopping') {
-          // 1. Parallel Fetch: Multi-source products + Google Images
           const [products, images] = await Promise.all([
               searchShopping(query),
               fetchGoogleImages(query)
           ]);
-          
           setSearchState({ 
               status: 'results', 
               query, 
@@ -477,45 +511,36 @@ const App: React.FC = () => {
               media: [], 
               shopping: products,
               productImages: images,
-              aiProductPicks: [] // Temporary empty
+              aiProductPicks: [] 
           });
-
-          // 2. AI Post-Processing (Async)
           if (products.length > 0) {
               getProductRecommendations(products, query).then(picks => {
                   setSearchState(prev => ({ ...prev, aiProductPicks: picks }));
               });
           }
-
           addToHistory({ type: 'search', title: `Shopping: ${query}`, summary: `Product search for ${query}`, sources: [] });
       } else if (mode === 'flight') {
           const flights = await searchFlights(query);
           setSearchState({ status: 'results', query, summary: `Found ${flights.length} flights.`, sources: [], media: [], flights: flights });
           addToHistory({ type: 'search', title: `Flight: ${query}`, summary: `Travel search for ${query}`, sources: [] });
       } else {
-          // Web Search (or Visual Search)
           const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
-          
-          // Modify query for Visual Search if empty and file is present
           let activeQuery = query;
           if (!activeQuery && attachedFile) {
               activeQuery = "Find images related to this input image and explain them.";
           }
-
           const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
             searchWithGemini(activeQuery, fileContext),
             fetchPixabayImages(activeQuery, 4),
             fetchPexelsImages(activeQuery, 4),
             fetchNasaImages(activeQuery)
           ]);
-    
           const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
           addToHistory({ type: 'search', title: activeQuery, summary: aiData.text, sources: aiData.sources });
-    
           setSearchState({ status: 'results', query: activeQuery, summary: aiData.text, sources: aiData.sources, media: combinedImages });
           setMediaGridData({ items: combinedImages, loading: false });
           setMediaType('image');
-          setAttachedFile(null); // Clear attachment after search
+          setAttachedFile(null); 
       }
     } catch (error) {
       console.error(error);
@@ -557,13 +582,11 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: any) => {
-    // Only save previous tab if not already on it
     if (activeTab !== tab && tab !== 'recipe' && tab !== 'article') {
         setPreviousTab(activeTab as any); 
     }
     setActiveTab(tab);
     if (tab === 'community') {
-        // Clear specific post state when clicking tab
         setInitialCommunityPostId(null);
     }
     if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
@@ -572,7 +595,7 @@ const App: React.FC = () => {
   };
 
   const handleOpenArticle = (article: NewsArticle) => {
-      setPreviousTab('discover'); // Assume discovering
+      setPreviousTab('discover'); 
       setCurrentArticle(article);
       setActiveTab('article');
       addToHistory({ type: 'article', title: article.title, subtitle: article.source.name, data: article });
@@ -626,13 +649,11 @@ const App: React.FC = () => {
       return <div className="h-screen w-full bg-black"><LoginPage onSkip={() => { setSessionUser({ id: 'demo-user', email: 'demo@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Demo User' }, aud: 'authenticated', created_at: '' } as User); setView('app'); }} /></div>;
   }
 
-  // Greeting Variables
   const userName = sessionUser?.user_metadata?.full_name?.split(' ')[0] || "there";
   const userAvatar = sessionUser?.user_metadata?.avatar_url;
   const tempVal = weather?.temperature || 0;
   const tempDisplay = weatherUnit === 'c' ? Math.round(tempVal) : Math.round(tempVal * 9/5 + 32);
   const tempUnitLabel = weatherUnit === 'c' ? 'C' : 'F';
-  
   const condition = weather?.weathercode !== undefined ? getWeatherDescription(weather.weathercode) : 'clear';
   const city = weather?.city || "your location";
 
@@ -650,10 +671,7 @@ const App: React.FC = () => {
           <VoiceOverlay onClose={() => setShowVoiceMode(false)} />
       )}
 
-      {/* Desktop Sidebar */}
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
-
-      {/* Mobile Bottom Navigation */}
       <MobileNav activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
       <main 
@@ -667,7 +685,6 @@ const App: React.FC = () => {
                 <div className="hidden md:flex">
                     <QuickAccessBar />
                 </div>
-                
                 {sessionUser && (
                     <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
                         <div className="w-full h-full rounded-full overflow-hidden bg-black border border-white/10">
@@ -711,16 +728,10 @@ const App: React.FC = () => {
             {activeTab === 'home' && (
               <>
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
-                    
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
                         <a href="https://freeimage.host/" target="_blank" rel="noopener noreferrer">
-                            <img 
-                                src="https://iili.io/fRRfoF9.png" 
-                                alt="Infinity Visual" 
-                                className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" 
-                            />
+                            <img src="https://iili.io/fRRfoF9.png" alt="Infinity Visual" className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" />
                         </a>
-                        
                         <div className="w-full relative z-30">
                             <SearchInput 
                                 onSearch={handleSearch} 
@@ -736,61 +747,31 @@ const App: React.FC = () => {
                                 onVoiceClick={() => setShowVoiceMode(true)}
                             />
                         </div>
-
                         <div className="text-center space-y-3 mt-4 px-4">
                             <p className="text-lg md:text-xl text-zinc-400 font-light">
                                 Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.
                             </p>
-                            <button 
-                                onClick={handleViewDailyBrief}
-                                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group"
-                            >
+                            <button onClick={handleViewDailyBrief} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group">
                                 See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" />
                             </button>
                         </div>
                     </div>
-
                 </div>
-
                 {searchState.status === 'searching' && <div className="absolute inset-0 flex items-center justify-center"><LoadingAnimation /></div>}
-                
                 {searchState.status === 'results' && (
                     <div className="w-full h-full pt-4">
-                        {searchMode === 'code' && searchState.codeResult ? (
-                            <CodePilotView codeResult={searchState.codeResult} />
-                        ) : searchMode === 'notion' ? (
-                            <NotionResultsView items={searchState.media} query={searchState.query} />
-                        ) : searchMode === 'bible' ? (
-                            <BibleResultsView items={searchState.media} query={searchState.query} />
-                        ) : searchMode === 'podcast' ? (
-                            <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} />
-                        ) : searchMode === 'community' ? (
-                            <CommunityView user={sessionUser} initialQuery={searchState.query} />
-                        ) : searchMode === 'recipe' ? (
-                            <RecipeResultsView recipes={recipes} query={searchState.query} onOpenRecipe={handleOpenRecipe} />
-                        ) : searchMode === 'shopping' ? (
-                            <ShoppingResultsView 
-                                products={searchState.shopping || []} 
-                                aiPicks={searchState.aiProductPicks || []}
-                                productImages={searchState.productImages || []}
-                                query={searchState.query} 
-                                onSave={handleSaveToCollections}
-                            />
-                        ) : searchMode === 'flight' ? (
-                            <FlightResultsView flights={searchState.flights || []} query={searchState.query} onSave={handleSaveToCollections} />
-                        ) : (
+                        {searchMode === 'code' && searchState.codeResult ? <CodePilotView codeResult={searchState.codeResult} /> 
+                        : searchMode === 'notion' ? <NotionResultsView items={searchState.media} query={searchState.query} /> 
+                        : searchMode === 'bible' ? <BibleResultsView items={searchState.media} query={searchState.query} /> 
+                        : searchMode === 'podcast' ? <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} /> 
+                        : searchMode === 'community' ? <CommunityView user={sessionUser} initialQuery={searchState.query} /> 
+                        : searchMode === 'recipe' ? <RecipeResultsView recipes={recipes} query={searchState.query} onOpenRecipe={handleOpenRecipe} /> 
+                        : searchMode === 'shopping' ? <ShoppingResultsView products={searchState.shopping || []} aiPicks={searchState.aiProductPicks || []} productImages={searchState.productImages || []} query={searchState.query} onSave={handleSaveToCollections} /> 
+                        : searchMode === 'flight' ? <FlightResultsView flights={searchState.flights || []} query={searchState.query} onSave={handleSaveToCollections} /> 
+                        : (
                             <>
-                                <div className="max-w-4xl mx-auto mb-6">
-                                    <h2 className="text-3xl font-bold text-white drop-shadow-md mb-2">{searchState.query}</h2>
-                                </div>
-                                <ResultsView 
-                                    summary={searchState.summary} 
-                                    sources={searchState.sources} 
-                                    images={searchState.media} 
-                                    onOpenImageGrid={() => handleMediaSearch(searchState.query, 'image')}
-                                    onSave={handleSaveToCollections}
-                                    query={searchState.query}
-                                />
+                                <div className="max-w-4xl mx-auto mb-6"><h2 className="text-3xl font-bold text-white drop-shadow-md mb-2">{searchState.query}</h2></div>
+                                <ResultsView summary={searchState.summary} sources={searchState.sources} images={searchState.media} onOpenImageGrid={() => handleMediaSearch(searchState.query, 'image')} onSave={handleSaveToCollections} query={searchState.query} />
                             </>
                         )}
                     </div>
@@ -798,35 +779,9 @@ const App: React.FC = () => {
               </>
             )}
 
-            {/* NEW OS VIEW TAB */}
-            {activeTab === 'os' && (
-                <OsView 
-                    user={sessionUser}
-                    onLogout={handleLogout}
-                    weather={weather}
-                    history={history}
-                    collections={collections}
-                    onSearch={(q) => handleSearch(q, 'web')}
-                    onSaveHistory={addToHistory}
-                />
-            )}
-
-            {/* NEW CANVAS VIEW TAB */}
-            {activeTab === 'canvas' && (
-                <CanvasView />
-            )}
-
-            {activeTab === 'discover' && (
-                <div className="w-full h-full pt-4">
-                    <DiscoverView 
-                        onOpenArticle={handleOpenArticle} 
-                        onSummarize={handleSummarizeArticle} 
-                        onOpenRecipe={handleOpenRecipe}
-                        initialTab={discoverViewTab} 
-                        weatherUnit={weatherUnit} 
-                    />
-                </div>
-            )}
+            {activeTab === 'os' && <OsView user={sessionUser} onLogout={handleLogout} weather={weather} history={history} collections={collections} onSearch={(q) => handleSearch(q, 'web')} onSaveHistory={addToHistory} />}
+            {activeTab === 'canvas' && <CanvasView />}
+            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} onOpenRecipe={handleOpenRecipe} initialTab={discoverViewTab} weatherUnit={weatherUnit} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
@@ -834,6 +789,7 @@ const App: React.FC = () => {
             {activeTab === 'recipe' && currentRecipe && <div className="w-full h-full"><RecipeDetailView recipe={currentRecipe} onBack={() => setActiveTab(previousTab as any)} /></div>}
             {activeTab === 'pricing' && <div className="w-full h-full"><PricingView /></div>}
             {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
+            
             {activeTab === 'settings' && (
                 <div className="w-full h-full">
                     <SettingsView 
@@ -845,6 +801,10 @@ const App: React.FC = () => {
                         onUpgradeClick={handleUpgradeClick}
                         osVersion={osVersion}
                         onUpdateOS={handleOsUpdate}
+                        isCloudEnabled={isCloudEnabled}
+                        onToggleCloud={handleToggleCloud}
+                        lastSynced={lastSynced}
+                        onManualSync={handleManualSync}
                     />
                 </div>
             )}

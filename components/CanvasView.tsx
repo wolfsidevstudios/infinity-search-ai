@@ -1,16 +1,10 @@
 
 import React, { useState, useRef } from 'react';
 import { CanvasNode } from '../types';
-import { Plus, Image as ImageIcon, Type, Link, Move, X } from 'lucide-react';
-
-const INITIAL_NODES: CanvasNode[] = [
-    { id: '1', type: 'note', x: 400, y: 300, title: 'Project Idea', content: 'Build a spatial interface for search results.', color: '#3b82f6' },
-    { id: '2', type: 'image', x: 700, y: 150, title: 'Inspiration', content: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop', width: 300, height: 200 },
-    { id: '3', type: 'link', x: 200, y: 500, title: 'Documentation', content: 'https://react.dev' },
-];
+import { Plus, Image as ImageIcon, Type, Link, Move, X, Edit2, Trash2 } from 'lucide-react';
 
 const CanvasView: React.FC = () => {
-  const [nodes, setNodes] = useState<CanvasNode[]>(INITIAL_NODES);
+  const [nodes, setNodes] = useState<CanvasNode[]>([]);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
@@ -49,29 +43,73 @@ const CanvasView: React.FC = () => {
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-      if (e.ctrlKey) {
+      if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
           const zoomSensitivity = 0.001;
-          const newScale = Math.min(Math.max(0.5, scale - e.deltaY * zoomSensitivity), 3);
+          const newScale = Math.min(Math.max(0.2, scale - e.deltaY * zoomSensitivity), 5);
           setScale(newScale);
+      } else {
+          // Pan with scroll if not zooming
+          setPan(p => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
       }
   };
 
   const addNode = (type: 'note' | 'image' | 'link') => {
+      let title = 'Untitled';
+      let content = '';
+      
+      if (type === 'note') {
+          const userContent = prompt("Enter note content:", "");
+          if (userContent === null) return;
+          content = userContent || "New Note";
+          title = prompt("Enter note title:", "Note") || "Note";
+      } else if (type === 'image') {
+          const url = prompt("Enter image URL:", "");
+          if (!url) return;
+          content = url;
+          title = "Image";
+      } else if (type === 'link') {
+          const url = prompt("Enter URL:", "https://");
+          if (!url) return;
+          title = prompt("Enter link title:", "Link") || "Link";
+          content = url;
+      }
+
       const newNode: CanvasNode = {
           id: Date.now().toString(),
           type,
-          x: -pan.x / scale + window.innerWidth / 2, // Center on screen
-          y: -pan.y / scale + window.innerHeight / 2,
-          title: 'New Item',
-          content: type === 'image' ? 'https://via.placeholder.com/300' : 'New Content',
-          color: type === 'note' ? '#eab308' : undefined
+          // Calculate center of current viewport accounting for pan and scale
+          x: (window.innerWidth / 2 - pan.x) / scale - 150, 
+          y: (window.innerHeight / 2 - pan.y) / scale - 100,
+          title,
+          content,
+          color: type === 'note' ? '#eab308' : undefined,
+          width: type === 'image' ? 300 : 250
       };
       setNodes([...nodes, newNode]);
   };
 
   const deleteNode = (id: string) => {
-      setNodes(nodes.filter(n => n.id !== id));
+      if (window.confirm("Delete this item?")) {
+          setNodes(nodes.filter(n => n.id !== id));
+      }
+  };
+
+  const editNode = (node: CanvasNode) => {
+      let newTitle = node.title;
+      let newContent = node.content;
+
+      if (node.type === 'note') {
+          newTitle = prompt("Edit Title:", node.title) || node.title;
+          newContent = prompt("Edit Content:", node.content) || node.content;
+      } else if (node.type === 'link') {
+          newTitle = prompt("Edit Link Title:", node.title) || node.title;
+          newContent = prompt("Edit URL:", node.content) || node.content;
+      } else if (node.type === 'image') {
+          newContent = prompt("Edit Image URL:", node.content) || node.content;
+      }
+
+      setNodes(nodes.map(n => n.id === node.id ? { ...n, title: newTitle, content: newContent } : n));
   };
 
   return (
@@ -93,6 +131,16 @@ const CanvasView: React.FC = () => {
                 Infinity Canvas 1.0
             </div>
         </div>
+
+        {/* Empty State Hint */}
+        {nodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-600">
+                <div className="text-center">
+                    <p className="text-lg font-medium mb-2">Your canvas is empty</p>
+                    <p className="text-sm">Use the toolbar above to add notes, images, or links.</p>
+                </div>
+            </div>
+        )}
 
         {/* Canvas Area */}
         <div 
@@ -121,6 +169,7 @@ const CanvasView: React.FC = () => {
                     <div
                         key={node.id}
                         onMouseDown={(e) => { e.stopPropagation(); setDraggingNode(node.id); }}
+                        onDoubleClick={(e) => { e.stopPropagation(); editNode(node); }}
                         className="absolute bg-zinc-900 border border-zinc-700 rounded-2xl shadow-xl overflow-hidden group hover:border-white/50 transition-colors"
                         style={{
                             left: node.x,
@@ -131,27 +180,39 @@ const CanvasView: React.FC = () => {
                         }}
                     >
                         {/* Handle */}
-                        <div className="h-8 bg-zinc-800/50 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing">
-                            <div className="flex gap-2">
+                        <div className="h-8 bg-zinc-800/50 flex items-center justify-between px-3 cursor-grab active:cursor-grabbing border-b border-zinc-800/50">
+                            <div className="flex gap-2 items-center">
                                 <div className={`w-3 h-3 rounded-full ${node.type === 'note' ? 'bg-yellow-500' : node.type === 'link' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
                                 <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">{node.type}</span>
                             </div>
-                            <button onClick={() => deleteNode(node.id)} className="text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                                <X size={14} />
-                            </button>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={(e) => { e.stopPropagation(); editNode(node); }} className="text-zinc-500 hover:text-white p-1">
+                                    <Edit2 size={12} />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="text-zinc-500 hover:text-red-500 p-1">
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Content */}
                         <div className="p-4">
                             {node.type === 'image' ? (
-                                <img src={node.content} alt="node" className="w-full h-auto rounded-lg pointer-events-none" />
+                                <img 
+                                    src={node.content} 
+                                    alt="node" 
+                                    className="w-full h-auto rounded-lg pointer-events-none bg-zinc-800 min-h-[100px]" 
+                                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200?text=Invalid+Image+URL'; }}
+                                />
                             ) : (
                                 <>
-                                    <h3 className="text-white font-bold mb-2">{node.title}</h3>
-                                    <p className="text-zinc-400 text-sm leading-relaxed">{node.content}</p>
+                                    <h3 className="text-white font-bold mb-2 break-words">{node.title}</h3>
+                                    <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-wrap break-words">{node.content}</p>
                                     {node.type === 'link' && (
-                                        <div className="mt-3 flex items-center gap-1 text-blue-400 text-xs">
-                                            <Link size={10} /> {node.content}
+                                        <div className="mt-3 pt-3 border-t border-zinc-800">
+                                            <a href={node.content} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 text-xs hover:underline pointer-events-auto" onMouseDown={e => e.stopPropagation()}>
+                                                <Link size={10} /> Open Link
+                                            </a>
                                         </div>
                                     )}
                                 </>
@@ -163,8 +224,8 @@ const CanvasView: React.FC = () => {
         </div>
 
         {/* Hint */}
-        <div className="absolute bottom-8 left-8 text-zinc-500 text-xs font-medium pointer-events-none">
-            Space: Hold to Pan • Scroll: Zoom
+        <div className="absolute bottom-8 left-8 text-zinc-500 text-xs font-medium pointer-events-none bg-black/50 backdrop-blur px-3 py-1 rounded-full border border-white/5">
+            Space+Drag to Pan • Scroll to Zoom • Double Click to Edit
         </div>
 
     </div>
