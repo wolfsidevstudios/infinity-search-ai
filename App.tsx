@@ -29,6 +29,8 @@ import QuickAccessBar from './components/QuickAccessBar';
 import CameraView from './components/CameraView';
 import PricingView from './components/PricingView';
 import OsView from './components/OsView';
+import CanvasView from './components/CanvasView'; // New Import
+import VoiceOverlay from './components/VoiceOverlay'; // New Import
 import { searchWithGemini, getProductRecommendations, askDrive, generateCode } from './services/geminiService';
 import { fetchImages as fetchPixabayImages, fetchPixabayVideos } from './services/pixabayService';
 import { fetchPexelsImages, fetchPexelsVideos } from './services/pexelsService';
@@ -71,8 +73,8 @@ const App: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
-  const [previousTab, setPreviousTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
+  const [previousTab, setPreviousTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
   
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
@@ -81,7 +83,7 @@ const App: React.FC = () => {
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
   const [isPro, setIsPro] = useState(false);
-  const [osVersion, setOsVersion] = useState<string>('26.1');
+  const [osVersion, setOsVersion] = useState<string>('26.2 Beta');
 
   // Search State
   const [searchState, setSearchState] = useState<SearchState>({
@@ -103,6 +105,7 @@ const App: React.FC = () => {
   // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [showVoiceMode, setShowVoiceMode] = useState(false);
 
   // Collections State
   const [collections, setCollections] = useState<CollectionItem[]>([]);
@@ -193,7 +196,7 @@ const App: React.FC = () => {
                      setActiveTab('community');
                      const postId = path.split('/')[1];
                      if (postId) setInitialCommunityPostId(postId);
-                 } else if (['home', 'os', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing'].includes(path)) {
+                 } else if (['home', 'os', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing', 'canvas'].includes(path)) {
                       setActiveTab(path as any);
                  }
             }
@@ -643,6 +646,10 @@ const App: React.FC = () => {
           />
       )}
 
+      {showVoiceMode && (
+          <VoiceOverlay onClose={() => setShowVoiceMode(false)} />
+      )}
+
       {/* Desktop Sidebar */}
       <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
 
@@ -677,7 +684,7 @@ const App: React.FC = () => {
             </div>
         )}
 
-        <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' ? 'hidden' : ''}`}>
+        <div className={`h-20 flex items-center justify-between pointer-events-none relative z-20 px-8 pt-4 shrink-0 ${activeTab === 'settings' || activeTab === 'canvas' ? 'hidden' : ''}`}>
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
@@ -687,13 +694,19 @@ const App: React.FC = () => {
                 )}
             </div>
             {!(activeTab === 'home' && searchState.status === 'idle') && (activeTab !== 'os') && (
-                <div className={`font-bold tracking-tight text-xl opacity-80 flex items-center gap-2 text-white`}>
-                    Infinity {osVersion}
+                <div className="flex items-center gap-3 px-4 py-2 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all hover:border-white/20 group">
+                    <div className="relative">
+                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
+                        <div className="absolute inset-0 bg-purple-500 blur-[4px] opacity-50"></div>
+                    </div>
+                    <span className="font-semibold text-sm text-white/90 tracking-tight">Infinity {osVersion}</span>
+                    <div className="h-3 w-[1px] bg-white/10"></div>
+                    <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Synapse</span>
                 </div>
             )}
         </div>
 
-        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' || activeTab === 'os' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
+        <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' || activeTab === 'os' || activeTab === 'canvas' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
             
             {activeTab === 'home' && (
               <>
@@ -720,6 +733,7 @@ const App: React.FC = () => {
                                 onRemoveFile={handleRemoveFile}
                                 onCameraClick={() => setShowCamera(true)}
                                 isPro={isPro}
+                                onVoiceClick={() => setShowVoiceMode(true)}
                             />
                         </div>
 
@@ -795,6 +809,11 @@ const App: React.FC = () => {
                     onSearch={(q) => handleSearch(q, 'web')}
                     onSaveHistory={addToHistory}
                 />
+            )}
+
+            {/* NEW CANVAS VIEW TAB */}
+            {activeTab === 'canvas' && (
+                <CanvasView />
             )}
 
             {activeTab === 'discover' && (

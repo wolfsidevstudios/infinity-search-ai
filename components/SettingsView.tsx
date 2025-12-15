@@ -31,7 +31,7 @@ const WALLPAPERS = [
   { id: 'minimal', url: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=2000&auto=format&fit=crop', name: 'Minimal Gray', isPro: false },
 ];
 
-// Updated Model List for 26.1
+// Updated Model List for 26.2
 const AVAILABLE_MODELS = [
     { id: 'gemma-2-9b', name: 'Google Gemma 2', desc: 'Fast, efficient, budget-friendly.', isPro: false, badge: 'NEW' },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Standard reasoning engine.', isPro: false, badge: 'DEFAULT' },
@@ -65,7 +65,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     weatherUnit,
     onToggleWeatherUnit,
     onUpgradeClick,
-    osVersion = '26.0',
+    osVersion = '26.2 Beta',
     onUpdateOS
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -100,8 +100,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
     setMcpServers(getMcpServers());
     
-    // Auto-check logic: If current OS is already 26.1, we are up to date
-    if (osVersion === '26.1') {
+    // Auto-check logic
+    if (osVersion.includes('26.2')) {
         setUpdateStatus('uptodate');
     }
   }, [user, osVersion]);
@@ -115,7 +115,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               clearInterval(interval);
               setInstallProgress(100);
               setTimeout(() => {
-                  if (onUpdateOS) onUpdateOS('26.1');
+                  if (onUpdateOS) onUpdateOS('26.2 Beta');
                   setUpdateStatus('uptodate');
               }, 1000);
           } else {
@@ -266,37 +266,37 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                   
                   <div className="text-center">
                       <h3 className="text-3xl font-bold text-white mb-2">
-                          {updateStatus === 'uptodate' ? `Infinity OS ${osVersion} is up to date` : 'Infinity OS 26.1 Available'}
+                          {updateStatus === 'uptodate' ? `Infinity OS ${osVersion}` : 'Infinity OS 26.2 Available'}
                       </h3>
                       <p className="text-zinc-500 text-lg">
                           {updateStatus === 'uptodate' 
-                            ? 'You are running the latest version with Deep Think 2.0.' 
+                            ? 'You are on the cutting-edge "Synapse" beta channel.' 
                             : 'A new software update is available for your workspace.'}
                       </p>
                   </div>
 
                   {updateStatus === 'available' && (
                       <div className="bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-[32px] p-8 shadow-2xl animate-fadeIn relative overflow-hidden group hover:border-zinc-700 transition-all">
-                          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] pointer-events-none"></div>
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[80px] pointer-events-none"></div>
                           
                           <div className="relative z-10">
                               <div className="flex items-center gap-3 mb-4">
-                                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-md">NEW</span>
-                                  <h4 className="text-xl font-bold text-white">Feature Drop: "Polymath"</h4>
+                                  <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-md">BETA</span>
+                                  <h4 className="text-xl font-bold text-white">Update: "Synapse"</h4>
                               </div>
                               <ul className="space-y-3 mb-8 text-zinc-400 text-sm">
-                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>New AI Models:</strong> Claude Opus 4.5, GPT-5 Mini, Grok 3.</li>
-                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>Smoother Animations:</strong> Rebuilt physics engine for 120Hz feel.</li>
-                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>Budget Options:</strong> Added Google Gemma 2 for efficient queries.</li>
+                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>Dynamic Hub:</strong> New alive status bar interface.</li>
+                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>Beta Channel:</strong> Early access to experimental features.</li>
+                                  <li className="flex gap-2"><Check size={16} className="text-green-500 shrink-0"/> <strong>Refined UI:</strong> Smoother animations and glass effects.</li>
                               </ul>
                               
                               <button 
                                 onClick={handleUpdateOS} 
                                 className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                               >
-                                  <Download size={20} /> Download and Install
+                                  <Download size={20} /> Update to Beta
                               </button>
-                              <p className="text-center text-xs text-zinc-600 mt-4">Size: 45 MB • Requires Restart</p>
+                              <p className="text-center text-xs text-zinc-600 mt-4">Size: 62 MB • Requires Restart</p>
                           </div>
                       </div>
                   )}

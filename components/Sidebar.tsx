@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles, Layout } from 'lucide-react';
+import { Home, Plus, Compass, Clock, User, Image as ImageIcon, Bookmark, Users, Sparkles, Layout, Grid } from 'lucide-react';
 
 interface SidebarProps {
-  activeTab: 'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing';
-  onTabChange: (tab: 'home' | 'os' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'pricing') => void;
+  activeTab: 'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas';
+  onTabChange: (tab: 'home' | 'os' | 'discover' | 'history' | 'images' | 'settings' | 'collections' | 'community' | 'pricing' | 'canvas') => void;
   onReset: () => void;
 }
 
@@ -63,6 +63,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onReset }) =>
                 title="Infinity OS Dashboard"
             >
                 <Layout size={activeTab === 'os' ? 28 : 24} strokeWidth={activeTab === 'os' ? 2.5 : 2} />
+            </button>
+
+            <button 
+                onClick={() => onTabChange('canvas')}
+                className={btnClass(activeTab === 'canvas')}
+                title="Infinity Canvas"
+            >
+                <Grid size={activeTab === 'canvas' ? 28 : 24} strokeWidth={activeTab === 'canvas' ? 2.5 : 2} />
             </button>
             
             <button 

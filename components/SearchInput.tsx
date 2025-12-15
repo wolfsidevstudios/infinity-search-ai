@@ -20,6 +20,7 @@ interface SearchInputProps {
   onRemoveFile?: () => void;
   onCameraClick: () => void;
   isPro: boolean;
+  onVoiceClick?: () => void; // New prop for Voice Overlay
 }
 
 const MODES = [
@@ -44,16 +45,15 @@ const SearchInput: React.FC<SearchInputProps> = ({
     attachedFile, 
     onRemoveFile,
     onCameraClick,
-    isPro
+    isPro,
+    onVoiceClick
 }) => {
   const [query, setQuery] = useState("");
-  const [isListening, setIsListening] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,9 +65,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
           document.removeEventListener('mousedown', handleClickOutside);
-          if (recognitionRef.current) {
-              recognitionRef.current.stop();
-          }
       };
   }, []);
 
@@ -105,45 +102,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       }
   };
 
-  const toggleListening = () => {
-      if (isListening) {
-          recognitionRef.current?.stop();
-          setIsListening(false);
-      } else {
-          startListening();
-      }
-  };
-
-  const startListening = () => {
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-          alert("Speech recognition is not supported in this browser.");
-          return;
-      }
-
-      // @ts-ignore
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-
-      recognition.onstart = () => setIsListening(true);
-      recognition.onend = () => {
-          setIsListening(false);
-      };
-      
-      recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          setQuery(transcript);
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-  };
-
   const getPlaceholder = () => {
-      if (isListening) return "Listening...";
       if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
       
       const modeLabel = MODES.find(m => m.id === activeMode)?.label || 'Web';
@@ -250,8 +209,9 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
                   <button
                       type="button"
-                      onClick={toggleListening}
-                      className={`p-3 rounded-full hover:bg-white/10 transition-all duration-300 active:scale-90 ${isListening ? 'text-red-500 animate-pulse' : 'text-zinc-400 hover:text-white'}`}
+                      onClick={onVoiceClick} // Use parent handler for new voice mode
+                      className={`p-3 rounded-full hover:bg-white/10 transition-all duration-300 active:scale-90 text-zinc-400 hover:text-white`}
+                      title="Neural Voice"
                   >
                       <Mic size={20} />
                   </button>

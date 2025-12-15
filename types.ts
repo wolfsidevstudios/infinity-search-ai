@@ -19,6 +19,18 @@ export interface MediaItem {
   data?: any; // For additional metadata (e.g. Notion page details, Bible verses)
 }
 
+export interface CanvasNode {
+    id: string;
+    type: 'note' | 'image' | 'link';
+    x: number;
+    y: number;
+    title: string;
+    content: string;
+    color?: string;
+    width?: number;
+    height?: number;
+}
+
 export interface CollectionItem {
   id: string;
   type: 'web' | 'image' | 'audio' | 'note' | 'product' | 'flight' | 'app' | 'code';
