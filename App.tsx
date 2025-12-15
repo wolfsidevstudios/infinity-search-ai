@@ -88,6 +88,7 @@ const App: React.FC = () => {
   
   // Cloud State
   const [isCloudEnabled, setIsCloudEnabled] = useState(false);
+  const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   // Search State
@@ -157,6 +158,9 @@ const App: React.FC = () => {
         
         const cloudEnabled = localStorage.getItem('infinity_cloud_enabled') === 'true';
         setIsCloudEnabled(cloudEnabled);
+
+        const autoSync = localStorage.getItem('infinity_auto_sync') === 'true';
+        setIsAutoSyncEnabled(autoSync);
 
         // 1. Check for Payment Return Parameters First
         const urlParams = new URLSearchParams(window.location.search);
@@ -265,7 +269,10 @@ const App: React.FC = () => {
   // Sync Logic Hook
   useEffect(() => {
       const sync = async () => {
-          if (isCloudEnabled && sessionUser) {
+          if (isCloudEnabled && sessionUser && !isAutoSyncEnabled) {
+              // Standard debounce sync for manual-ish saves or important events, 
+              // but we rely more on Auto Sync interval if enabled.
+              // For now, let's keep basic debounce sync as fallback or immediate save.
               const res = await syncData(sessionUser.id, collections, history, {
                   weatherUnit,
                   wallpaperUrl: currentWallpaper,
@@ -274,7 +281,7 @@ const App: React.FC = () => {
               if (res?.success) {
                   setLastSynced(new Date());
               }
-          } else {
+          } else if (!isCloudEnabled) {
               // Local Backup
               localStorage.setItem('infinity_collections', JSON.stringify(collections));
           }
@@ -282,7 +289,28 @@ const App: React.FC = () => {
       
       const timeout = setTimeout(sync, 2000); // Debounce
       return () => clearTimeout(timeout);
-  }, [collections, history, weatherUnit, currentWallpaper, isCloudEnabled, sessionUser]);
+  }, [collections, history, weatherUnit, currentWallpaper, isCloudEnabled, sessionUser, isAutoSyncEnabled]);
+
+  // Auto Sync Interval
+  useEffect(() => {
+      let interval: any;
+      if (isAutoSyncEnabled && isCloudEnabled && sessionUser) {
+          interval = setInterval(async () => {
+              // Trigger sync
+              const res = await syncData(sessionUser.id, collections, history, {
+                  weatherUnit,
+                  wallpaperUrl: currentWallpaper,
+                  osVersion
+              });
+              if (res?.success) {
+                  setLastSynced(new Date());
+              }
+          }, 30000); // Sync every 30 seconds
+      }
+      return () => {
+          if (interval) clearInterval(interval);
+      };
+  }, [isAutoSyncEnabled, isCloudEnabled, sessionUser, collections, history, weatherUnit, currentWallpaper, osVersion]);
 
   // Update URL on Tab Change
   useEffect(() => {
@@ -329,6 +357,11 @@ const App: React.FC = () => {
       } else {
           await disableInfinityCloud(sessionUser.id);
       }
+  };
+
+  const handleToggleAutoSync = (enabled: boolean) => {
+      setIsAutoSyncEnabled(enabled);
+      localStorage.setItem('infinity_auto_sync', String(enabled));
   };
 
   const handleManualSync = async () => {
@@ -805,6 +838,8 @@ const App: React.FC = () => {
                         onToggleCloud={handleToggleCloud}
                         lastSynced={lastSynced}
                         onManualSync={handleManualSync}
+                        isAutoSyncEnabled={isAutoSyncEnabled}
+                        onToggleAutoSync={handleToggleAutoSync}
                     />
                 </div>
             )}

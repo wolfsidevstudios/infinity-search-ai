@@ -22,6 +22,8 @@ interface SettingsViewProps {
   onToggleCloud?: (enabled: boolean) => void;
   lastSynced?: Date | null;
   onManualSync?: () => void;
+  isAutoSyncEnabled?: boolean;
+  onToggleAutoSync?: (enabled: boolean) => void;
 }
 
 type Tab = 'profile' | 'customization' | 'wallpapers' | 'cloud' | 'bible' | 'ai' | 'connected' | 'subscription' | 'updates' | 'developer';
@@ -47,18 +49,6 @@ const AVAILABLE_MODELS = [
     { id: 'grok-3', name: 'Grok 3', desc: 'xAI\'s real-time reasoning model.', isPro: true, badge: 'NEW' },
 ];
 
-// Search Modes for Display
-const SEARCH_MODES = [
-    { label: 'Web', icon: Globe, desc: 'Real-time internet search' },
-    { label: 'Scripture', icon: BookOpen, desc: 'Bible analysis' },
-    { label: 'Podcast', icon: Radio, desc: 'Audio episode finder' },
-    { label: 'Community', icon: Users, desc: 'Social discussions' },
-    { label: 'Recipes', icon: Utensils, desc: 'Cooking instructions' },
-    { label: 'Shopping', icon: ShoppingBag, desc: 'Product deals' },
-    { label: 'Flights', icon: Plane, desc: 'Travel booking' },
-    { label: 'Code Pilot', icon: Terminal, desc: 'Programming assistant' },
-];
-
 const SettingsView: React.FC<SettingsViewProps> = ({ 
     isNotionConnected, 
     onConnectNotion, 
@@ -74,7 +64,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     isCloudEnabled = false,
     onToggleCloud,
     lastSynced,
-    onManualSync
+    onManualSync,
+    isAutoSyncEnabled = false,
+    onToggleAutoSync
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [apiKey, setApiKey] = useState('');
@@ -346,6 +338,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               </div>
                           </div>
 
+                          {/* Auto Sync Toggle */}
+                          <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+                              <div>
+                                  <div className="font-bold text-white flex items-center gap-2 text-sm">
+                                      Auto-Sync <span className="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">BETA</span>
+                                  </div>
+                                  <div className="text-xs text-zinc-500 mt-1">Automatically sync changes in the background.</div>
+                              </div>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                  <input 
+                                      type="checkbox" 
+                                      className="sr-only peer" 
+                                      checked={isAutoSyncEnabled} 
+                                      onChange={(e) => onToggleAutoSync && onToggleAutoSync(e.target.checked)} 
+                                  />
+                                  <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                              </label>
+                          </div>
+
                           <button 
                             onClick={handleSync}
                             disabled={isSyncing}
@@ -379,12 +390,9 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* ... other tabs ... */}
           {activeTab === 'profile' && (
-            // ... profile content ...
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">My Profile</h3>
-              {/* Reuse existing profile block */}
               <div className="flex items-center gap-6 p-6 bg-zinc-900 rounded-[32px] border border-zinc-800 relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:scale-[1.01]">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-zinc-800 to-black flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-black overflow-hidden relative z-10">
                    {avatarUrl ? (
@@ -412,9 +420,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                </div>
             </div>
           )}
-          {/* ... keeping other tabs simplified for brevity in XML, assuming they exist unchanged from previous state ... */}
           
-          {/* Re-rendering other tabs to ensure file integrity */}
           {activeTab === 'subscription' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Subscription</h3>

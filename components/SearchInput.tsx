@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Mic, Camera, X, ImageIcon, FileText, ChevronDown, Globe, Database, BookOpen, Radio, Users, Utensils, ShoppingBag, Plane, Terminal, Lock } from 'lucide-react';
+import { Search, Mic, Camera, X, ImageIcon, FileText, ChevronDown, Globe, Database, BookOpen, Radio, Users, Utensils, ShoppingBag, Plane, Terminal, Lock, Paperclip } from 'lucide-react';
 
 interface AttachedFile {
   name: string;
@@ -20,7 +20,7 @@ interface SearchInputProps {
   onRemoveFile?: () => void;
   onCameraClick: () => void;
   isPro: boolean;
-  onVoiceClick?: () => void; // New prop for Voice Overlay
+  onVoiceClick?: () => void; 
 }
 
 const MODES = [
@@ -55,6 +55,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -68,11 +69,18 @@ const SearchInput: React.FC<SearchInputProps> = ({
       };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (query.trim() || attachedFile) {
       onSearch(query, activeMode);
       setShowModeMenu(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
@@ -106,7 +114,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
       if (attachedFile && attachedFile.type === 'image') return "Ask about this image...";
       
       const modeLabel = MODES.find(m => m.id === activeMode)?.label || 'Web';
-      return `Ask ${modeLabel}...`;
+      return `Ask ${modeLabel} anything...`;
   };
 
   const ActiveIcon = MODES.find(m => m.id === activeMode)?.icon || Globe;
@@ -117,159 +125,159 @@ const SearchInput: React.FC<SearchInputProps> = ({
         centered ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-8 opacity-0 pointer-events-none scale-95 absolute'
       }`}
     >
-      <div className="w-full relative">
+      <div 
+        className="w-full relative"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
           
-          {/* Main Bar */}
+          {/* Main Box */}
           <div 
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`relative flex items-center w-full h-14 rounded-full border transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]
+            className={`relative flex flex-col w-full bg-[#1a1a1a]/95 backdrop-blur-2xl border rounded-[32px] p-4 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-2xl
                 ${isDragging 
-                    ? 'ring-2 ring-blue-500 bg-blue-900/20 scale-105 border-blue-400' 
+                    ? 'ring-2 ring-blue-500 bg-blue-900/20 border-blue-400 scale-[1.02]' 
                     : isFocused 
-                        ? 'border-white/30 bg-[#1a1a1a] shadow-[0_0_30px_rgba(0,0,0,0.5)] scale-[1.02] ring-1 ring-white/10' 
-                        : 'border-white/10 bg-[#1a1a1a]/90 backdrop-blur-xl shadow-lg hover:bg-[#202020] hover:border-white/20'
+                        ? 'border-white/20 ring-1 ring-white/10 bg-[#1a1a1a]' 
+                        : 'border-white/10'
                 }
             `}
           >
-              {/* Mode Selector */}
-              <div className="relative pl-2" ref={menuRef}>
-                  <button 
-                    type="button"
-                    onClick={() => setShowModeMenu(!showModeMenu)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-300 hover:text-white transition-all duration-300 active:scale-95"
-                  >
-                      <ActiveIcon size={18} className="text-blue-400" />
-                      <span className="text-sm font-medium hidden sm:block">{MODES.find(m => m.id === activeMode)?.label || 'Web'}</span>
-                      <ChevronDown size={14} className={`transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ${showModeMenu ? 'rotate-180' : ''}`} />
-                  </button>
+              {/* Text Area */}
+              <textarea
+                  ref={textareaRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  placeholder={getPlaceholder()}
+                  disabled={isSearching}
+                  rows={1}
+                  className="w-full bg-transparent border-none outline-none text-white text-xl placeholder-zinc-500 resize-none min-h-[96px] max-h-[300px] mb-2 custom-scrollbar"
+              />
 
-                  {/* Dropdown Menu */}
-                  {showModeMenu && (
-                      <div className="absolute top-full left-0 mt-3 w-56 bg-[#1a1a1a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-scaleIn origin-top-left">
-                          <div className="p-2 grid gap-1 max-h-[300px] overflow-y-auto glass-scroll">
-                              {MODES.map((mode) => (
-                                  <button
-                                    key={mode.id}
-                                    type="button"
-                                    onClick={() => {
-                                        onModeChange(mode.id as any);
-                                        setShowModeMenu(false);
-                                    }}
-                                    className={`flex items-center justify-between w-full p-2.5 rounded-xl text-sm transition-all duration-200 active:scale-95 ${
-                                        activeMode === mode.id 
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                                        : 'text-zinc-400 hover:bg-white/10 hover:text-white'
-                                    }`}
-                                  >
-                                      <div className="flex items-center gap-3">
-                                          <mode.icon size={16} />
-                                          <span>{mode.label}</span>
-                                      </div>
-                                      {mode.isPro && !isPro && <Lock size={12} className="text-yellow-500" />}
-                                  </button>
-                              ))}
-                          </div>
-                      </div>
-                  )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-6 w-[1px] bg-white/10 mx-2"></div>
-
-              {/* Input */}
-              <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full">
-                  <input
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                      placeholder={getPlaceholder()}
-                      disabled={isSearching}
-                      className="w-full bg-transparent border-none outline-none text-white text-lg placeholder-zinc-500 h-full transition-all"
-                  />
-                  {/* Hidden File Input */}
-                  <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*,application/pdf,text/*" />
-              </form>
-
-              {/* Right: Actions */}
-              <div className="pr-2 flex items-center gap-1">
-                  
-                  {/* Visual Search / Camera Button */}
-                  <button
-                      type="button"
-                      onClick={onCameraClick}
-                      className="p-3 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-all duration-300 active:scale-90"
-                      title="Visual Search"
-                  >
-                      <Camera size={20} />
-                  </button>
-
-                  <button
-                      type="button"
-                      onClick={onVoiceClick} // Use parent handler for new voice mode
-                      className={`p-3 rounded-full hover:bg-white/10 transition-all duration-300 active:scale-90 text-zinc-400 hover:text-white`}
-                      title="Neural Voice"
-                  >
-                      <Mic size={20} />
-                  </button>
-                  
-                  {/* Submit */}
-                  <button
-                      onClick={handleSubmit}
-                      disabled={!query.trim() && !attachedFile}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ml-1 ${
-                          !query.trim() && !attachedFile 
-                          ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed opacity-50' 
-                          : 'bg-white text-black hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                      }`}
-                  >
-                      <Search size={20} />
-                  </button>
-              </div>
-          </div>
-
-          {/* Attached Images - Circles Under Input */}
-          {attachedFile && (
-            <div className="w-full flex items-center gap-3 mt-4 ml-2 animate-slideUp">
-                <div className="relative group">
-                    <div className="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-zinc-800 shadow-lg">
+              {/* Attached Files Preview */}
+              {attachedFile && (
+                <div className="flex items-center gap-3 mb-4 animate-slideUp bg-zinc-900/50 p-2 rounded-xl border border-white/5 w-fit">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 relative">
                         {attachedFile.type === 'image' ? (
                             <img src={`data:${attachedFile.mimeType};base64,${attachedFile.content}`} alt="preview" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                                <FileText size={20} />
+                                <FileText size={18} />
                             </div>
                         )}
                     </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-medium text-white max-w-[150px] truncate">{attachedFile.name}</span>
+                        <span className="text-[10px] text-zinc-500 uppercase">{attachedFile.type}</span>
+                    </div>
                     <button 
                         onClick={onRemoveFile}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity transform scale-0 group-hover:scale-100 duration-200"
+                        className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-red-400 transition-colors ml-2"
                     >
-                        <X size={10} />
+                        <X size={14} />
                     </button>
                 </div>
-                
-                {attachedFile.type === 'image' && (
-                    <div className="flex flex-col">
-                        <span className="text-xs text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                            <ImageIcon size={10} /> Visual Search
-                        </span>
-                        <span className="text-[10px] text-zinc-500 max-w-[150px] truncate">
-                            {attachedFile.name}
-                        </span>
-                    </div>
-                )}
-            </div>
-          )}
+              )}
+
+              {/* Bottom Controls */}
+              <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  
+                  {/* Left: Mode Selector */}
+                  <div className="relative" ref={menuRef}>
+                      <button 
+                        type="button"
+                        onClick={() => setShowModeMenu(!showModeMenu)}
+                        className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-all duration-300 active:scale-95 text-sm font-medium bg-zinc-900/50 border border-white/5"
+                      >
+                          <ActiveIcon size={16} className={activeMode === 'web' ? 'text-zinc-300' : 'text-blue-400'} />
+                          <span>{MODES.find(m => m.id === activeMode)?.label || 'Web'}</span>
+                          <ChevronDown size={14} className={`transition-transform duration-300 ${showModeMenu ? 'rotate-180' : ''} opacity-50`} />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {showModeMenu && (
+                          <div className="absolute top-full left-0 mt-2 w-56 bg-[#1f1f1f] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-scaleIn origin-top-left p-1.5">
+                              <div className="grid gap-0.5 max-h-[300px] overflow-y-auto glass-scroll">
+                                  {MODES.map((mode) => (
+                                      <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => {
+                                            onModeChange(mode.id as any);
+                                            setShowModeMenu(false);
+                                        }}
+                                        className={`flex items-center justify-between w-full p-2.5 rounded-xl text-sm transition-all duration-200 active:scale-95 ${
+                                            activeMode === mode.id 
+                                            ? 'bg-zinc-800 text-white font-medium' 
+                                            : 'text-zinc-400 hover:bg-white/5 hover:text-white'
+                                        }`}
+                                      >
+                                          <div className="flex items-center gap-3">
+                                              <mode.icon size={16} className={activeMode === mode.id ? 'text-blue-400' : 'opacity-70'} />
+                                              <span>{mode.label}</span>
+                                          </div>
+                                          {mode.isPro && !isPro && <Lock size={12} className="text-yellow-500 opacity-80" />}
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-2">
+                      <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept="image/*,application/pdf,text/*" />
+                      
+                      <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-2.5 rounded-full hover:bg-white/10 text-zinc-500 hover:text-white transition-all duration-300 active:scale-90"
+                          title="Attach File"
+                      >
+                          <Paperclip size={20} />
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={onCameraClick}
+                          className="p-2.5 rounded-full hover:bg-white/10 text-zinc-500 hover:text-white transition-all duration-300 active:scale-90"
+                          title="Visual Search"
+                      >
+                          <Camera size={20} />
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={onVoiceClick} 
+                          className="p-2.5 rounded-full hover:bg-white/10 text-zinc-500 hover:text-white transition-all duration-300 active:scale-90"
+                          title="Voice Input"
+                      >
+                          <Mic size={20} />
+                      </button>
+                      
+                      <button
+                          onClick={() => handleSubmit()}
+                          disabled={!query.trim() && !attachedFile}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] ml-1 ${
+                              !query.trim() && !attachedFile 
+                              ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed' 
+                              : 'bg-white text-black hover:scale-110 active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                          }`}
+                      >
+                          <Search size={20} strokeWidth={2.5} />
+                      </button>
+                  </div>
+              </div>
+          </div>
 
           {/* Drag Overlay Tip */}
           {isDragging && (
-              <div className="absolute top-16 left-0 right-0 text-center animate-fadeIn">
-                  <div className="inline-block bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400 transform scale-110">
-                      Drop image to search
+              <div className="absolute inset-0 bg-blue-500/20 backdrop-blur-sm rounded-[32px] flex items-center justify-center z-50 pointer-events-none animate-fadeIn border-2 border-blue-500 border-dashed">
+                  <div className="bg-blue-600 text-white text-sm font-bold px-6 py-3 rounded-full shadow-xl flex items-center gap-2">
+                      <ImageIcon size={18} /> Drop image to analyze
                   </div>
               </div>
           )}
