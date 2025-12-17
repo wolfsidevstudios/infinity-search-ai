@@ -236,7 +236,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           )}
 
-          {/* ... other tabs would use cardClass and theme-aware colors ... */}
           {activeTab === 'profile' && (
               <div className={sectionClass}>
                   <h3 className="text-3xl font-bold">My Profile</h3>
