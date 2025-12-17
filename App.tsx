@@ -70,6 +70,7 @@ const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'login' | 'app' | 'assets' | 'success'>('landing');
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   
   const [activeTab, setActiveTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
   const [previousTab, setPreviousTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
@@ -113,6 +114,8 @@ const App: React.FC = () => {
         setIsCloudEnabled(cloudEnabled);
         const autoSync = localStorage.getItem('infinity_auto_sync') === 'true';
         setIsAutoSyncEnabled(autoSync);
+        const savedTheme = localStorage.getItem('infinity_theme') as 'light' | 'dark' | null;
+        if (savedTheme) setTheme(savedTheme);
 
         if (session) {
             setSessionUser(session.user);
@@ -129,7 +132,6 @@ const App: React.FC = () => {
                 }
             }
         } else {
-            // Check for specific deep links or stay on landing
             const path = window.location.pathname.replace('/', '');
             if (path === 'login') setView('login');
             else setView('landing');
@@ -159,6 +161,11 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleThemeToggle = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    localStorage.setItem('infinity_theme', newTheme);
+  };
 
   useEffect(() => {
       const loadWeather = async () => {
@@ -270,7 +277,6 @@ const App: React.FC = () => {
       setActiveTab('home');
       setSearchState({ status: 'idle', query: '', summary: '', sources: [], media: [] });
       setNotionToken(null);
-      // Selective clearing to maintain app settings but clear user session
       localStorage.removeItem('notion_token');
       localStorage.removeItem('infinity_cloud_enabled');
       localStorage.removeItem('infinity_auto_sync');
@@ -432,25 +438,25 @@ const App: React.FC = () => {
   const city = weather?.city || "your location";
 
   return (
-    <div className="relative h-screen w-full bg-black text-white flex flex-col md:flex-row overflow-hidden">
+    <div className={`relative h-screen w-full transition-colors duration-700 ${theme === 'dark' ? 'bg-black text-white' : 'bg-[#f5f5f7] text-[#1d1d1f]'} flex flex-col md:flex-row overflow-hidden`}>
       {showCamera && <CameraView onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} />}
       {showVoiceMode && <VoiceOverlay onClose={() => setShowVoiceMode(false)} />}
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
-      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
+      <Sidebar theme={theme} activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
+      <MobileNav theme={theme} activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
 
       <main 
-        className="flex-1 w-full h-full md:h-[calc(100vh-1.5rem)] md:m-3 md:ml-24 relative md:rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border-x border-b md:border border-white/10 pb-20 md:pb-0" 
-        style={currentWallpaper ? { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#000' }}
+        className={`flex-1 w-full h-full md:h-[calc(100vh-1.5rem)] md:m-3 md:ml-24 relative md:rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-700 border-x border-b md:border ${theme === 'dark' ? 'border-white/10' : 'border-black/5'} pb-20 md:pb-0`} 
+        style={currentWallpaper ? { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
       >
-        {currentWallpaper && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-0" />}
+        {currentWallpaper && <div className={`absolute inset-0 ${theme === 'dark' ? 'bg-black/60' : 'bg-white/60'} backdrop-blur-[2px] pointer-events-none z-0`} />}
 
         {activeTab === 'home' && searchState.status === 'idle' && (
             <div className="absolute top-6 right-8 z-50 flex items-center gap-4">
                 <QuickAccessBar />
                 {sessionUser && (
                     <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
-                        <div className="w-full h-full rounded-full overflow-hidden bg-black border border-white/10">
-                            {userAvatar ? <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white font-bold">{userName.charAt(0).toUpperCase()}</div>}
+                        <div className={`w-full h-full rounded-full overflow-hidden ${theme === 'dark' ? 'bg-black' : 'bg-white'} border ${theme === 'dark' ? 'border-white/10' : 'border-black/5'}`}>
+                            {userAvatar ? <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center ${theme === 'dark' ? 'bg-zinc-800 text-white' : 'bg-zinc-200 text-black'} font-bold`}>{userName.charAt(0).toUpperCase()}</div>}
                         </div>
                     </div>
                 )}
@@ -461,16 +467,16 @@ const App: React.FC = () => {
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full group-hover:scale-150 transition-transform bg-white"/>
-                        <span className="font-medium tracking-wide group-hover:opacity-100 opacity-80 text-white">Back to Search</span>
+                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform ${theme === 'dark' ? 'bg-white' : 'bg-black'}`}/>
+                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>Back to Search</span>
                     </div>
                 )}
             </div>
             {!(activeTab === 'home' && searchState.status === 'idle') && (activeTab !== 'os') && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all hover:border-white/20 group">
+                <div className={`flex items-center gap-3 px-4 py-2 ${theme === 'dark' ? 'bg-[#111]/80 border-white/10' : 'bg-white/80 border-black/5'} backdrop-blur-xl border rounded-full shadow-2xl transition-all hover:border-white/20 group`}>
                     <div className="relative"><div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div><div className="absolute inset-0 bg-purple-500 blur-[4px] opacity-50"></div></div>
-                    <span className="font-semibold text-sm text-white/90 tracking-tight">Infinity {osVersion}</span>
-                    <div className="h-3 w-[1px] bg-white/10"></div>
+                    <span className={`font-semibold text-sm ${theme === 'dark' ? 'text-white/90' : 'text-black/90'} tracking-tight`}>Infinity {osVersion}</span>
+                    <div className={`h-3 w-[1px] ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`}></div>
                     <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Synapse</span>
                 </div>
             )}
@@ -481,16 +487,18 @@ const App: React.FC = () => {
               <>
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
-                        <img src="https://iili.io/fRRfoF9.png" alt="Infinity Logo" className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" />
+                        <img src={theme === 'dark' ? "https://iili.io/fRRfoF9.png" : "https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png"} alt="Infinity Logo" className={`${theme === 'dark' ? 'w-64 md:w-80' : 'w-24 md:w-32'} h-auto mb-4 drop-shadow-2xl`} />
+                        {!theme || theme === 'dark' ? null : <h1 className="text-4xl font-bold tracking-tighter -mt-12 mb-4">Infinity</h1>}
                         <SearchInput 
+                            theme={theme}
                             onSearch={handleSearch} isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
                             centered={true} activeMode={searchMode} onModeChange={handleModeChange}
                             onFileSelect={handleFileSelect} attachedFile={attachedFile} onRemoveFile={handleRemoveFile}
                             onCameraClick={() => setShowCamera(true)} isPro={isPro} onVoiceClick={() => setShowVoiceMode(true)}
                         />
                         <div className="text-center space-y-3 mt-4 px-4">
-                            <p className="text-lg md:text-xl text-zinc-400 font-light">Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.</p>
-                            <button onClick={() => { setDiscoverViewTab('brief'); setActiveTab('discover'); }} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group">See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" /></button>
+                            <p className={`text-lg md:text-xl ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-500'} font-light`}>Hi, {userName}. Today, there will be <span className={`${theme === 'dark' ? 'text-white' : 'text-black'} font-medium`}>{tempDisplay}°{tempUnitLabel}</span> and <span className={`${theme === 'dark' ? 'text-white' : 'text-black'} font-medium`}>{condition}</span> in {city}.</p>
+                            <button onClick={() => { setDiscoverViewTab('brief'); setActiveTab('discover'); }} className="flex items-center gap-1 text-blue-500 hover:text-blue-400 font-medium transition-colors mx-auto group">See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" /></button>
                         </div>
                     </div>
                 </div>
@@ -507,17 +515,17 @@ const App: React.FC = () => {
                         : searchMode === 'flight' ? <FlightResultsView flights={searchState.flights || []} query={searchState.query} onSave={handleSaveToCollections} /> 
                         : (
                             <>
-                                <div className="max-w-4xl mx-auto mb-6"><h2 className="text-3xl font-bold text-white drop-shadow-md mb-2">{searchState.query}</h2></div>
-                                <ResultsView summary={searchState.summary} sources={searchState.sources} images={searchState.media} onOpenImageGrid={() => handleMediaSearch(searchState.query, 'image')} onSave={handleSaveToCollections} query={searchState.query} />
+                                <div className="max-w-4xl mx-auto mb-6"><h2 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-black'} drop-shadow-md mb-2`}>{searchState.query}</h2></div>
+                                <ResultsView theme={theme} summary={searchState.summary} sources={searchState.sources} images={searchState.media} onOpenImageGrid={() => handleMediaSearch(searchState.query, 'image')} onSave={handleSaveToCollections} query={searchState.query} />
                             </>
                         )}
                     </div>
                 )}
               </>
             )}
-            {activeTab === 'os' && <OsView user={sessionUser} onLogout={handleLogout} weather={weather} history={history} collections={collections} onSearch={(q) => handleSearch(q, 'web')} onSaveHistory={addToHistory} />}
+            {activeTab === 'os' && <OsView user={sessionUser} theme={theme} onLogout={handleLogout} weather={weather} history={history} collections={collections} onSearch={(q) => handleSearch(q, 'web')} onSaveHistory={addToHistory} />}
             {activeTab === 'canvas' && <CanvasView />}
-            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={setCurrentArticle} onSummarize={(url) => handleSearch(`Summarize: ${url}`, 'web')} onOpenRecipe={setCurrentRecipe} initialTab={discoverViewTab} weatherUnit={weatherUnit} /></div>}
+            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView theme={theme} onOpenArticle={setCurrentArticle} onSummarize={(url) => handleSearch(`Summarize: ${url}`, 'web')} onOpenRecipe={setCurrentRecipe} initialTab={discoverViewTab} weatherUnit={weatherUnit} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
@@ -525,7 +533,7 @@ const App: React.FC = () => {
             {activeTab === 'recipe' && currentRecipe && <RecipeDetailView recipe={currentRecipe} onBack={() => setActiveTab(previousTab)} />}
             {activeTab === 'pricing' && <PricingView />}
             {activeTab === 'history' && <HistoryView history={history} onSelectItem={(item) => item.type === 'search' ? handleSearch(item.title, 'web') : setCurrentArticle(item.data)} />}
-            {activeTab === 'settings' && <SettingsView isNotionConnected={!!notionToken} onConnectNotion={initiateNotionLogin} currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper} user={sessionUser} onLogout={handleLogout} weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange} onUpgradeClick={() => setActiveTab('pricing')} osVersion={osVersion} onUpdateOS={handleOsUpdate} isCloudEnabled={isCloudEnabled} onToggleCloud={handleToggleCloud} lastSynced={lastSynced} onManualSync={handleManualSync} isAutoSyncEnabled={isAutoSyncEnabled} onToggleAutoSync={handleToggleAutoSync} />}
+            {activeTab === 'settings' && <SettingsView theme={theme} onThemeToggle={handleThemeToggle} isNotionConnected={!!notionToken} onConnectNotion={initiateNotionLogin} currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper} user={sessionUser} onLogout={handleLogout} weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange} onUpgradeClick={() => setActiveTab('pricing')} osVersion={osVersion} onUpdateOS={handleOsUpdate} isCloudEnabled={isCloudEnabled} onToggleCloud={handleToggleCloud} lastSynced={lastSynced} onManualSync={handleManualSync} isAutoSyncEnabled={isAutoSyncEnabled} onToggleAutoSync={handleToggleAutoSync} />}
         </div>
       </main>
     </div>
