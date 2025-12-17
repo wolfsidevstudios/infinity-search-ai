@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, User, Palette, Cpu, Link as LinkIcon, Save, Key, CheckCircle, Smartphone } from 'lucide-react';
 
@@ -10,24 +11,6 @@ type Tab = 'profile' | 'customization' | 'ai' | 'connected';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isSpotifyConnected }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
-  const [apiKey, setApiKey] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-
-  useEffect(() => {
-    // Load saved key on mount
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) setApiKey(savedKey);
-  }, []);
-
-  const handleSaveKey = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-    } else {
-      localStorage.removeItem('gemini_api_key');
-    }
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
-  };
 
   const navItemClass = (tab: Tab) => `
     flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer font-medium
@@ -135,37 +118,21 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isSpotifyConnect
             </div>
           )}
 
-          {/* TAB: AI (API KEY) */}
+          {/* TAB: AI */}
           {activeTab === 'ai' && (
             <div className="space-y-8 animate-fadeIn">
-              <h3 className="text-3xl font-bold">Feature AI</h3>
+              <h3 className="text-3xl font-bold">Intelligence Engine</h3>
               <p className="text-gray-600 leading-relaxed">
-                Unlock the full potential of Lumina by connecting your own Google Gemini API key. 
-                Your key is stored locally on your device and never sent to our servers.
+                Infinity Search is powered by the latest Gemini reasoning models. Your environment is pre-configured with the necessary credentials to ensure a seamless and secure experience.
               </p>
 
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
-                <label className="flex items-center gap-2 text-sm font-bold text-blue-800 mb-3">
-                    <Key size={16} /> GEMINI API KEY
-                </label>
-                <div className="flex gap-3">
-                    <input 
-                        type="password" 
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        className="flex-1 p-4 bg-white border border-blue-200 rounded-xl focus:ring-4 focus:ring-blue-200 outline-none font-mono text-sm"
-                    />
-                    <button 
-                        onClick={handleSaveKey}
-                        className={`px-6 rounded-xl font-bold text-white transition-all flex items-center gap-2 ${isSaved ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'}`}
-                    >
-                        {isSaved ? <CheckCircle size={20} /> : <Save size={20} />}
-                        {isSaved ? 'Saved' : 'Save'}
-                    </button>
+                <div className="flex items-center gap-3 text-blue-800 font-bold">
+                    <CheckCircle size={20} className="text-green-600" />
+                    <span>Gemini Core Integration Active</span>
                 </div>
                 <p className="text-xs text-blue-600 mt-3">
-                    Don't have a key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="underline font-bold">Get one from Google AI Studio</a>.
+                    Intelligence features are managed by the Infinity Synapse kernel using secure, pre-configured access tokens.
                 </p>
               </div>
             </div>

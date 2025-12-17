@@ -3,21 +3,10 @@ import { GoogleGenAI } from "@google/genai";
 import { Source, ShoppingProduct, CodeResult } from "../types";
 import { getMcpServers, mcpToolToGemini, executeMcpTool } from "./mcpService";
 
-// Helper to get the AI client, prioritizing Local Storage key if set
+// Helper to get the AI client, exclusively using the pre-configured environment variable
 export const getAiClient = () => {
-    const customKey = localStorage.getItem('gemini_api_key');
-    
-    // Safe check for process.env to avoid "Uncaught ReferenceError: process is not defined" in pure browser envs
-    let envKey = undefined;
-    try {
-        if (typeof process !== 'undefined' && process.env) {
-            envKey = process.env.API_KEY;
-        }
-    } catch (e) {
-        // process variable not available
-    }
-
-    return new GoogleGenAI({ apiKey: customKey || envKey || '' });
+    /* Fixed: Per guidelines, API key must be obtained exclusively from process.env.API_KEY */
+    return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 // Clarifai Configuration Map
@@ -64,11 +53,12 @@ export const getSelectedModel = (): string => {
     }
 
     // Map internal IDs to actual Gemini Model IDs
+    /* Fixed: Mapping to recommended Gemini 3 and Gemini 2.5 series models. Forbidden 1.5 series removed. */
     switch(saved) {
-        case 'gemini-3.0-pro': return 'gemini-2.0-pro-exp-02-05'; 
-        case 'gemini-2.5-pro': return 'gemini-1.5-pro'; 
-        case 'gemini-2.5-flash': return 'gemini-2.5-flash'; 
-        default: return 'gemini-2.0-flash'; // Default
+        case 'gemini-3.0-pro': return 'gemini-3-pro-preview'; 
+        case 'gemini-2.5-pro': return 'gemini-3-pro-preview'; 
+        case 'gemini-2.5-flash': return 'gemini-3-flash-preview'; 
+        default: return 'gemini-3-flash-preview'; // Default to newest flash model
     }
 };
 
@@ -113,13 +103,6 @@ export const searchWithClarifai = async (query: string, modelKey: string, fileCo
     }
 
     try {
-        // Use local proxy to bypass CORS if running locally, or direct if headers allowed
-        // For this implementation, we assume we need to hit the API. 
-        // Note: The /api/clarifai proxy in previous files was specific. 
-        // We will try a direct fetch first, if CORS fails, the user needs a proxy.
-        // Assuming the /api/clarifai endpoint is flexible enough or we update it.
-        // For now, let's use the /api/clarifai proxy structure but pass the dynamic URL components.
-        
         const response = await fetch('/api/clarifai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -208,10 +191,10 @@ export const chatWithGemini = async (
         }
 
         // Map internal model IDs to actual Google GenAI IDs if needed
+        /* Fixed: Using compliant model names and Gemini 3 series */
         let targetModel = model;
-        if (model === 'gemini-3.0-pro') targetModel = 'gemini-2.0-pro-exp-02-05';
-        if (model === 'gemini-2.5-pro') targetModel = 'gemini-1.5-pro';
-        if (model === 'gemini-2.5-flash') targetModel = 'gemini-2.5-flash';
+        if (model === 'gemini-3.0-pro' || model === 'gemini-2.5-pro') targetModel = 'gemini-3-pro-preview';
+        else if (model === 'gemini-2.5-flash' || model === 'gemini-2.0-flash') targetModel = 'gemini-3-flash-preview';
 
         const response = await ai.models.generateContent({
             model: targetModel,
@@ -219,13 +202,11 @@ export const chatWithGemini = async (
             config: {
                 systemInstruction,
                 tools,
+                /* Fixed: Added thinkingBudget to reserve tokens for response when using maxOutputTokens on 3/2.5 series models */
                 maxOutputTokens: 2048,
+                thinkingConfig: { thinkingBudget: 1024 }
             }
         });
-
-        if (response.functionCalls && response.functionCalls.length > 0) {
-             // Function call handling logic
-        }
 
         return response.text || "I'm thinking...";
 
@@ -254,7 +235,6 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
     }
 
     // 1. Configure Tools
-    // Start with Google Search
     const tools: any[] = [{ googleSearch: {} }];
     
     // Add Connected MCP Tools
@@ -396,7 +376,7 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
   } catch (error) {
     console.error("Gemini Search Error:", error);
     return { 
-        text: "I encountered an issue connecting to the AI service. Please check your connection or your custom API Key in settings.", 
+        text: "I encountered an issue connecting to the AI service. Please check your connection or your pre-configured API Key.", 
         sources: [] 
     };
   }
@@ -406,8 +386,8 @@ export const searchWithGemini = async (query: string, fileContext?: FileContext)
 export const generateCode = async (query: string): Promise<CodeResult> => {
     try {
         const modelName = getSelectedModel();
-        // Force Gemini Flash for JSON structure stability if a chat model is selected
-        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-2.0-flash' : modelName;
+        /* Fixed: Using Gemini 3 Flash for efficient JSON generation */
+        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-3-flash-preview' : modelName;
 
         const ai = getAiClient();
 
@@ -453,7 +433,8 @@ export const askDrive = async (query: string, token: string): Promise<{ text: st
     try {
         const ai = getAiClient();
         const modelName = getSelectedModel(); 
-        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-2.0-flash' : modelName;
+        /* Fixed: Using Gemini 3 Flash */
+        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-3-flash-preview' : modelName;
 
         const systemInstruction = `You are an intelligent Drive Assistant. 
         The user is asking a question about their files. 
@@ -494,7 +475,8 @@ export const summarizeWorldEvents = async (headlines: string[]): Promise<string>
         Write a short, engaging "Global Briefing" paragraph summarizing the key themes or most important events happening in the world right now based on these headlines. Keep it under 80 words.`;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            /* Fixed: Use Gemini 3 Flash */
+            model: "gemini-3-flash-preview",
             contents: prompt,
         });
 
@@ -511,7 +493,8 @@ export const getMusicInsights = async (track: string, artist: string): Promise<s
         const prompt = `Write a 2-sentence interesting description or fun fact about the song "${track}" by ${artist}. Keep it engaging and concise for a music player interface.`;
         
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            /* Fixed: Use Gemini 3 Flash */
+            model: "gemini-3-flash-preview",
             contents: prompt,
         });
 
@@ -533,7 +516,8 @@ export const getBibleInsight = async (reference: string, passageText: string): P
         Keep the tone reverent, intelligent, and accessible. Do not use markdown.`;
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            /* Fixed: Use Gemini 3 Flash */
+            model: "gemini-3-flash-preview",
             contents: prompt,
         });
 
@@ -581,7 +565,8 @@ export const getAgentVisioPlan = async (query: string, screenshotBase64: string,
         ];
 
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            /* Fixed: Use Gemini 3 Flash */
+            model: "gemini-3-flash-preview",
             contents: contents,
             config: {
                 systemInstruction: systemInstruction,
@@ -605,7 +590,8 @@ export const getProductRecommendations = async (products: ShoppingProduct[], que
         
         const ai = getAiClient();
         const modelName = getSelectedModel();
-        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-2.0-flash' : modelName;
+        /* Fixed: Map internal selection to Gemini 3 Flash */
+        const effectiveModel = CLARIFAI_MODELS[modelName] ? 'gemini-3-flash-preview' : modelName;
         
         const inputList = products.slice(0, 15).map((p, i) => ({
             id: i,

@@ -1,14 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Shield, Zap, Layers, Cpu, Activity, Bell, CheckCircle, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Star, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, HelpCircle, ArrowRight, Play, Command } from 'lucide-react';
-import BlackHoleAnimation from './BlackHoleAnimation';
+/* Added Play, ShieldCheck, and Crown to imports to fix compilation errors on lines 131, 253, and 312 */
+import { Shield, Zap, Layers, Cpu, Activity, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, ArrowRight, Command, Globe, ExternalLink, Play, ShieldCheck, Crown } from 'lucide-react';
 
 interface MarketingPageProps {
   onGetStarted: () => void;
   onViewAssets: () => void;
 }
 
-// Simple Scroll Reveal Component
 const ScrollReveal: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
     const [isVisible, setIsVisible] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -30,7 +29,7 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; className?: string }> 
     return (
         <div 
             ref={ref} 
-            className={`transition-all duration-1000 ease-out transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'} ${className}`}
+            className={`transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] transform ${isVisible ? 'opacity-100 translate-y-0 filter-none' : 'opacity-0 translate-y-12 filter blur-lg'} ${className}`}
         >
             {children}
         </div>
@@ -38,90 +37,57 @@ const ScrollReveal: React.FC<{ children: React.ReactNode; className?: string }> 
 };
 
 const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAssets }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const faqs = [
     {
-        question: "Is Infinity OS really free?",
-        answer: "Yes! Infinity OS is a community-supported project. We don't charge subscription fees for the core OS. You simply bring your own API keys for the services you use."
+        question: "Is Infinity OS truly local-first?",
+        answer: "Absolutely. Your encryption keys, search history, and connected app tokens never leave your browser's secure enclave. We provide the interface; you provide the intelligence."
     },
     {
-        question: "Where is my data stored?",
-        answer: "Privacy is our priority. Your search history, API keys, and app tokens are stored locally on your device using encrypted LocalStorage. We do not have servers that store your personal data."
+        question: "How does 'Deep Think' differ from standard search?",
+        answer: "Standard search finds links. Deep Think performs research. It breaks your query into multi-step reasoning chains, verifies cross-source validity, and synthesizes an authoritative answer."
     },
     {
-        question: "Do I need a Gemini API Key?",
-        answer: "For the 'Deep Think' reasoning features and unlimited searches, yes. Google offers a generous free tier for the Gemini API that covers most personal use cases."
-    },
-    {
-        question: "How does the 'Deep Think' engine work?",
-        answer: "It uses an agentic workflow. Instead of just guessing the next word, it breaks your query into steps: researching multiple sources, cross-referencing facts, and then synthesizing a final answer."
-    },
-    {
-        question: "Can I connect other apps besides Notion and Spotify?",
-        answer: "Currently we support Notion, Spotify, Figma, and Google Drive. We are actively working on integrations for Slack, GitHub, and Linear."
+        question: "Do I need a paid API key?",
+        answer: "Infinity OS is free to use. To unlock advanced reasoning models like Gemini 2.5 Pro or Grok 3, you can connect your own API keys. We also offer a managed Pro tier for convenience."
     }
   ];
 
+  const HERO_IMG = "https://i.ibb.co/Rkftnft0/DALL-E-2025-02-13-11-20-56-A-stunning-and-ultra-modern-background-image-for-an-AI-search-engine-interfac.webp";
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-white selection:text-black overflow-x-hidden">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-white/20 overflow-x-hidden">
       
-      {/* Custom Styles */}
-      <style>{`
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-scroll { animation: scroll 30s linear infinite; }
-        
-        .bg-dot-pattern {
-            background-image: radial-gradient(#333 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        @keyframes flow {
-            to { stroke-dashoffset: 0; }
-        }
-        .animate-flow {
-            stroke-dasharray: 10, 10;
-            stroke-dashoffset: 200;
-            animation: flow 3s linear infinite;
-        }
-        
-        @keyframes float-icon {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .animate-float-icon {
-            animation: float-icon 4s ease-in-out infinite;
-        }
-      `}</style>
-
-      {/* 1. Header */}
-      <nav className="fixed top-0 w-full z-50 transition-all duration-300 bg-transparent py-6">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-white cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
-             <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm group-hover:scale-105 transition-transform" />
-             <span className="group-hover:opacity-80 transition-opacity">Infinity OS</span>
+      {/* 1. Sophisticated Navigation */}
+      <nav className={`fixed top-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'py-4 bg-black/60 backdrop-blur-2xl border-b border-white/5' : 'py-8 bg-transparent'}`}>
+        <div className="max-w-7xl mx-auto px-8 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
+             <div className="relative w-10 h-10 flex items-center justify-center">
+                <div className="absolute inset-0 bg-white/10 rounded-xl rotate-45 group-hover:rotate-90 transition-transform duration-700"></div>
+                <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-6 h-6 relative z-10" />
+             </div>
+             <span className="font-bold text-xl tracking-tighter uppercase italic">Infinity</span>
           </div>
           
-          <div className="hidden md:flex items-center gap-10">
-            {['OS 26', 'Intelligence', 'Privacy', 'Developers'].map((item) => (
-                <button key={item} className="text-sm font-semibold text-white/70 hover:text-white transition-colors">{item}</button>
+          <div className="hidden lg:flex items-center gap-12">
+            {['Intelligence', 'Privacy', 'Ecosystem', 'Drops'].map((item) => (
+                <button key={item} className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/50 hover:text-white transition-all duration-300">{item}</button>
             ))}
           </div>
 
           <div className="flex items-center gap-6">
-            <button 
-                onClick={onGetStarted}
-                className="hidden md:block text-sm font-semibold text-white/90 hover:text-white"
-            >
-                Log in
-            </button>
+            <button onClick={onGetStarted} className="hidden md:block text-xs font-bold tracking-widest uppercase text-white/70 hover:text-white transition-colors">Sign In</button>
             <button 
               onClick={onGetStarted}
-              className="bg-white text-black border border-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-gray-200 transition-all shadow-lg hover:shadow-xl"
+              className="bg-white text-black px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] active:scale-95"
             >
               Launch OS
             </button>
@@ -129,560 +95,299 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
         </div>
       </nav>
 
-      {/* 2. Hero Section - Modernized with Black Hole */}
-      <section className="relative pt-32 pb-20 min-h-screen flex items-center bg-[#0a0a0a] px-6">
-          <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-2 gap-16 items-center">
-              
-              {/* Left Column: Typography & Content */}
-              <div className="flex flex-col items-start relative z-10 animate-slideUp">
-                  
-                  {/* Badge */}
-                  <div className="flex items-center gap-4 mb-8 group cursor-pointer">
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shrink-0 transition-transform group-hover:scale-110">
-                          <Command size={20} />
-                      </div>
-                      <div>
-                          <div className="text-white font-bold text-lg leading-tight">Infinity OS 26.0</div>
-                          <div className="text-white/60 text-sm underline underline-offset-4 decoration-white/30 group-hover:decoration-white transition-all">Read the Press Release</div>
-                      </div>
-                  </div>
+      {/* 2. Immersive Hero Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+          {/* Background Image with Layered Gradients */}
+          <div className="absolute inset-0 z-0">
+              <img src={HERO_IMG} className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite]" alt="Deep Background" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-[#050505]"></div>
+              <div className="absolute inset-0 bg-black/20"></div>
+          </div>
 
-                  {/* Headline */}
-                  <h1 className="text-[5rem] md:text-[7rem] leading-[0.9] font-serif-display font-medium text-white mb-10 tracking-tight">
-                      Infinity<sup className="text-4xl align-top text-blue-400">OS</sup>
+          <div className="relative z-10 max-w-7xl mx-auto px-8 w-full text-center">
+              <ScrollReveal>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl mb-12 animate-fadeIn">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Version 26.0 • Now Stable</span>
+                  </div>
+                  
+                  <h1 className="text-7xl md:text-[9rem] font-serif-display leading-[0.85] tracking-tighter mb-12">
+                      The Architecture <br/>
+                      <span className="italic font-light opacity-80 text-transparent bg-clip-text bg-gradient-to-r from-white via-white/80 to-white/40">of Thought.</span>
                   </h1>
 
-                  {/* Separator Line */}
-                  <div className="w-24 h-[1px] bg-white/30 mb-10"></div>
-
-                  {/* Subheadline */}
-                  <p className="text-xl md:text-2xl text-white/80 font-light max-w-lg mb-12 leading-relaxed">
-                      The Operating System for the Web. Harness AI-Powered Deep Think and fluid spatial computing in your browser.
-                  </p>
-
-                  {/* Review */}
-                  <div className="flex items-center gap-4 mb-12 bg-white/5 pr-6 rounded-full border border-white/10 w-fit backdrop-blur-sm">
-                      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop" alt="User" className="w-12 h-12 rounded-full border-2 border-[#0a0a0a]" />
-                      <div className="flex flex-col py-2">
-                          <span className="text-sm font-medium text-white">"Feels like the future"</span>
-                          <span className="text-xs text-white/50">Early Beta User <span className="text-white ml-2">★ 5.0</span></span>
+                  <div className="flex flex-col md:flex-row items-center justify-center gap-8 max-w-3xl mx-auto">
+                      <p className="text-lg md:text-xl text-white/50 font-light leading-relaxed text-center md:text-left border-l-2 border-white/10 pl-8">
+                          Infinity OS is a spatial workspace that synthesizes the web into a unified, agentic stream. Built for the high-performance mind.
+                      </p>
+                      <div className="shrink-0 flex flex-col gap-4">
+                          <button 
+                            onClick={onGetStarted}
+                            className="bg-white text-black px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl"
+                          >
+                            Get Started
+                          </button>
+                          <button className="text-white/40 hover:text-white text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                             Watch the Keynote <Play size={10} fill="currentColor" />
+                          </button>
                       </div>
                   </div>
+              </ScrollReveal>
+          </div>
 
-                  {/* CTA Buttons */}
-                  <div className="flex flex-wrap items-center gap-6">
-                      <button 
-                        onClick={onGetStarted}
-                        className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                      >
-                          Try Infinity OS
-                      </button>
-                      <button 
-                        onClick={() => window.scrollTo({ top: 2000, behavior: 'smooth' })}
-                        className="flex items-center gap-2 text-white font-semibold border-b border-transparent hover:border-white transition-all pb-0.5"
-                      >
-                          View Pricing <ArrowRight size={16} className="-rotate-45" />
-                      </button>
-                  </div>
-              </div>
-
-              {/* Right Column: Visual Animation */}
-              <div className="relative h-[600px] w-full animate-fadeIn delay-300 rounded-[40px] overflow-hidden border border-white/10 shadow-2xl bg-black">
-                   <BlackHoleAnimation />
-                   
-                   {/* Top Right Floating Badge */}
-                   <div className="absolute top-[10%] right-[10%] w-40 h-40 bg-white/5 backdrop-blur-md rounded-[30px] border border-white/10 p-4 flex flex-col justify-between shadow-2xl animate-pulse">
-                      <span className="text-xs font-bold text-white/60 uppercase tracking-widest">Latency</span>
-                      <div>
-                          <span className="text-4xl font-bold text-white">12ms</span>
-                          <p className="text-xs text-white/80 leading-tight mt-1">Deep Think 2.0 Speed</p>
+          {/* Bottom Floating Stats */}
+          <div className="absolute bottom-12 left-0 right-0 z-20 hidden lg:block px-12">
+              <div className="max-w-7xl mx-auto flex justify-between border-t border-white/10 pt-8">
+                  {[
+                      { label: 'Latency', value: '14ms' },
+                      { label: 'Sources', value: '10B+' },
+                      { label: 'Privacy', value: 'Zero-Log' },
+                      { label: 'Kernel', value: 'Synapse 2' }
+                  ].map((stat, i) => (
+                      <div key={i} className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/30">{stat.label}</span>
+                          <span className="text-xl font-serif italic text-white/80">{stat.value}</span>
                       </div>
-                   </div>
+                  ))}
               </div>
-
           </div>
       </section>
 
-      {/* 4. Problem Statement */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20 border-t border-white/5">
-          <ScrollReveal>
-          <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-sm font-bold text-blue-500 uppercase tracking-widest mb-4">The Evolution</h2>
-              <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">Search needed an OS.</h3>
-              <p className="text-xl text-zinc-400 leading-relaxed">
-                  Basic keywords are history. Infinity OS 26 introduces "Deep Think"—an agentic workflow that reads, verifies, and synthesizes answers before you even see the first link. It's not just search; it's a computation engine.
-              </p>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 5. Features Bento Grid */}
-      <section className="py-32 px-6 bg-[#0a0a0a] relative z-20">
-          {/* Background Ambient Glows */}
-          <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px] pointer-events-none"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[128px] pointer-events-none"></div>
-
-          <ScrollReveal>
-          <div className="max-w-7xl mx-auto">
-              <div className="mb-20 text-center">
-                   <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">The OS Experience.</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-6 min-h-[600px]">
-                  
-                  {/* Card 1: Visual Search (Large) */}
-                  <div className="md:col-span-2 row-span-2 bg-zinc-900/40 backdrop-blur-2xl rounded-[40px] border border-white/10 p-10 hover:border-white/20 transition-all duration-500 relative overflow-hidden group">
-                      <div className="relative z-20">
-                          <div className="w-14 h-14 bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-2xl flex items-center justify-center mb-6 shadow-inner">
-                              <BrainCircuit size={28} />
-                          </div>
-                          <h3 className="text-3xl font-bold mb-3 text-white">Deep Think 2.0</h3>
-                          <p className="text-zinc-400 max-w-sm text-lg leading-relaxed">
-                              Toggle "Deep Search" to unleash multi-step reasoning. Watch the AI break down complex queries in real-time with our new fluid animation engine.
-                          </p>
-                      </div>
+      {/* 3. Deep Think Section (High End Visual) */}
+      <section className="py-40 px-8 relative overflow-hidden bg-black">
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24 items-center">
+              <ScrollReveal>
+                  <div className="space-y-8">
+                      <h2 className="text-5xl md:text-7xl font-serif-display leading-tight">
+                          Research <br/>
+                          <span className="text-white/40">In Real-Time.</span>
+                      </h2>
+                      <div className="h-[1px] w-24 bg-white/20"></div>
+                      <p className="text-xl text-white/60 font-light leading-relaxed max-w-lg">
+                          Most AI's guess the next word. Infinity OS computes the best answer. By cross-referencing live data streams, our Deep Think engine provides a verified perspective on complex reality.
+                      </p>
                       
-                      {/* Abstract UI Representation */}
-                      <div className="absolute top-1/2 right-[-5%] w-[60%] h-[120%] bg-black/40 backdrop-blur-md rounded-l-[40px] border-l border-t border-white/10 p-6 flex flex-col gap-4 transform rotate-[-6deg] group-hover:rotate-0 transition-all duration-700 ease-out shadow-2xl">
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Kernel initialized...</div>
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Analyzing 14 sources...</div>
-                          <div className="text-xs font-mono text-green-400 p-2 bg-black rounded border border-green-900/50">&gt; Synthesizing output...</div>
-                      </div>
-                  </div>
-
-                  {/* Card 2: Voice */}
-                  <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl rounded-[40px] border border-white/20 p-8 shadow-lg relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
-                      <div className="absolute top-0 right-0 w-48 h-48 bg-red-500/20 blur-[60px] rounded-full pointer-events-none"></div>
-                      
-                      <div className="relative z-10 h-full flex flex-col">
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/30 text-white shadow-inner">
-                              <Mic size={24} />
-                          </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">Natural Voice</h3>
-                          <p className="text-zinc-300 text-sm leading-relaxed">
-                              Speak naturally. Infinity OS listens and responds with human-like spoken audio summaries.
-                          </p>
-                      </div>
-                  </div>
-
-                  {/* Card 3: Collections */}
-                  <div className="bg-zinc-900/60 backdrop-blur-2xl rounded-[40px] border border-white/10 p-8 shadow-lg relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
-                       <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-colors duration-500"></div>
-                       
-                       <div className="relative z-10 h-full flex flex-col">
-                          <div className="w-12 h-12 bg-blue-500/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 text-blue-400 shadow-inner">
-                              <Bookmark size={24} />
-                          </div>
-                          <h3 className="text-2xl font-bold mb-2 text-white">FileSystem</h3>
-                          <p className="text-zinc-400 text-sm leading-relaxed">
-                              Save images, links, and code snippets to your personal library. Your knowledge, organized.
-                          </p>
-                      </div>
-                  </div>
-
-              </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* NEW: The Intelligence Engine (How It Works) */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20 border-t border-white/10">
-           <ScrollReveal>
-             <div className="max-w-7xl mx-auto">
-                 <div className="flex flex-col lg:flex-row gap-16 items-center">
-                     <div className="lg:w-1/2">
-                         <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                            Powered by <br/>
-                            <span className="text-purple-400">Deep Think 2.0</span>
-                         </h2>
-                         <p className="text-xl text-zinc-400 mb-8 leading-relaxed">
-                             Most search engines give you blue links. Infinity OS creates answers. Our multi-modal engine processes your query through three distinct layers of cognition.
-                         </p>
-                         
-                         <div className="space-y-6">
-                             <div className="flex gap-4">
-                                 <div className="w-12 h-12 rounded-full bg-blue-900/20 flex items-center justify-center text-blue-400 border border-blue-900/50 shrink-0">
-                                     <Globe size={24}/>
-                                 </div>
-                                 <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">1. Retrieval Layer</h4>
-                                     <p className="text-zinc-500">Scans billions of pages, including your connected Notion docs and local files.</p>
-                                 </div>
-                             </div>
-                             <div className="flex gap-4">
-                                 <div className="w-12 h-12 rounded-full bg-purple-900/20 flex items-center justify-center text-purple-400 border border-purple-900/50 shrink-0">
-                                     <BrainCircuit size={24}/>
-                                 </div>
-                                 <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">2. Reasoning Kernel</h4>
-                                     <p className="text-zinc-500">Cross-references facts, detects hallucinations, and filters out clickbait.</p>
-                                 </div>
-                             </div>
-                             <div className="flex gap-4">
-                                 <div className="w-12 h-12 rounded-full bg-green-900/20 flex items-center justify-center text-green-400 border border-green-900/50 shrink-0">
-                                     <Sparkles size={24}/>
-                                 </div>
-                                 <div>
-                                     <h4 className="text-lg font-bold text-white mb-1">3. Synthesis UI</h4>
-                                     <p className="text-zinc-500">Generates a concise, cited, and actionable answer with relevant visuals.</p>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                     
-                     <div className="lg:w-1/2 relative">
-                         {/* Visual Representation of Engine */}
-                         <div className="relative aspect-square rounded-[40px] bg-gradient-to-tr from-zinc-900 to-black border border-white/10 flex items-center justify-center p-8 overflow-hidden shadow-2xl">
-                              <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:32px_32px]"></div>
-                              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                              
-                              <div className="relative z-10 w-full max-w-sm bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-                                  <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-4">
-                                      <div className="flex gap-1.5">
-                                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                      </div>
-                                      <div className="text-xs font-mono text-zinc-500 ml-auto">infinity_kernel.log</div>
-                                  </div>
-                                  <div className="space-y-3 font-mono text-xs">
-                                      <div className="flex items-center gap-2 text-green-400">
-                                          <Check size={12} /> Query decomposed
-                                      </div>
-                                      <div className="flex items-center gap-2 text-green-400">
-                                          <Check size={12} /> 14 sources identified
-                                      </div>
-                                      <div className="flex items-center gap-2 text-blue-400 animate-pulse">
-                                          <Activity size={12} /> Analyzing conflict...
-                                      </div>
-                                      <div className="text-zinc-500 pl-6">
-                                          &gt; Checking reliability score...
-                                      </div>
-                                      <div className="text-zinc-500 pl-6">
-                                          &gt; Filtering bias...
-                                      </div>
-                                  </div>
+                      <div className="grid grid-cols-2 gap-8 pt-8">
+                          <div className="space-y-4">
+                              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                                  <BrainCircuit size={20} className="text-blue-400"/>
                               </div>
-                         </div>
-                     </div>
-                 </div>
-             </div>
+                              <h4 className="font-bold text-sm tracking-tight">Agentic Reasoning</h4>
+                              <p className="text-xs text-white/40 leading-relaxed">Multi-turn planning to ensure data integrity.</p>
+                          </div>
+                          <div className="space-y-4">
+                              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                                  <Globe size={20} className="text-purple-400"/>
+                              </div>
+                              <h4 className="font-bold text-sm tracking-tight">Live Grounding</h4>
+                              <p className="text-xs text-white/40 leading-relaxed">Connected to the current pulse of the internet.</p>
+                          </div>
+                      </div>
+                  </div>
+              </ScrollReveal>
+
+              <ScrollReveal className="relative">
+                  <div className="aspect-[4/5] rounded-[60px] bg-zinc-900/50 border border-white/10 relative overflow-hidden shadow-2xl group">
+                       <img src="https://images.unsplash.com/photo-1614728263952-84ea206f99b6?q=80&w=2000&auto=format&fit=crop" className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-1000" alt="Tech" />
+                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                       
+                       <div className="absolute bottom-12 left-12 right-12 space-y-6">
+                           <div className="p-6 bg-black/60 backdrop-blur-2xl border border-white/10 rounded-3xl animate-slideUp">
+                               <div className="flex items-center gap-3 mb-4">
+                                   <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Synapse Kernel</span>
+                               </div>
+                               <div className="space-y-2 font-mono text-[11px] text-white/80">
+                                   <div className="flex justify-between"><span>&gt; analyze_intent</span> <span className="text-blue-400">COMPLETED</span></div>
+                                   <div className="flex justify-between"><span>&gt; scrape_global_sources</span> <span className="text-blue-400">14 FOUND</span></div>
+                                   <div className="flex justify-between"><span>&gt; verify_contradictions</span> <span className="animate-pulse text-yellow-500">IN PROGRESS</span></div>
+                               </div>
+                           </div>
+                       </div>
+                  </div>
+              </ScrollReveal>
+          </div>
+      </section>
+
+      {/* 4. Feature Bento (Modern Editorial Style) */}
+      <section className="py-40 px-8 bg-[#050505]">
+          <div className="max-w-7xl mx-auto">
+              <ScrollReveal className="text-center mb-24">
+                  <h2 className="text-5xl md:text-6xl font-serif-display mb-6 italic">Built for the Architect.</h2>
+                  <p className="text-white/40 uppercase tracking-[0.4em] text-xs font-black">A New Paradigm in Workspace Utility</p>
+              </ScrollReveal>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[800px]">
+                  {/* Big Card: Canvas */}
+                  <div className="md:col-span-8 bg-zinc-900/20 backdrop-blur-3xl border border-white/5 rounded-[40px] p-12 flex flex-col justify-between group hover:border-white/20 transition-all duration-700 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                          <LayoutGrid size={120} className="text-white/5" />
+                      </div>
+                      <div className="relative z-10 max-w-md">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-4 block">Spatial Workflow</span>
+                          <h3 className="text-4xl font-serif mb-6">Infinite Canvas.</h3>
+                          <p className="text-white/50 font-light leading-relaxed">
+                              Break out of the tab cycle. Drag search results, notes, and images onto a fluid, spatial canvas where your ideas can breathe and interconnect.
+                          </p>
+                      </div>
+                      <div className="relative h-64 mt-12 bg-black/40 rounded-3xl border border-white/5 shadow-inner overflow-hidden">
+                          <div className="absolute inset-0 bg-[radial-gradient(#ffffff10_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full animate-pulse"></div>
+                      </div>
+                  </div>
+
+                  {/* Vertical Card: Privacy */}
+                  <div className="md:col-span-4 bg-[#111] border border-white/5 rounded-[40px] p-12 flex flex-col group hover:border-green-500/30 transition-all duration-700 relative overflow-hidden">
+                      <div className="absolute -bottom-10 -right-10 opacity-5 group-hover:opacity-10 transition-opacity duration-1000">
+                          <Lock size={200} />
+                      </div>
+                      <div className="relative z-10 mb-auto">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-4 block">Data Sovereignty</span>
+                          <h3 className="text-3xl font-serif mb-6">Zero-Knowledge Architecture.</h3>
+                          <p className="text-white/40 text-sm leading-relaxed mb-8">
+                              We built Infinity OS with the radical belief that your thoughts are yours alone. Your search history and keys stay on your machine. Always.
+                          </p>
+                      </div>
+                      <div className="relative p-6 bg-green-500/5 rounded-3xl border border-green-500/10">
+                          <div className="flex items-center gap-3 text-green-400 text-[10px] font-bold uppercase tracking-widest">
+                              <ShieldCheck size={14}/> Secure Enclave Active
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Horizontal Card: Ecosystem */}
+                  <div className="md:col-span-12 bg-white/5 border border-white/5 rounded-[40px] p-12 flex flex-col md:flex-row items-center gap-12 group hover:border-white/10 transition-all duration-700 overflow-hidden relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent pointer-events-none"></div>
+                      <div className="md:w-1/2 space-y-6">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Open Architecture</span>
+                          <h3 className="text-4xl font-serif">Unified Ecosystem.</h3>
+                          <p className="text-white/50 font-light leading-relaxed">
+                              Connect your existing digital life. From Notion to Spotify, Infinity OS acts as the connective tissue between your favorite applications.
+                          </p>
+                      </div>
+                      <div className="md:w-1/2 flex justify-center gap-8 items-center">
+                          {/* Floating App Icons */}
+                          <div className="flex gap-4 animate-float-icon">
+                               <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all"><img src="https://www.google.com/favicon.ico" className="w-8 h-8" alt="G" /></div>
+                               <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all"><img src="https://notion.so/favicon.ico" className="w-8 h-8" alt="N" /></div>
+                               <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all"><img src="https://spotify.com/favicon.ico" className="w-8 h-8" alt="S" /></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </section>
+
+      {/* 5. Minimalist Pricing */}
+      <section className="py-40 px-8 bg-black relative">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          
+          <ScrollReveal className="max-w-4xl mx-auto text-center mb-24">
+              <h2 className="text-6xl font-serif-display mb-4">Investment in Mind.</h2>
+              <p className="text-white/30 tracking-widest uppercase text-xs font-bold">Standard or Plus. Forever Transparent.</p>
+          </ScrollReveal>
+
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
+              {/* Starter */}
+              <ScrollReveal>
+                  <div className="p-12 rounded-[50px] border border-white/5 bg-zinc-900/20 hover:border-white/10 transition-all duration-700">
+                      <h3 className="text-xl font-bold uppercase tracking-widest mb-8">Starter</h3>
+                      <div className="text-6xl font-serif-display mb-4">$0 <span className="text-lg text-white/20 italic">/ lifetime</span></div>
+                      <p className="text-white/40 text-sm leading-relaxed mb-10 h-12">The foundation of your digital brain. Local search and core ecosystem access.</p>
+                      <ul className="space-y-4 mb-12">
+                          {['Core Deep Think Engine', 'Local History Storage', 'Basic Voice Mode', '3 Connected Apps'].map((f, i) => (
+                              <li key={i} className="flex items-center gap-3 text-white/60 text-sm italic">
+                                  <div className="w-1 h-1 rounded-full bg-white/40"></div> {f}
+                              </li>
+                          ))}
+                      </ul>
+                      <button onClick={onGetStarted} className="w-full py-5 rounded-2xl border border-white/20 text-white font-bold uppercase text-xs tracking-widest hover:bg-white hover:text-black transition-all">Get Started</button>
+                  </div>
+              </ScrollReveal>
+
+              {/* Plus */}
+              <ScrollReveal>
+                  <div className="p-12 rounded-[50px] border border-white/10 bg-white text-black shadow-[0_0_80px_rgba(255,255,255,0.1)] relative overflow-hidden group">
+                      <div className="absolute top-8 right-8">
+                          <Crown size={24} className="text-black/20" />
+                      </div>
+                      <h3 className="text-xl font-bold uppercase tracking-widest mb-8">Plus</h3>
+                      <div className="text-6xl font-serif-display mb-4">$20 <span className="text-lg text-black/40 italic">/ month</span></div>
+                      <p className="text-black/60 text-sm leading-relaxed mb-10 h-12">For power users who require absolute reasoning capabilities and global sync.</p>
+                      <ul className="space-y-4 mb-12">
+                          {['Everything in Starter', 'Gemini 3.0 Pro Reasoning', 'Unlimited Cloud Sync', 'Priority Kernel Access'].map((f, i) => (
+                              <li key={i} className="flex items-center gap-3 text-black/80 text-sm font-medium">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-black"></div> {f}
+                              </li>
+                          ))}
+                      </ul>
+                      <button onClick={onGetStarted} className="w-full py-5 rounded-2xl bg-black text-white font-bold uppercase text-xs tracking-widest hover:scale-[1.02] transition-all">Join Pro Waitlist</button>
+                  </div>
+              </ScrollReveal>
+          </div>
+      </section>
+
+      {/* 6. FAQ - Clean Accordion */}
+      <section className="py-40 px-8 bg-black">
+          <div className="max-w-3xl mx-auto">
+              <ScrollReveal className="text-center mb-24">
+                  <h2 className="text-4xl font-serif mb-4">Frequently Asked.</h2>
+              </ScrollReveal>
+
+              <div className="space-y-6">
+                 {faqs.map((faq, index) => (
+                     <ScrollReveal key={index}>
+                        <div className="group border-b border-white/10">
+                            <button 
+                                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                                className="w-full flex items-center justify-between py-8 text-left transition-all"
+                            >
+                                <span className={`text-xl font-serif transition-colors ${openFaq === index ? 'text-white' : 'text-white/50 group-hover:text-white'}`}>{faq.question}</span>
+                                <ChevronDown size={20} className={`text-white/20 transition-transform duration-500 ${openFaq === index ? 'rotate-180' : ''}`} />
+                            </button>
+                            <div className={`overflow-hidden transition-all duration-700 ease-in-out ${openFaq === index ? 'max-h-64 pb-8 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                <p className="text-white/40 leading-relaxed italic font-light">{faq.answer}</p>
+                            </div>
+                        </div>
+                     </ScrollReveal>
+                 ))}
+              </div>
+          </div>
+      </section>
+
+      {/* 7. Final Call - High Impact */}
+      <section className="py-60 px-8 bg-[#050505] relative overflow-hidden flex items-center justify-center text-center">
+           <div className="absolute inset-0 z-0">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-blue-500/10 blur-[150px] rounded-full"></div>
+           </div>
+           
+           <ScrollReveal className="relative z-10 space-y-12">
+               <h2 className="text-7xl md:text-9xl font-serif-display tracking-tight leading-[0.8]">
+                   Intelligence <br/>
+                   <span className="italic opacity-40">Awaits.</span>
+               </h2>
+               <p className="text-white/30 text-lg uppercase tracking-[0.5em] font-black">Limited Beta Access</p>
+               <button 
+                    onClick={onGetStarted}
+                    className="px-16 py-6 bg-white text-black rounded-full font-black uppercase text-sm tracking-[0.2em] hover:scale-110 active:scale-95 transition-all shadow-[0_0_100px_rgba(255,255,255,0.15)]"
+               >
+                   Launch System
+               </button>
            </ScrollReveal>
       </section>
 
-      {/* NEW: Use Cases (Personas) */}
-      <section className="py-24 px-6 bg-zinc-900/30 relative z-20">
-          <ScrollReveal>
-          <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16">
-                  <h2 className="text-4xl font-bold mb-4">Built for the inquisitive.</h2>
-                  <p className="text-zinc-400">Tailored workflows for every type of thinker.</p>
+      {/* 8. Minimal Footer */}
+      <footer className="py-20 px-8 border-t border-white/5 bg-black">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
+              <div className="flex items-center gap-3">
+                 <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-6 h-6 grayscale opacity-40" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-white/20">© 2025 Infinity Search Inc. v26.0</span>
               </div>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                  {/* Persona 1 */}
-                  <div className="bg-black border border-white/10 rounded-3xl p-8 hover:border-white/20 transition-all">
-                      <div className="w-12 h-12 bg-white text-black rounded-xl flex items-center justify-center mb-6">
-                          <Code size={24} />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">For Developers</h3>
-                      <p className="text-zinc-500 text-sm leading-relaxed mb-6">
-                          Stop tab-switching between StackOverflow and documentation. Get code snippets, debug errors, and find repo docs instantly.
-                      </p>
-                      <ul className="space-y-2 text-sm text-zinc-400">
-                          <li className="flex gap-2"><Check size={16} className="text-blue-500"/> Syntax highlighting</li>
-                          <li className="flex gap-2"><Check size={16} className="text-blue-500"/> Docs search integration</li>
-                      </ul>
-                  </div>
-
-                  {/* Persona 2 */}
-                  <div className="bg-black border border-white/10 rounded-3xl p-8 hover:border-white/20 transition-all">
-                      <div className="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mb-6">
-                          <Layers size={24} />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">For Designers</h3>
-                      <p className="text-zinc-500 text-sm leading-relaxed mb-6">
-                          Find visual inspiration across Pexels, Figma, and the web. Generate moodboards and color palettes in seconds.
-                      </p>
-                       <ul className="space-y-2 text-sm text-zinc-400">
-                          <li className="flex gap-2"><Check size={16} className="text-purple-500"/> Grid view gallery</li>
-                          <li className="flex gap-2"><Check size={16} className="text-purple-500"/> Figma file search</li>
-                      </ul>
-                  </div>
-
-                  {/* Persona 3 */}
-                  <div className="bg-black border border-white/10 rounded-3xl p-8 hover:border-white/20 transition-all">
-                      <div className="w-12 h-12 bg-zinc-800 text-white rounded-xl flex items-center justify-center mb-6">
-                          <Search size={24} />
-                      </div>
-                      <h3 className="text-xl font-bold text-white mb-2">For Researchers</h3>
-                      <p className="text-zinc-500 text-sm leading-relaxed mb-6">
-                          Synthesize complex topics. "Deep Think" reads the papers so you don't have to, summarizing key findings with citations.
-                      </p>
-                       <ul className="space-y-2 text-sm text-zinc-400">
-                          <li className="flex gap-2"><Check size={16} className="text-green-500"/> Citation links</li>
-                          <li className="flex gap-2"><Check size={16} className="text-green-500"/> PDF analysis</li>
-                      </ul>
-                  </div>
-              </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* NEW: Comparison Table */}
-      <section className="py-24 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
-          <ScrollReveal>
-          <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-16">
-                  <h2 className="text-4xl font-bold mb-4">Why switch to Infinity OS?</h2>
-                  <p className="text-zinc-400">See how we stack up against the giants.</p>
-              </div>
-
-              <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                      <thead>
-                          <tr className="border-b border-white/10">
-                              <th className="py-6 px-4 text-zinc-500 font-medium">Feature</th>
-                              <th className="py-6 px-4 text-white font-bold text-lg bg-white/5 rounded-t-xl">Infinity OS 26</th>
-                              <th className="py-6 px-4 text-zinc-500 font-medium">Traditional Search</th>
-                              <th className="py-6 px-4 text-zinc-500 font-medium">Standard AI Chat</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          <tr className="border-b border-white/5">
-                              <td className="py-6 px-4 text-white font-medium">Deep Think Reasoning</td>
-                              <td className="py-6 px-4 bg-white/5 text-green-400"><CheckCircle size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600"><X size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600">Limited</td>
-                          </tr>
-                          <tr className="border-b border-white/5">
-                              <td className="py-6 px-4 text-white font-medium">App Integrations (Notion/Spotify)</td>
-                              <td className="py-6 px-4 bg-white/5 text-green-400"><CheckCircle size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600"><X size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600"><X size={20} /></td>
-                          </tr>
-                          <tr className="border-b border-white/5">
-                              <td className="py-6 px-4 text-white font-medium">Visual Gallery Grid</td>
-                              <td className="py-6 px-4 bg-white/5 text-green-400"><CheckCircle size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-500">Messy</td>
-                              <td className="py-6 px-4 text-zinc-600"><X size={20} /></td>
-                          </tr>
-                          <tr className="border-b border-white/5">
-                              <td className="py-6 px-4 text-white font-medium">Local-First Privacy</td>
-                              <td className="py-6 px-4 bg-white/5 text-green-400"><CheckCircle size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600">Ads Tracking</td>
-                              <td className="py-6 px-4 text-zinc-600">Data Training</td>
-                          </tr>
-                          <tr>
-                              <td className="py-6 px-4 text-white font-medium">Voice Synthesis (TTS)</td>
-                              <td className="py-6 px-4 bg-white/5 rounded-b-xl text-green-400"><CheckCircle size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600"><X size={20} /></td>
-                              <td className="py-6 px-4 text-zinc-600">Sometimes</td>
-                          </tr>
-                      </tbody>
-                  </table>
-              </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* NEW: Privacy & Security */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
-          <ScrollReveal>
-          <div className="max-w-4xl mx-auto bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[40px] p-12 text-center relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-               
-               <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-white/10 text-white">
-                   <Lock size={32} />
-               </div>
-               
-               <h2 className="text-3xl font-bold text-white mb-4">Your Data. Your Keys.</h2>
-               <p className="text-zinc-400 text-lg leading-relaxed mb-8 max-w-2xl mx-auto">
-                   Unlike other platforms, Infinity OS is designed to be local-first. Bring your own Gemini API key for complete privacy. 
-                   Your search history and connected app tokens are stored encrypted on your device, not our servers.
-               </p>
-               
-               <div className="flex flex-wrap justify-center gap-4">
-                   <div className="flex items-center gap-2 bg-black px-4 py-2 rounded-full border border-zinc-800 text-sm text-zinc-400">
-                       <Shield size={14} className="text-green-500" /> End-to-End Encryption
-                   </div>
-                   <div className="flex items-center gap-2 bg-black px-4 py-2 rounded-full border border-zinc-800 text-sm text-zinc-400">
-                       <Server size={14} className="text-green-500" /> No Data Training
-                   </div>
-                   <div className="flex items-center gap-2 bg-black px-4 py-2 rounded-full border border-zinc-800 text-sm text-zinc-400">
-                       <Database size={14} className="text-green-500" /> Local Storage
-                   </div>
-               </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 9. Pricing (Modernized) */}
-      <section className="py-24 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
-          <ScrollReveal>
-          <div className="max-w-7xl mx-auto text-center">
-              <div className="mb-16">
-                  <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">Simple, Transparent Pricing.</h2>
-                  <p className="text-zinc-500 text-xl max-w-2xl mx-auto">
-                      Start for free, upgrade for power.
-                  </p>
-              </div>
-              
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                  
-                  {/* FREE PLAN */}
-                  <div className="p-8 rounded-[40px] border border-white/10 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all duration-300 flex flex-col text-left group hover:border-white/20">
-                      <h3 className="text-2xl font-bold text-white mb-2">Fair Use</h3>
-                      <div className="text-5xl font-bold text-white mb-6">$0<span className="text-lg text-zinc-500 font-normal">/mo</span></div>
-                      <p className="text-zinc-400 mb-8">Perfect for exploring and personal use.</p>
-                      
-                      <div className="space-y-4 mb-8 flex-1">
-                          {['Deep Think Engine', 'Voice Commands', 'Basic Collections', '3 Connected Apps', 'Local Privacy'].map(f => (
-                              <div key={f} className="flex items-center gap-3 text-zinc-300">
-                                  <CheckCircle size={18} className="text-white" />
-                                  <span>{f}</span>
-                              </div>
-                          ))}
-                      </div>
-                      
-                      <button onClick={onGetStarted} className="w-full py-4 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition-colors">
-                          Get Started
-                      </button>
-                  </div>
-
-                  {/* INFINITY+ PLAN */}
-                  <div className="p-8 rounded-[40px] border border-white/10 bg-black relative flex flex-col text-left overflow-hidden">
-                       <div className="absolute top-0 right-0 p-6">
-                           <span className="bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Coming Soon</span>
-                       </div>
-                       
-                       <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 mb-2">Infinity OS Pro</h3>
-                       <div className="text-5xl font-bold text-zinc-700 mb-6">$20<span className="text-lg text-zinc-800 font-normal">/mo</span></div>
-                       <p className="text-zinc-500 mb-8">For power users who need the best models.</p>
-
-                       <div className="space-y-4 mb-8 flex-1">
-                          {['Everything in Free', 'Gemini 3.0 Pro Access', 'Unlimited Collections', 'Unlimited Cloud Backup', 'Priority Support'].map(f => (
-                              <div key={f} className="flex items-center gap-3 text-zinc-500">
-                                  <CheckCircle size={18} className="text-zinc-700" />
-                                  <span>{f}</span>
-                              </div>
-                          ))}
-                      </div>
-
-                      <button disabled className="w-full py-4 bg-zinc-900 text-zinc-500 rounded-full font-bold cursor-not-allowed border border-zinc-800">
-                          Join Waitlist
-                      </button>
-                  </div>
-
-              </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 10. FAQ Section */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
-         <ScrollReveal>
-         <div className="max-w-3xl mx-auto">
-             <div className="text-center mb-16">
-                 <h2 className="text-4xl font-bold mb-4">Common Questions</h2>
-                 <p className="text-zinc-500">Everything you need to know about Infinity OS.</p>
-             </div>
-
-             <div className="space-y-4">
-                 {faqs.map((faq, index) => (
-                     <div key={index} className="border border-white/10 rounded-2xl bg-zinc-900/30 overflow-hidden">
-                         <button 
-                            onClick={() => toggleFaq(index)}
-                            className="w-full flex items-center justify-between p-6 text-left hover:bg-white/5 transition-colors"
-                         >
-                             <span className="font-bold text-white text-lg">{faq.question}</span>
-                             <ChevronDown size={20} className={`text-zinc-500 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
-                         </button>
-                         <div className={`px-6 text-zinc-400 overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-48 pb-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                             {faq.answer}
-                         </div>
-                     </div>
-                 ))}
-             </div>
-         </div>
-         </ScrollReveal>
-      </section>
-
-      {/* 11. Final CTA - Redesigned */}
-      <section className="py-24 px-6 bg-[#0a0a0a] relative z-20">
-          <ScrollReveal>
-          <div className="max-w-5xl mx-auto relative rounded-[40px] overflow-hidden bg-[#050505] border border-white/10 text-center py-20 px-6">
-               
-               {/* Background Gradients */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-3xl bg-purple-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-               <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-purple-900/10 to-transparent pointer-events-none"></div>
-               
-               {/* Grid Pattern at Bottom */}
-               <div className="absolute bottom-0 left-0 right-0 h-64 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:linear-gradient(to_top,black,transparent)] pointer-events-none"></div>
-
-               {/* Content Container */}
-               <div className="relative z-10 flex flex-col items-center">
-                   
-                   {/* Icons Row */}
-                   <div className="flex items-center justify-center gap-8 mb-12 relative">
-                       {/* Connecting Line */}
-                       <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                       
-                       {/* Left Icon */}
-                       <div className="w-12 h-12 rounded-full bg-black border border-white/10 flex items-center justify-center relative z-10 text-zinc-400">
-                           <Layers size={20} />
-                       </div>
-
-                       {/* Center Icon (Logo) */}
-                       <div className="w-20 h-20 rounded-full bg-gradient-to-b from-zinc-800 to-black border border-purple-500/50 flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(168,85,247,0.4)]">
-                           <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-10 h-10" />
-                       </div>
-
-                       {/* Right Icon */}
-                       <div className="w-12 h-12 rounded-full bg-black border border-white/10 flex items-center justify-center relative z-10 text-zinc-400">
-                           <Shield size={20} />
-                       </div>
-                   </div>
-
-                   {/* Heading */}
-                   <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight max-w-3xl leading-tight">
-                       The simple way <br/> to organize your data
-                   </h2>
-
-                   {/* Subtext */}
-                   <p className="text-lg text-purple-200/60 max-w-xl mb-10 leading-relaxed">
-                       Fully managed AI workspace and agentic search platform for curious minds and modern teams.
-                   </p>
-
-                   {/* Button */}
-                   <button 
-                       onClick={onGetStarted}
-                       className="px-8 py-3 bg-white text-black text-sm font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                   >
-                       Get Started
-                   </button>
-
-               </div>
-          </div>
-          </ScrollReveal>
-      </section>
-
-      {/* 12. Footer */}
-      <footer className="py-20 px-6 bg-[#0a0a0a] border-t border-white/10 relative z-20">
-          <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
-                  <div>
-                      <div className="flex items-center gap-3 font-bold text-2xl tracking-tight mb-6 text-white">
-                        <img src="https://i.ibb.co/pjtXDLqZ/Google-AI-Studio-2025-12-06-T01-46-54-593-Z-modified.png" alt="Logo" className="w-8 h-8 rounded-lg grayscale hover:grayscale-0 transition-all" />
-                        Infinity OS 26
-                      </div>
-                      <p className="text-zinc-500 max-w-sm">
-                          The intelligent search workspace for the modern internet.
-                      </p>
-                  </div>
-              </div>
-              <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                  <p className="text-zinc-600 text-sm">© 2025 Infinity Search Inc. v26.0</p>
+              <div className="flex gap-10">
+                  {['Terms', 'Privacy', 'Security', 'OSS'].map(l => (
+                      <button key={l} className="text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors">{l}</button>
+                  ))}
               </div>
           </div>
       </footer>

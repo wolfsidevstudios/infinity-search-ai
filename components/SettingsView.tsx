@@ -40,10 +40,10 @@ const WALLPAPERS = [
 // Updated Model List for 26.2
 const AVAILABLE_MODELS = [
     { id: 'gemma-2-9b', name: 'Google Gemma 2', desc: 'Fast, efficient, budget-friendly.', isPro: false, badge: 'NEW' },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', desc: 'Standard reasoning engine.', isPro: false, badge: 'DEFAULT' },
+    { id: 'gemini-2.5-flash', name: 'Gemini 3 Flash', desc: 'Standard reasoning engine.', isPro: false, badge: 'DEFAULT' },
     { id: 'gpt-oss-120b', name: 'GPT-OSS 120B', desc: 'Powerful open-source benchmark leader.', isPro: false, badge: 'OPEN' },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', desc: 'Advanced complex reasoning.', isPro: true },
-    { id: 'gemini-3.0-pro', name: 'Gemini 3.0 Pro', desc: 'Maximum reasoning power.', isPro: true },
+    { id: 'gemini-2.5-pro', name: 'Gemini 3 Pro', desc: 'Advanced complex reasoning.', isPro: true },
+    { id: 'gemini-3.0-pro', name: 'Gemini 3 Pro (Ultra)', desc: 'Maximum reasoning power.', isPro: true },
     { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', desc: 'Anthropic\'s most capable model.', isPro: true, badge: 'PREMIUM' },
     { id: 'gpt-5-mini', name: 'GPT-5 Mini', desc: 'OpenAI\'s next-gen efficient model.', isPro: true, badge: 'BETA' },
     { id: 'grok-3', name: 'Grok 3', desc: 'xAI\'s real-time reasoning model.', isPro: true, badge: 'NEW' },
@@ -69,7 +69,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     onToggleAutoSync
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
-  const [apiKey, setApiKey] = useState('');
   const [clarifaiPat, setClarifaiPat] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isPro, setIsPro] = useState(false);
@@ -87,9 +86,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) setApiKey(savedKey);
-
     const savedClarifaiPat = localStorage.getItem('clarifai_pat');
     if (savedClarifaiPat) setClarifaiPat(savedClarifaiPat);
 
@@ -133,12 +129,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handleSaveKeys = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-    } else {
-      localStorage.removeItem('gemini_api_key');
-    }
-
     if (clarifaiPat.trim()) {
       localStorage.setItem('clarifai_pat', clarifaiPat.trim());
     } else {
@@ -258,7 +248,49 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           {/* TAB: UPDATES */}
           {activeTab === 'updates' && (
               <div className="space-y-8 animate-slideUp max-w-2xl mx-auto pt-10">
-                  {/* ... same as before ... */}
+                  <h3 className="text-3xl font-bold text-white">Software Updates</h3>
+                  <div className="p-8 rounded-[32px] bg-zinc-900 border border-white/10 flex flex-col items-center text-center">
+                      <div className="w-20 h-20 bg-zinc-800 rounded-3xl flex items-center justify-center mb-6 shadow-lg">
+                          <Settings size={40} className={updateStatus === 'installing' ? 'animate-spin text-blue-400' : 'text-zinc-400'} />
+                      </div>
+                      
+                      {updateStatus === 'uptodate' ? (
+                          <>
+                              <h4 className="text-xl font-bold mb-2">Infinity OS is up to date</h4>
+                              <p className="text-zinc-500 text-sm mb-8">Version {osVersion} Beta</p>
+                              <div className="flex items-center gap-2 text-green-500 text-sm font-bold bg-green-500/10 px-4 py-2 rounded-full border border-green-500/20">
+                                  <Check size={16} /> Latest version installed
+                              </div>
+                          </>
+                      ) : updateStatus === 'available' ? (
+                          <>
+                              <h4 className="text-xl font-bold mb-2">New Update Available</h4>
+                              <p className="text-zinc-500 text-sm mb-8">Infinity OS 26.2.1-stable • 142MB</p>
+                              <div className="text-left w-full bg-black/40 p-4 rounded-2xl border border-white/5 mb-8">
+                                  <div className="text-xs font-bold text-blue-400 uppercase mb-2">What's New</div>
+                                  <ul className="text-xs text-zinc-400 space-y-1">
+                                      <li>• Improved kernel reasoning latency</li>
+                                      <li>• Optimized spatial window physics</li>
+                                      <li>• New dynamic glass textures</li>
+                                  </ul>
+                              </div>
+                              <button onClick={handleUpdateOS} className="w-full py-4 bg-white text-black rounded-2xl font-bold hover:bg-gray-200 transition-all shadow-xl">
+                                  Update Now
+                              </button>
+                          </>
+                      ) : (
+                          <div className="w-full">
+                              <h4 className="text-xl font-bold mb-2">Installing Update</h4>
+                              <p className="text-zinc-500 text-sm mb-6">Preparing components... {Math.round(installProgress)}%</p>
+                              <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mb-8">
+                                  <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${installProgress}%` }}></div>
+                              </div>
+                              <button disabled className="w-full py-4 bg-zinc-800 text-zinc-500 rounded-2xl font-bold cursor-wait">
+                                  Please wait...
+                              </button>
+                          </div>
+                      )}
+                  </div>
               </div>
           )}
 
@@ -268,7 +300,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
               <h3 className="text-3xl font-bold text-white">Cloud Storage</h3>
               <p className="text-zinc-400">Manage your data synchronization.</p>
               
-              {/* Infinity Cloud Card */}
               <div className={`p-8 rounded-[32px] border relative overflow-hidden transition-all duration-500 ${isCloudEnabled ? 'bg-gradient-to-br from-zinc-900 to-black border-green-900/50 shadow-lg shadow-green-900/10' : 'bg-zinc-900 border-zinc-800'}`}>
                   
                   {isCloudEnabled && <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[80px] pointer-events-none"></div>}
@@ -307,7 +338,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
 
                   {isCloudEnabled && user && (
                       <div className="space-y-6 relative z-10">
-                          {/* Sync Status */}
                           <div className="bg-black/40 rounded-2xl p-5 border border-white/5 flex items-center justify-between">
                               <div>
                                   <div className="text-xs text-zinc-500 uppercase font-bold tracking-wider mb-1">Status</div>
@@ -327,7 +357,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               </div>
                           </div>
 
-                          {/* Storage Bar Mock */}
                           <div>
                               <div className="flex justify-between text-xs text-zinc-400 mb-2">
                                   <span>Storage Usage</span>
@@ -338,7 +367,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               </div>
                           </div>
 
-                          {/* Auto Sync Toggle */}
                           <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
                               <div>
                                   <div className="font-bold text-white flex items-center gap-2 text-sm">
@@ -367,27 +395,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       </div>
                   )}
               </div>
-
-              {/* Legacy/Deprecated Connections */}
-              <div className="opacity-60 grayscale hover:grayscale-0 transition-all">
-                  <div className="flex items-center gap-4 mb-4">
-                      <h4 className="text-lg font-bold text-white">Legacy Connections</h4>
-                      <div className="h-[1px] bg-zinc-800 flex-1"></div>
-                  </div>
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-zinc-500">
-                              <HardDrive size={20} />
-                          </div>
-                          <div>
-                              <div className="font-bold text-white">Google Drive</div>
-                              <div className="text-xs text-zinc-500">Discontinued</div>
-                          </div>
-                      </div>
-                      <span className="text-xs bg-red-900/20 text-red-500 px-2 py-1 rounded">Deprecated</span>
-                  </div>
-              </div>
-            </div>
+          </div>
           )}
 
           {activeTab === 'profile' && (
@@ -424,10 +432,8 @@ const SettingsView: React.FC<SettingsViewProps> = ({
           {activeTab === 'subscription' && (
             <div className="space-y-8 animate-slideUp max-w-2xl">
               <h3 className="text-3xl font-bold text-white">Subscription</h3>
-              
               <div className="p-8 rounded-[32px] bg-gradient-to-br from-zinc-900 to-black border border-white/10 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] pointer-events-none"></div>
-                  
                   <div className="flex justify-between items-start mb-8 relative z-10">
                       <div>
                           <div className="text-sm text-zinc-500 font-bold uppercase tracking-wider mb-2">Current Plan</div>
@@ -445,7 +451,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                       <div className="space-y-6">
                           <div className="flex items-center gap-3 text-zinc-300">
                               <CheckCircle size={20} className="text-green-500" />
-                              <span>Access to Gemini 3.0 Pro & Claude Opus</span>
+                              <span>Access to Gemini 3 Pro & Claude Opus</span>
                           </div>
                           <div className="flex items-center gap-3 text-zinc-300">
                               <CheckCircle size={20} className="text-green-500" />
@@ -455,7 +461,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                               <CheckCircle size={20} className="text-green-500" />
                               <span>Early access to experimental features</span>
                           </div>
-                          
                           <div className="pt-6 border-t border-white/10 flex gap-4">
                               <button className="flex-1 py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-200 transition-colors">Manage Subscription</button>
                               <button onClick={handleCancelSubscription} className="px-6 py-3 bg-red-900/20 text-red-400 rounded-xl font-bold hover:bg-red-900/30 transition-colors border border-red-900/50">Cancel</button>
@@ -486,20 +491,104 @@ const SettingsView: React.FC<SettingsViewProps> = ({
                           </div>
                       </div>
                       <div className="flex bg-black rounded-lg p-1 border border-zinc-800">
-                          <button 
-                            onClick={() => onToggleWeatherUnit('c')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'c' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                          >
-                              °C
-                          </button>
-                          <button 
-                            onClick={() => onToggleWeatherUnit('f')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'f' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                          >
-                              °F
-                          </button>
+                          <button onClick={() => onToggleWeatherUnit('c')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'c' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>°C</button>
+                          <button onClick={() => onToggleWeatherUnit('f')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${weatherUnit === 'f' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>°F</button>
                       </div>
                   </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: FEATURE AI */}
+          {activeTab === 'ai' && (
+            <div className="space-y-8 animate-slideUp max-w-3xl">
+              <h3 className="text-3xl font-bold text-white">Feature AI</h3>
+              <p className="text-zinc-400">Select the intelligence engine that powers your search and workspace.</p>
+              
+              <div className="grid gap-3">
+                  {AVAILABLE_MODELS.map((model) => (
+                      <div 
+                        key={model.id}
+                        onClick={() => handleModelChange(model.id)}
+                        className={`p-6 rounded-[24px] border transition-all cursor-pointer relative group ${
+                            selectedModel === model.id 
+                            ? 'bg-white text-black border-white shadow-lg' 
+                            : model.isPro && !isPro 
+                                ? 'bg-zinc-900/50 border-zinc-800 opacity-60 cursor-not-allowed' 
+                                : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                        }`}
+                      >
+                          <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-3">
+                                  <div className={`font-bold ${selectedModel === model.id ? 'text-black' : 'text-white'}`}>{model.name}</div>
+                                  {model.badge && (
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${selectedModel === model.id ? 'bg-black text-white' : 'bg-zinc-800 text-zinc-400'}`}>
+                                          {model.badge}
+                                      </span>
+                                  )}
+                              </div>
+                              {selectedModel === model.id && <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center text-white"><Check size={12}/></div>}
+                              {model.isPro && !isPro && <Lock size={14} className="text-zinc-500" />}
+                          </div>
+                          <div className={`text-sm ${selectedModel === model.id ? 'text-black/60' : 'text-zinc-500'}`}>{model.desc}</div>
+                      </div>
+                  ))}
+              </div>
+
+              {/* Fixed: Removed manual Gemini API Key input UI as per guidelines. API key is pre-configured. */}
+              <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl mt-8">
+                  <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+                      <ShieldCheck size={18} className="text-green-400" /> Pre-configured Intelligence
+                  </h4>
+                  <p className="text-xs text-zinc-500 leading-relaxed">
+                      Infinity Search uses a system-provided API key for Gemini models to ensure maximum security and privacy. You do not need to provide your own key.
+                  </p>
+              </div>
+
+              <div className="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 p-6 rounded-2xl border border-blue-900/30">
+                <label className="flex items-center gap-2 text-sm font-bold text-blue-300 mb-3">
+                    <Key size={16} /> CLARIFAI ACCESS TOKEN (Optional)
+                </label>
+                <div className="flex gap-3">
+                    <input 
+                        type="password" 
+                        value={clarifaiPat}
+                        onChange={(e) => setClarifaiPat(e.target.value)}
+                        placeholder="Clarifai PAT..."
+                        className="flex-1 p-4 bg-black border border-zinc-800 rounded-xl focus:ring-1 focus:ring-blue-500 outline-none font-mono text-sm text-white"
+                    />
+                    <button 
+                        onClick={handleSaveKeys}
+                        className={`px-6 rounded-xl font-bold text-white transition-all flex items-center gap-2 ${isSaved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    >
+                        {isSaved ? <Check size={20} /> : <Save size={20} />}
+                    </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'connected' && (
+            <div className="space-y-8 animate-slideUp max-w-2xl">
+              <h3 className="text-3xl font-bold text-white">Connected Apps</h3>
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 rounded-2xl">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white border border-zinc-800 rounded-xl flex items-center justify-center p-2">
+                             <img src="https://notion.so/favicon.ico" alt="Notion" className="w-full h-full object-contain" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-lg text-white">Notion</h4>
+                            <p className="text-sm text-zinc-500">{isNotionConnected ? 'Active Connection' : 'Not linked'}</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={onConnectNotion}
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${isNotionConnected ? 'bg-zinc-800 text-zinc-400 hover:bg-red-900/20 hover:text-red-500' : 'bg-white text-black hover:bg-zinc-200'}`}
+                    >
+                        {isNotionConnected ? 'Connected' : 'Connect'}
+                    </button>
+                </div>
               </div>
             </div>
           )}
