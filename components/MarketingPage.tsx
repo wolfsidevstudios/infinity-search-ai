@@ -1,12 +1,47 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-/* Added Play, ShieldCheck, and Crown to imports to fix compilation errors on lines 131, 253, and 312 */
 import { Shield, Zap, Layers, Cpu, Activity, LayoutGrid, Sparkles, Lock, Check, ChevronDown, MessageSquare, Code, Terminal, Mic, Bookmark, BrainCircuit, Search, X, Server, Database, ArrowRight, Command, Globe, ExternalLink, Play, ShieldCheck, Crown } from 'lucide-react';
 
 interface MarketingPageProps {
   onGetStarted: () => void;
   onViewAssets: () => void;
 }
+
+const TypingText: React.FC<{ text: string; className?: string; delay?: number; speed?: number }> = ({ text, className = "", delay = 0, speed = 40 }) => {
+    const [displayedText, setDisplayedText] = useState("");
+    const [hasStarted, setHasStarted] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasStarted) {
+                    setTimeout(() => setHasStarted(true), delay);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.5 }
+        );
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [hasStarted, delay]);
+
+    useEffect(() => {
+        if (hasStarted && displayedText.length < text.length) {
+            const timeout = setTimeout(() => {
+                setDisplayedText(text.substring(0, displayedText.length + 1));
+            }, speed);
+            return () => clearTimeout(timeout);
+        }
+    }, [hasStarted, displayedText, text, speed]);
+
+    return (
+        <span ref={ref} className={className}>
+            {displayedText}
+            <span className={`inline-block w-[2px] h-[1em] bg-current ml-1 align-middle ${displayedText.length === text.length ? 'opacity-0' : 'animate-pulse'}`} />
+        </span>
+    );
+};
 
 const ScrollReveal: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -97,7 +132,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
 
       {/* 2. Immersive Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-          {/* Background Image with Layered Gradients */}
           <div className="absolute inset-0 z-0">
               <img src={HERO_IMG} className="w-full h-full object-cover opacity-60 scale-105 animate-[pulse_10s_ease-in-out_infinite]" alt="Deep Background" />
               <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]"></div>
@@ -109,7 +143,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               <ScrollReveal>
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl mb-12 animate-fadeIn">
                       <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Version 26.0 • Now Stable</span>
+                      <TypingText text="Version 26.0 • Now Stable" speed={50} delay={500} className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60" />
                   </div>
                   
                   <h1 className="text-7xl md:text-[9rem] font-serif-display leading-[0.85] tracking-tighter mb-12">
@@ -136,7 +170,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
               </ScrollReveal>
           </div>
 
-          {/* Bottom Floating Stats */}
           <div className="absolute bottom-12 left-0 right-0 z-20 hidden lg:block px-12">
               <div className="max-w-7xl mx-auto flex justify-between border-t border-white/10 pt-8">
                   {[
@@ -154,14 +187,14 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           </div>
       </section>
 
-      {/* 3. Deep Think Section (High End Visual) */}
+      {/* 3. Deep Think Section */}
       <section className="py-40 px-8 relative overflow-hidden bg-black">
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-24 items-center">
               <ScrollReveal>
                   <div className="space-y-8">
                       <h2 className="text-5xl md:text-7xl font-serif-display leading-tight">
                           Research <br/>
-                          <span className="text-white/40">In Real-Time.</span>
+                          <TypingText text="In Real-Time." speed={100} delay={1000} className="text-white/40" />
                       </h2>
                       <div className="h-[1px] w-24 bg-white/20"></div>
                       <p className="text-xl text-white/60 font-light leading-relaxed max-w-lg">
@@ -199,9 +232,18 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Synapse Kernel</span>
                                </div>
                                <div className="space-y-2 font-mono text-[11px] text-white/80">
-                                   <div className="flex justify-between"><span>&gt; analyze_intent</span> <span className="text-blue-400">COMPLETED</span></div>
-                                   <div className="flex justify-between"><span>&gt; scrape_global_sources</span> <span className="text-blue-400">14 FOUND</span></div>
-                                   <div className="flex justify-between"><span>&gt; verify_contradictions</span> <span className="animate-pulse text-yellow-500">IN PROGRESS</span></div>
+                                   <div className="flex justify-between">
+                                        <span>&gt; <TypingText text="analyze_intent" speed={30} delay={1500} /></span> 
+                                        <span className="text-blue-400">COMPLETED</span>
+                                   </div>
+                                   <div className="flex justify-between">
+                                        <span>&gt; <TypingText text="scrape_global_sources" speed={20} delay={2500} /></span> 
+                                        <span className="text-blue-400">14 FOUND</span>
+                                   </div>
+                                   <div className="flex justify-between">
+                                        <span>&gt; <TypingText text="verify_contradictions" speed={20} delay={3500} /></span> 
+                                        <span className="animate-pulse text-yellow-500">IN PROGRESS</span>
+                                   </div>
                                </div>
                            </div>
                        </div>
@@ -210,7 +252,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           </div>
       </section>
 
-      {/* 4. Feature Bento (Modern Editorial Style) */}
+      {/* 4. Feature Bento */}
       <section className="py-40 px-8 bg-[#050505]">
           <div className="max-w-7xl mx-auto">
               <ScrollReveal className="text-center mb-24">
@@ -267,7 +309,6 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
                           </p>
                       </div>
                       <div className="md:w-1/2 flex justify-center gap-8 items-center">
-                          {/* Floating App Icons */}
                           <div className="flex gap-4 animate-float-icon">
                                <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all"><img src="https://www.google.com/favicon.ico" className="w-8 h-8" alt="G" /></div>
                                <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center shadow-2xl border border-white/10 grayscale hover:grayscale-0 transition-all"><img src="https://notion.so/favicon.ico" className="w-8 h-8" alt="N" /></div>
@@ -328,7 +369,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           </div>
       </section>
 
-      {/* 6. FAQ - Clean Accordion */}
+      {/* 6. FAQ */}
       <section className="py-40 px-8 bg-black">
           <div className="max-w-3xl mx-auto">
               <ScrollReveal className="text-center mb-24">
@@ -356,7 +397,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
           </div>
       </section>
 
-      {/* 7. Final Call - High Impact */}
+      {/* 7. Final Call */}
       <section className="py-60 px-8 bg-[#050505] relative overflow-hidden flex items-center justify-center text-center">
            <div className="absolute inset-0 z-0">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-blue-500/10 blur-[150px] rounded-full"></div>
@@ -377,7 +418,7 @@ const MarketingPage: React.FC<MarketingPageProps> = ({ onGetStarted, onViewAsset
            </ScrollReveal>
       </section>
 
-      {/* 8. Minimal Footer */}
+      {/* 8. Footer */}
       <footer className="py-20 px-8 border-t border-white/5 bg-black">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
               <div className="flex items-center gap-3">

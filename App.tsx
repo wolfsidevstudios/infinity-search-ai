@@ -43,16 +43,14 @@ import { searchRecipes, Recipe } from './services/recipeService';
 import { searchShopping, fetchGoogleImages } from './services/shoppingService';
 import { searchFlights } from './services/flightService';
 import { fetchWeather, getWeatherDescription, WeatherData } from './services/weatherService';
-import { enableInfinityCloud, disableInfinityCloud, syncData, loadFromCloud } from './services/infinityCloudService'; // NEW
+import { enableInfinityCloud, disableInfinityCloud, syncData, loadFromCloud } from './services/infinityCloudService';
 import { SearchState, HistoryItem, NewsArticle, MediaItem, CollectionItem, ShoppingProduct, Flight } from './types';
 import { User } from '@supabase/supabase-js';
 import { ChevronDown, Globe, Image as ImageIcon, ShoppingBag, Plane, Terminal, HardDrive, Newspaper } from 'lucide-react';
 
-// Helper to mix results from different sources
 const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
     const result: MediaItem[] = [];
     const maxLen = Math.max(...sources.map(s => s.length));
-    
     for (let i = 0; i < maxLen; i++) {
         for (const source of sources) {
             if (source[i]) result.push(source[i]);
@@ -64,188 +62,84 @@ const interleaveResults = (sources: MediaItem[][]): MediaItem[] => {
 interface AttachedFile {
   name: string;
   type: 'image' | 'text' | 'pdf';
-  content: string; // Base64 or text content
+  content: string;
   mimeType: string;
 }
 
 const App: React.FC = () => {
-  // App Logic State
   const [view, setView] = useState<'landing' | 'login' | 'app' | 'assets' | 'success'>('landing');
   const [sessionUser, setSessionUser] = useState<User | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
   const [activeTab, setActiveTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
   const [previousTab, setPreviousTab] = useState<'home' | 'os' | 'discover' | 'history' | 'article' | 'images' | 'settings' | 'collections' | 'community' | 'recipe' | 'pricing' | 'canvas'>('home');
-  
   const [discoverViewTab, setDiscoverViewTab] = useState<'news' | 'widgets' | 'whats_new' | 'brief'>('news');
   const [initialCommunityPostId, setInitialCommunityPostId] = useState<string | null>(null);
-  
-  // Appearance & Settings
   const [currentWallpaper, setCurrentWallpaper] = useState<string | null>(null);
   const [weatherUnit, setWeatherUnit] = useState<'c' | 'f'>('c');
   const [isPro, setIsPro] = useState(false);
   const [osVersion, setOsVersion] = useState<string>('26.2 Beta');
-  
-  // Cloud State
   const [isCloudEnabled, setIsCloudEnabled] = useState(false);
   const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
-
-  // Search State
-  const [searchState, setSearchState] = useState<SearchState>({
-    status: 'idle',
-    query: '',
-    summary: '',
-    sources: [],
-    media: [],
-    shopping: [],
-    aiProductPicks: [],
-    productImages: [],
-    flights: [],
-    isDeepSearch: false,
-  });
-
-  // Search Mode
+  const [searchState, setSearchState] = useState<SearchState>({ status: 'idle', query: '', summary: '', sources: [], media: [], shopping: [], aiProductPicks: [], productImages: [], flights: [], isDeepSearch: false });
   const [searchMode, setSearchMode] = useState<'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code'>('web');
-
-  // File Upload & Camera State
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [showCamera, setShowCamera] = useState(false);
   const [showVoiceMode, setShowVoiceMode] = useState(false);
-
-  // Collections State
   const [collections, setCollections] = useState<CollectionItem[]>([]);
-
-  // Auth State (Legacy/Direct Connections)
   const [notionToken, setNotionToken] = useState<string | null>(null);
   const [showNotionModal, setShowNotionModal] = useState(false);
-
-  // Connection Success State
   const [connectedProvider, setConnectedProvider] = useState<string>('');
-
-  // State for Images/Media Tab
-  const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({
-    items: [],
-    loading: false
-  });
-  
+  const [mediaGridData, setMediaGridData] = useState<{ items: MediaItem[], loading: boolean }>({ items: [], loading: false });
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
-
-  // State for history
   const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  // State for viewing details
   const [currentArticle, setCurrentArticle] = useState<NewsArticle | null>(null);
   const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
-
-  // Weather State for Home Greeting
   const [weather, setWeather] = useState<WeatherData | null>(null);
-
-  // State for Recipes Search Results
   const [recipes, setRecipes] = useState<any[]>([]);
 
-  // -- INIT & ROUTING LOGIC --
   useEffect(() => {
-    const initApp = async () => {
+    const checkUser = async () => {
         setIsAuthChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         
+        // Load persistable local settings
         const proStatus = localStorage.getItem('infinity_pro_status');
         if (proStatus === 'active') setIsPro(true);
-
         const savedVersion = localStorage.getItem('infinity_os_version');
         if (savedVersion) setOsVersion(savedVersion);
-        
         const cloudEnabled = localStorage.getItem('infinity_cloud_enabled') === 'true';
         setIsCloudEnabled(cloudEnabled);
-
         const autoSync = localStorage.getItem('infinity_auto_sync') === 'true';
         setIsAutoSyncEnabled(autoSync);
 
-        // 1. Check for Payment Return Parameters First
-        const urlParams = new URLSearchParams(window.location.search);
-        const providerParam = urlParams.get('provider');
-        const successParam = urlParams.get('success');
-
-        if (providerParam === 'polar' || successParam === 'true') {
-            localStorage.setItem('infinity_pro_status', 'active');
-            setIsPro(true);
-            setConnectedProvider('Polar Pro Plan');
-            setView('success');
-            window.history.replaceState({}, '', window.location.pathname);
-            setIsAuthChecking(false);
-            if (session) {
-                setSessionUser(session.user);
-                restoreTokens();
-            } else {
-                setSessionUser({ id: 'pro-user', email: 'pro@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Pro User' }, aud: 'authenticated', created_at: '' } as User);
-            }
-            return;
-        }
-
-        // 2. Check Deep Link Path
-        const path = window.location.pathname.replace('/', '');
-        
         if (session) {
             setSessionUser(session.user);
+            setView('app');
             restoreTokens();
-            
-            // Cloud Logic: Attempt to Load Data
             if (cloudEnabled) {
                 const cloudData = await loadFromCloud(session.user.id);
                 if (cloudData) {
                     setCollections(cloudData.collections);
                     setHistory(cloudData.history);
-                    if (cloudData.settings) {
-                        if (cloudData.settings.weather_unit) setWeatherUnit(cloudData.settings.weather_unit as 'c'|'f');
-                        if (cloudData.settings.wallpaper_url) setCurrentWallpaper(cloudData.settings.wallpaper_url);
-                        if (cloudData.settings.os_version) setOsVersion(cloudData.settings.os_version);
-                    }
+                    if (cloudData.settings?.weather_unit) setWeatherUnit(cloudData.settings.weather_unit as 'c'|'f');
+                    if (cloudData.settings?.wallpaper_url) setCurrentWallpaper(cloudData.settings.wallpaper_url);
                     setLastSynced(new Date());
                 }
             }
-
-            const connectingProvider = localStorage.getItem('connecting_provider');
-            if (connectingProvider) {
-                 // handled in auth listener below
-            } else {
-                 setView('app');
-                 if (path.startsWith('community/')) {
-                     setActiveTab('community');
-                     const postId = path.split('/')[1];
-                     if (postId) setInitialCommunityPostId(postId);
-                 } else if (['home', 'os', 'discover', 'history', 'images', 'settings', 'collections', 'community', 'pricing', 'canvas'].includes(path)) {
-                      setActiveTab(path as any);
-                 }
-            }
         } else {
-             if (path === 'login') setView('login');
-             else setView('landing');
+            // Check for specific deep links or stay on landing
+            const path = window.location.pathname.replace('/', '');
+            if (path === 'login') setView('login');
+            else setView('landing');
         }
         setIsAuthChecking(false);
     };
 
-    initApp();
+    checkUser();
 
-    const loadWeather = async () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => setWeather(await fetchWeather(pos.coords.latitude, pos.coords.longitude)),
-                async () => setWeather(await fetchWeather(40.7128, -74.0060))
-            );
-        } else {
-            setWeather(await fetchWeather(40.7128, -74.0060));
-        }
-    };
-    loadWeather();
-
-    const savedCollections = localStorage.getItem('infinity_collections');
-    if (savedCollections && !isCloudEnabled) setCollections(JSON.parse(savedCollections)); // Only load local if cloud off
-
-    const savedWeatherUnit = localStorage.getItem('weather_unit');
-    if (savedWeatherUnit) setWeatherUnit(savedWeatherUnit as 'c' | 'f');
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (session) {
             setSessionUser(session.user);
             captureProviderTokens(session);
@@ -254,10 +148,10 @@ const App: React.FC = () => {
                 setConnectedProvider(connectingProvider);
                 setView('success');
                 localStorage.removeItem('connecting_provider');
-            } else {
+            } else if (view !== 'success') {
                 setView('app');
             }
-        } else {
+        } else if (event === 'SIGNED_OUT') {
             setSessionUser(null);
             setView('landing');
         }
@@ -266,61 +160,60 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Sync Logic Hook
+  useEffect(() => {
+      const loadWeather = async () => {
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                  async (pos) => setWeather(await fetchWeather(pos.coords.latitude, pos.coords.longitude)),
+                  async () => setWeather(await fetchWeather(40.7128, -74.0060))
+              );
+          } else {
+              setWeather(await fetchWeather(40.7128, -74.0060));
+          }
+      };
+      loadWeather();
+      const savedCollections = localStorage.getItem('infinity_collections');
+      if (savedCollections && !isCloudEnabled) setCollections(JSON.parse(savedCollections));
+  }, [isCloudEnabled]);
+
   useEffect(() => {
       const sync = async () => {
           if (isCloudEnabled && sessionUser && !isAutoSyncEnabled) {
-              // Standard debounce sync for manual-ish saves or important events, 
-              // but we rely more on Auto Sync interval if enabled.
-              // For now, let's keep basic debounce sync as fallback or immediate save.
               const res = await syncData(sessionUser.id, collections, history, {
                   weatherUnit,
                   wallpaperUrl: currentWallpaper,
                   osVersion
               });
-              if (res?.success) {
-                  setLastSynced(new Date());
-              }
+              if (res?.success) setLastSynced(new Date());
           } else if (!isCloudEnabled) {
-              // Local Backup
               localStorage.setItem('infinity_collections', JSON.stringify(collections));
           }
       };
-      
-      const timeout = setTimeout(sync, 2000); // Debounce
+      const timeout = setTimeout(sync, 2000);
       return () => clearTimeout(timeout);
-  }, [collections, history, weatherUnit, currentWallpaper, isCloudEnabled, sessionUser, isAutoSyncEnabled]);
+  }, [collections, history, weatherUnit, currentWallpaper, isCloudEnabled, sessionUser, isAutoSyncEnabled, osVersion]);
 
-  // Auto Sync Interval
   useEffect(() => {
       let interval: any;
       if (isAutoSyncEnabled && isCloudEnabled && sessionUser) {
           interval = setInterval(async () => {
-              // Trigger sync
               const res = await syncData(sessionUser.id, collections, history, {
                   weatherUnit,
                   wallpaperUrl: currentWallpaper,
                   osVersion
               });
-              if (res?.success) {
-                  setLastSynced(new Date());
-              }
-          }, 30000); // Sync every 30 seconds
+              if (res?.success) setLastSynced(new Date());
+          }, 30000);
       }
-      return () => {
-          if (interval) clearInterval(interval);
-      };
+      return () => clearInterval(interval);
   }, [isAutoSyncEnabled, isCloudEnabled, sessionUser, collections, history, weatherUnit, currentWallpaper, osVersion]);
 
-  // Update URL on Tab Change
   useEffect(() => {
       if (view === 'app') {
           let path = '/';
           if (activeTab !== 'home') {
               path = `/${activeTab}`;
-              if (activeTab === 'community' && initialCommunityPostId) {
-                  path = `/community/${initialCommunityPostId}`;
-              }
+              if (activeTab === 'community' && initialCommunityPostId) path = `/community/${initialCommunityPostId}`;
           }
           window.history.pushState({}, '', path);
       }
@@ -351,7 +244,6 @@ const App: React.FC = () => {
       setIsCloudEnabled(enabled);
       if (enabled) {
           await enableInfinityCloud(sessionUser.id);
-          // Trigger immediate sync to upload current local data
           const res = await syncData(sessionUser.id, collections, history, { weatherUnit, wallpaperUrl: currentWallpaper, osVersion });
           if(res?.success) setLastSynced(new Date());
       } else {
@@ -376,22 +268,18 @@ const App: React.FC = () => {
       setSessionUser(null);
       setView('landing');
       setActiveTab('home');
-      setSearchState({
-          status: 'idle',
-          query: '',
-          summary: '',
-          sources: [],
-          media: [],
-      });
+      setSearchState({ status: 'idle', query: '', summary: '', sources: [], media: [] });
       setNotionToken(null);
-      localStorage.clear(); 
+      // Selective clearing to maintain app settings but clear user session
+      localStorage.removeItem('notion_token');
+      localStorage.removeItem('infinity_cloud_enabled');
+      localStorage.removeItem('infinity_auto_sync');
+      localStorage.removeItem('infinity_collections');
       window.history.pushState({}, '', '/');
   };
 
-  const saveReturnTab = () => localStorage.setItem('return_tab', activeTab);
-
   const initiateNotionLogin = async () => {
-      saveReturnTab();
+      localStorage.setItem('return_tab', activeTab);
       localStorage.setItem('connecting_provider', 'notion');
       try {
           const { error } = await supabase.auth.signInWithOAuth({ provider: 'notion', options: { redirectTo: window.location.origin } });
@@ -406,22 +294,17 @@ const App: React.FC = () => {
   };
   
   const handleSuccessContinue = () => { 
-      if (connectedProvider === 'Polar Pro Plan') {
-          setView('app');
-          setActiveTab('pricing');
-          return;
-      }
       const returnTab = localStorage.getItem('return_tab');
       setView('app'); 
       if (returnTab) {
           setActiveTab(returnTab as any);
           localStorage.removeItem('return_tab');
       } else {
-          setActiveTab('settings');
+          setActiveTab('home');
       }
   };
 
-  const handleModeChange = (mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
+  const handleModeChange = (mode: any) => {
       if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
           alert(`Upgrade to Infinity Pro to access ${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode!`);
           setActiveTab('pricing');
@@ -452,139 +335,62 @@ const App: React.FC = () => {
   };
 
   const handleCameraCapture = (imageSrc: string) => {
-      setAttachedFile({
-          name: 'Camera Capture',
-          type: 'image',
-          content: imageSrc,
-          mimeType: 'image/jpeg'
-      });
+      setAttachedFile({ name: 'Camera Capture', type: 'image', content: imageSrc, mimeType: 'image/jpeg' });
       setShowCamera(false);
   };
 
   const handleRemoveFile = () => setAttachedFile(null);
 
   const handleSaveToCollections = (item: any) => {
-      const newItem: CollectionItem = {
-          id: Date.now().toString(),
-          type: item.type,
-          content: item.content,
-          dateAdded: Date.now()
-      };
+      const newItem: CollectionItem = { id: Date.now().toString(), type: item.type, content: item.content, dateAdded: Date.now() };
       setCollections(prev => [newItem, ...prev]);
   };
 
-  const handleRemoveFromCollections = (id: string) => {
-      setCollections(prev => prev.filter(item => item.id !== id));
-  };
+  const handleRemoveFromCollections = (id: string) => setCollections(prev => prev.filter(item => item.id !== id));
+  const handleOsUpdate = (version: string) => { setOsVersion(version); localStorage.setItem('infinity_os_version', version); };
 
-  const handleOsUpdate = (version: string) => {
-      setOsVersion(version);
-      localStorage.setItem('infinity_os_version', version);
-  };
-
-  // --- SEARCH LOGIC ---
-  const performSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
-     try {
-      if ((mode === 'shopping' || mode === 'flight' || mode === 'drive') && !isPro) {
-          setSearchState(prev => ({ ...prev, status: 'idle' }));
-          setActiveTab('pricing');
-          return;
-      }
-
-      if (mode === 'drive') {
-          setSearchState({ status: 'results', query, summary: "Google Drive integration is temporarily unavailable as we migrate to Supabase Storage.", sources: [], media: [] });
-      } else if (mode === 'code') {
-          const result = await generateCode(query);
-          setSearchState({ 
-              status: 'results', 
-              query, 
-              summary: result.explanation, 
-              sources: [], 
-              media: [], 
-              codeResult: result 
-          });
-          addToHistory({ type: 'search', title: `Code: ${query}`, summary: result.explanation, sources: [] });
-
-      } else if (mode === 'notion') {
-          if (!notionToken) return setShowNotionModal(true);
-          const pages = await searchNotion(query, notionToken);
-          setSearchState({ status: 'results', query, summary: `Found ${pages.length} pages in Notion.`, sources: [], media: pages });
-          addToHistory({ type: 'search', title: `Notion: ${query}`, summary: `Workspace search for ${query}`, sources: [] });
-      } else if (mode === 'bible') {
-          const preferredVersion = localStorage.getItem('bible_version') || 'kjv';
-          const preferredLang = (localStorage.getItem('bible_lang') as 'en' | 'es') || 'en';
-          const bibleData = await fetchBiblePassage(query, preferredVersion, preferredLang);
-          if (bibleData) {
-              setSearchState({ status: 'results', query, summary: `Passage from ${bibleData.reference}`, sources: [], media: [{ id: bibleData.reference, type: 'bible', thumbnailUrl: '', contentUrl: '', pageUrl: '', title: bibleData.reference, source: bibleData.translation_id, data: bibleData }] });
-              addToHistory({ type: 'search', title: `Scripture: ${bibleData.reference}`, summary: bibleData.text.substring(0, 100) + '...', sources: [] });
-          } else {
-             setSearchState(prev => ({ ...prev, status: 'results', media: [], summary: "No results found." }));
-          }
-      } else if (mode === 'podcast') {
-          const podcasts = await searchPodcasts(query);
-          setSearchState({ status: 'results', query, summary: `Found ${podcasts.length} podcasts.`, sources: [], media: podcasts });
-          addToHistory({ type: 'search', title: `Podcast: ${query}`, summary: `Audio search for ${query}`, sources: [] });
-      } else if (mode === 'community') {
-          setSearchState({ status: 'results', query, summary: `Searching community...`, sources: [], media: [] });
-      } else if (mode === 'recipe') {
-          const results = await searchRecipes(query);
-          setRecipes(results); 
-          setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
-          addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
-      } else if (mode === 'shopping') {
-          const [products, images] = await Promise.all([
-              searchShopping(query),
-              fetchGoogleImages(query)
-          ]);
-          setSearchState({ 
-              status: 'results', 
-              query, 
-              summary: `Found ${products.length} products.`, 
-              sources: [], 
-              media: [], 
-              shopping: products,
-              productImages: images,
-              aiProductPicks: [] 
-          });
-          if (products.length > 0) {
-              getProductRecommendations(products, query).then(picks => {
-                  setSearchState(prev => ({ ...prev, aiProductPicks: picks }));
-              });
-          }
-          addToHistory({ type: 'search', title: `Shopping: ${query}`, summary: `Product search for ${query}`, sources: [] });
-      } else if (mode === 'flight') {
-          const flights = await searchFlights(query);
-          setSearchState({ status: 'results', query, summary: `Found ${flights.length} flights.`, sources: [], media: [], flights: flights });
-          addToHistory({ type: 'search', title: `Flight: ${query}`, summary: `Travel search for ${query}`, sources: [] });
-      } else {
-          const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
-          let activeQuery = query;
-          if (!activeQuery && attachedFile) {
-              activeQuery = "Find images related to this input image and explain them.";
-          }
-          const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
-            searchWithGemini(activeQuery, fileContext),
-            fetchPixabayImages(activeQuery, 4),
-            fetchPexelsImages(activeQuery, 4),
-            fetchNasaImages(activeQuery)
-          ]);
-          const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
-          addToHistory({ type: 'search', title: activeQuery, summary: aiData.text, sources: aiData.sources });
-          setSearchState({ status: 'results', query: activeQuery, summary: aiData.text, sources: aiData.sources, media: combinedImages });
-          setMediaGridData({ items: combinedImages, loading: false });
-          setMediaType('image');
-          setAttachedFile(null); 
-      }
-    } catch (error) {
-      console.error(error);
-      setSearchState(prev => ({ ...prev, status: 'idle', error: 'Something went wrong. Please try again.' }));
-    }
-  };
-
-  const handleSearch = async (query: string, mode: 'web' | 'notion' | 'bible' | 'podcast' | 'community' | 'recipe' | 'shopping' | 'flight' | 'drive' | 'code') => {
+  const handleSearch = async (query: string, mode: any) => {
       setSearchState(prev => ({ ...prev, status: 'searching', query, isDeepSearch: false }));
       setActiveTab('home');
-      performSearch(query, mode);
+      try {
+        if (mode === 'code') {
+            const result = await generateCode(query);
+            setSearchState({ status: 'results', query, summary: result.explanation, sources: [], media: [], codeResult: result });
+            addToHistory({ type: 'search', title: `Code: ${query}`, summary: result.explanation, sources: [] });
+        } else if (mode === 'notion') {
+            if (!notionToken) return setShowNotionModal(true);
+            const pages = await searchNotion(query, notionToken);
+            setSearchState({ status: 'results', query, summary: `Found ${pages.length} pages in Notion.`, sources: [], media: pages });
+            addToHistory({ type: 'search', title: `Notion: ${query}`, summary: `Workspace search for ${query}`, sources: [] });
+        } else if (mode === 'bible') {
+            const bibleData = await fetchBiblePassage(query);
+            if (bibleData) {
+                setSearchState({ status: 'results', query, summary: `Passage from ${bibleData.reference}`, sources: [], media: [{ id: bibleData.reference, type: 'bible', thumbnailUrl: '', contentUrl: '', pageUrl: '', title: bibleData.reference, source: bibleData.translation_id, data: bibleData }] });
+                addToHistory({ type: 'search', title: `Scripture: ${bibleData.reference}`, summary: bibleData.text.substring(0, 100) + '...', sources: [] });
+            }
+        } else if (mode === 'recipe') {
+            const results = await searchRecipes(query);
+            setRecipes(results);
+            setSearchState({ status: 'results', query, summary: `Found ${results.length} recipes.`, sources: [], media: [] });
+            addToHistory({ type: 'search', title: `Recipe: ${query}`, summary: `Cooking search for ${query}`, sources: [] });
+        } else {
+            const fileContext = attachedFile ? { content: attachedFile.content, mimeType: attachedFile.mimeType } : undefined;
+            const [aiData, pixabayImgs, pexelsImgs, nasaImgs] = await Promise.all([
+              searchWithGemini(query, fileContext),
+              fetchPixabayImages(query, 4),
+              fetchPexelsImages(query, 4),
+              fetchNasaImages(query)
+            ]);
+            const combinedImages = interleaveResults([pixabayImgs, pexelsImgs, nasaImgs]);
+            addToHistory({ type: 'search', title: query, summary: aiData.text, sources: aiData.sources });
+            setSearchState({ status: 'results', query, summary: aiData.text, sources: aiData.sources, media: combinedImages });
+            setMediaGridData({ items: combinedImages, loading: false });
+            setAttachedFile(null); 
+        }
+      } catch (error) {
+        console.error(error);
+        setSearchState(prev => ({ ...prev, status: 'idle', error: 'Search failed' }));
+      }
   };
 
   const handleMediaSearch = async (query: string, type: 'image' | 'video') => {
@@ -592,17 +398,14 @@ const App: React.FC = () => {
       setMediaType(type);
       setActiveTab('images');
       let results: MediaItem[] = [];
-      try {
-        if (type === 'image') {
-          const [pixabay, pexels, nasa] = await Promise.all([fetchPixabayImages(query, 10), fetchPexelsImages(query, 10), fetchNasaImages(query)]);
-          results = interleaveResults([pixabay, pexels, nasa]);
-        } else {
-          const [pixabayVids, pexelsVids] = await Promise.all([fetchPixabayVideos(query, 8), fetchPexelsVideos(query, 8)]);
-          results = interleaveResults([pixabayVids, pexelsVids]);
-        }
-      } catch (e) { console.error("Media search failed", e); }
+      if (type === 'image') {
+        const [pixabay, pexels, nasa] = await Promise.all([fetchPixabayImages(query, 10), fetchPexelsImages(query, 10), fetchNasaImages(query)]);
+        results = interleaveResults([pixabay, pexels, nasa]);
+      } else {
+        const [pixabayVids, pexelsVids] = await Promise.all([fetchPixabayVideos(query, 8), fetchPexelsVideos(query, 8)]);
+        results = interleaveResults([pixabayVids, pexelsVids]);
+      }
       setMediaGridData({ items: results, loading: false });
-      addToHistory({ type: 'search', title: `${type === 'image' ? 'Images' : 'Videos'}: ${query}`, summary: `Visual discovery for "${query}"` });
   };
 
   const handleReset = () => {
@@ -610,77 +413,15 @@ const App: React.FC = () => {
     setSearchState({ status: 'idle', query: '', summary: '', sources: [], media: [] });
     setSearchMode('web');
     setAttachedFile(null);
-    window.speechSynthesis.cancel();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     window.history.pushState({}, '', '/');
-  };
-
-  const handleTabChange = (tab: any) => {
-    if (activeTab !== tab && tab !== 'recipe' && tab !== 'article') {
-        setPreviousTab(activeTab as any); 
-    }
-    setActiveTab(tab);
-    if (tab === 'community') {
-        setInitialCommunityPostId(null);
-    }
-    if (tab === 'images' && mediaGridData.items.length === 0 && searchState.query && searchMode === 'web') {
-         handleMediaSearch(searchState.query, mediaType);
-    }
-  };
-
-  const handleOpenArticle = (article: NewsArticle) => {
-      setPreviousTab('discover'); 
-      setCurrentArticle(article);
-      setActiveTab('article');
-      addToHistory({ type: 'article', title: article.title, subtitle: article.source.name, data: article });
-  };
-
-  const handleOpenRecipe = (recipe: Recipe) => {
-      setPreviousTab(activeTab !== 'recipe' ? (activeTab as any) : 'home');
-      setCurrentRecipe(recipe);
-      setActiveTab('recipe');
-  };
-
-  const handleSummarizeArticle = (url: string) => {
-      const query = `Summarize this article: ${url}`;
-      setSearchMode('web');
-      handleSearch(query, 'web');
-  };
-
-  const handleHistorySelect = (item: HistoryItem) => {
-      if (item.type === 'search') {
-          if (item.title.startsWith("Notion: ")) { setSearchMode('notion'); handleSearch(item.title.replace("Notion: ", ""), 'notion'); }
-          else if (item.title.startsWith("Scripture: ")) { setSearchMode('bible'); handleSearch(item.title.replace("Scripture: ", ""), 'bible'); }
-          else if (item.title.startsWith("Podcast: ")) { setSearchMode('podcast'); handleSearch(item.title.replace("Podcast: ", ""), 'podcast'); }
-          else if (item.title.startsWith("Recipe: ")) { setSearchMode('recipe'); handleSearch(item.title.replace("Recipe: ", ""), 'recipe'); }
-          else if (item.title.startsWith("Shopping: ")) { setSearchMode('shopping'); handleSearch(item.title.replace("Shopping: ", ""), 'shopping'); }
-          else if (item.title.startsWith("Flight: ")) { setSearchMode('flight'); handleSearch(item.title.replace("Flight: ", ""), 'flight'); }
-          else if (item.title.startsWith("Drive: ")) { setSearchMode('drive'); handleSearch(item.title.replace("Drive: ", ""), 'drive'); }
-          else if (item.title.startsWith("Code: ")) { setSearchMode('code'); handleSearch(item.title.replace("Code: ", ""), 'code'); }
-          else { setSearchMode('web'); handleSearch(item.title, 'web'); }
-      } else if (item.type === 'article' && item.data) { setCurrentArticle(item.data); setActiveTab('article'); }
-  };
-
-  const handleViewDailyBrief = () => {
-      setDiscoverViewTab('brief');
-      setActiveTab('discover');
-  };
-
-  const handleUpgradeClick = () => {
-      setActiveTab('pricing');
-  };
-
-  const bgStyle = () => {
-     if (currentWallpaper) return { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-     return { backgroundColor: '#000000' };
   };
 
   if (view === 'assets') return <AssetsPage onBack={() => setView('landing')} />;
   if (view === 'success') return <SuccessPage provider={connectedProvider} onContinue={handleSuccessContinue} />;
+  if (isAuthChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><LoadingAnimation/></div>;
   if (view === 'landing') return <div className="h-screen w-full overflow-y-auto bg-black"><MarketingPage onGetStarted={() => setView('login')} onViewAssets={() => setView('assets')} /></div>;
-  if (view === 'login' && !sessionUser) {
-      if (isAuthChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><LoadingAnimation/></div>;
-      return <div className="h-screen w-full bg-black"><LoginPage onSkip={() => { setSessionUser({ id: 'demo-user', email: 'demo@infinity.ai', app_metadata: {}, user_metadata: { full_name: 'Demo User' }, aud: 'authenticated', created_at: '' } as User); setView('app'); }} /></div>;
-  }
+  if (view === 'login' && !sessionUser) return <div className="h-screen w-full bg-black"><LoginPage onSkip={() => setView('app')} /></div>;
 
   const userName = sessionUser?.user_metadata?.full_name?.split(' ')[0] || "there";
   const userAvatar = sessionUser?.user_metadata?.avatar_url;
@@ -692,42 +433,24 @@ const App: React.FC = () => {
 
   return (
     <div className="relative h-screen w-full bg-black text-white flex flex-col md:flex-row overflow-hidden">
-      
-      {showCamera && (
-          <CameraView 
-            onCapture={handleCameraCapture}
-            onClose={() => setShowCamera(false)}
-          />
-      )}
-
-      {showVoiceMode && (
-          <VoiceOverlay onClose={() => setShowVoiceMode(false)} />
-      )}
-
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
-      <MobileNav activeTab={activeTab} onTabChange={handleTabChange} onReset={handleReset} />
+      {showCamera && <CameraView onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} />}
+      {showVoiceMode && <VoiceOverlay onClose={() => setShowVoiceMode(false)} />}
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
+      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} onReset={handleReset} />
 
       <main 
         className="flex-1 w-full h-full md:h-[calc(100vh-1.5rem)] md:m-3 md:ml-24 relative md:rounded-[40px] overflow-hidden shadow-2xl flex flex-col z-10 transition-all duration-500 border-x border-b md:border border-white/10 pb-20 md:pb-0" 
-        style={bgStyle()}
+        style={currentWallpaper ? { backgroundImage: `url(${currentWallpaper})`, backgroundSize: 'cover', backgroundPosition: 'center' } : { backgroundColor: '#000' }}
       >
         {currentWallpaper && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-none z-0" />}
 
         {activeTab === 'home' && searchState.status === 'idle' && (
             <div className="absolute top-6 right-8 z-50 flex items-center gap-4">
-                <div className="hidden md:flex">
-                    <QuickAccessBar />
-                </div>
+                <QuickAccessBar />
                 {sessionUser && (
                     <div className={`w-10 h-10 rounded-full p-[2px] ${isPro ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow' : 'bg-transparent'}`}>
                         <div className="w-full h-full rounded-full overflow-hidden bg-black border border-white/10">
-                            {userAvatar ? (
-                                <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white font-bold">
-                                    {userName.charAt(0).toUpperCase()}
-                                </div>
-                            )}
+                            {userAvatar ? <img src={userAvatar} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-white font-bold">{userName.charAt(0).toUpperCase()}</div>}
                         </div>
                     </div>
                 )}
@@ -738,17 +461,14 @@ const App: React.FC = () => {
             <div className="pointer-events-auto">
                 {activeTab === 'home' && (searchState.status === 'results' || searchState.status === 'thinking') && (
                     <div onClick={handleReset} className="cursor-pointer group flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full group-hover:scale-150 transition-transform bg-white`}/>
-                        <span className={`font-medium tracking-wide group-hover:opacity-100 opacity-80 text-white`}>Back to Search</span>
+                        <span className="w-2 h-2 rounded-full group-hover:scale-150 transition-transform bg-white"/>
+                        <span className="font-medium tracking-wide group-hover:opacity-100 opacity-80 text-white">Back to Search</span>
                     </div>
                 )}
             </div>
             {!(activeTab === 'home' && searchState.status === 'idle') && (activeTab !== 'os') && (
                 <div className="flex items-center gap-3 px-4 py-2 bg-[#111]/80 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl transition-all hover:border-white/20 group">
-                    <div className="relative">
-                        <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
-                        <div className="absolute inset-0 bg-purple-500 blur-[4px] opacity-50"></div>
-                    </div>
+                    <div className="relative"><div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div><div className="absolute inset-0 bg-purple-500 blur-[4px] opacity-50"></div></div>
                     <span className="font-semibold text-sm text-white/90 tracking-tight">Infinity {osVersion}</span>
                     <div className="h-3 w-[1px] bg-white/10"></div>
                     <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Synapse</span>
@@ -757,36 +477,20 @@ const App: React.FC = () => {
         </div>
 
         <div className={`flex-1 flex flex-col relative z-20 transition-all w-full ${activeTab === 'images' || activeTab === 'settings' || activeTab === 'recipe' || activeTab === 'pricing' || activeTab === 'os' || activeTab === 'canvas' ? 'overflow-hidden' : 'overflow-y-auto glass-scroll px-4 md:px-8 pb-8'}`}>
-            
             {activeTab === 'home' && (
               <>
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ${searchState.status === 'idle' ? 'opacity-100' : 'opacity-0 hidden'}`}>
                     <div className="flex flex-col items-center gap-8 w-full max-w-2xl mb-20 animate-slideUp">
-                        <a href="https://freeimage.host/" target="_blank" rel="noopener noreferrer">
-                            <img src="https://iili.io/fRRfoF9.png" alt="Infinity Visual" className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" />
-                        </a>
-                        <div className="w-full relative z-30">
-                            <SearchInput 
-                                onSearch={handleSearch} 
-                                isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
-                                centered={true}
-                                activeMode={searchMode}
-                                onModeChange={handleModeChange}
-                                onFileSelect={handleFileSelect}
-                                attachedFile={attachedFile}
-                                onRemoveFile={handleRemoveFile}
-                                onCameraClick={() => setShowCamera(true)}
-                                isPro={isPro}
-                                onVoiceClick={() => setShowVoiceMode(true)}
-                            />
-                        </div>
+                        <img src="https://iili.io/fRRfoF9.png" alt="Infinity Logo" className="w-64 md:w-80 h-auto mb-4 drop-shadow-2xl" />
+                        <SearchInput 
+                            onSearch={handleSearch} isSearching={searchState.status === 'searching' || searchState.status === 'thinking'} 
+                            centered={true} activeMode={searchMode} onModeChange={handleModeChange}
+                            onFileSelect={handleFileSelect} attachedFile={attachedFile} onRemoveFile={handleRemoveFile}
+                            onCameraClick={() => setShowCamera(true)} isPro={isPro} onVoiceClick={() => setShowVoiceMode(true)}
+                        />
                         <div className="text-center space-y-3 mt-4 px-4">
-                            <p className="text-lg md:text-xl text-zinc-400 font-light">
-                                Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.
-                            </p>
-                            <button onClick={handleViewDailyBrief} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group">
-                                See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" />
-                            </button>
+                            <p className="text-lg md:text-xl text-zinc-400 font-light">Hi, {userName}. Today, there will be <span className="text-white font-medium">{tempDisplay}°{tempUnitLabel}</span> and <span className="text-white font-medium">{condition}</span> in {city}.</p>
+                            <button onClick={() => { setDiscoverViewTab('brief'); setActiveTab('discover'); }} className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium transition-colors mx-auto group">See your daily briefing <ChevronDown size={16} className="group-hover:translate-y-1 transition-transform" /></button>
                         </div>
                     </div>
                 </div>
@@ -798,7 +502,7 @@ const App: React.FC = () => {
                         : searchMode === 'bible' ? <BibleResultsView items={searchState.media} query={searchState.query} /> 
                         : searchMode === 'podcast' ? <PodcastResultsView items={searchState.media} query={searchState.query} onSave={handleSaveToCollections} /> 
                         : searchMode === 'community' ? <CommunityView user={sessionUser} initialQuery={searchState.query} /> 
-                        : searchMode === 'recipe' ? <RecipeResultsView recipes={recipes} query={searchState.query} onOpenRecipe={handleOpenRecipe} /> 
+                        : searchMode === 'recipe' ? <RecipeResultsView recipes={recipes} query={searchState.query} onOpenRecipe={setCurrentRecipe} /> 
                         : searchMode === 'shopping' ? <ShoppingResultsView products={searchState.shopping || []} aiPicks={searchState.aiProductPicks || []} productImages={searchState.productImages || []} query={searchState.query} onSave={handleSaveToCollections} /> 
                         : searchMode === 'flight' ? <FlightResultsView flights={searchState.flights || []} query={searchState.query} onSave={handleSaveToCollections} /> 
                         : (
@@ -811,38 +515,17 @@ const App: React.FC = () => {
                 )}
               </>
             )}
-
             {activeTab === 'os' && <OsView user={sessionUser} onLogout={handleLogout} weather={weather} history={history} collections={collections} onSearch={(q) => handleSearch(q, 'web')} onSaveHistory={addToHistory} />}
             {activeTab === 'canvas' && <CanvasView />}
-            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={handleOpenArticle} onSummarize={handleSummarizeArticle} onOpenRecipe={handleOpenRecipe} initialTab={discoverViewTab} weatherUnit={weatherUnit} /></div>}
+            {activeTab === 'discover' && <div className="w-full h-full pt-4"><DiscoverView onOpenArticle={setCurrentArticle} onSummarize={(url) => handleSearch(`Summarize: ${url}`, 'web')} onOpenRecipe={setCurrentRecipe} initialTab={discoverViewTab} weatherUnit={weatherUnit} /></div>}
             {activeTab === 'collections' && <div className="w-full h-full pt-4"><CollectionsView items={collections} onRemove={handleRemoveFromCollections}/></div>}
             {activeTab === 'community' && <div className="w-full h-full pt-4"><CommunityView user={sessionUser} initialPostId={initialCommunityPostId} /></div>}
             {activeTab === 'images' && <div className="w-full h-full"><ImageGridView items={mediaGridData.items} onSearch={handleMediaSearch} loading={mediaGridData.loading} activeMediaType={mediaType} onMediaTypeChange={setMediaType} /></div>}
-            {activeTab === 'article' && currentArticle && <div className="w-full h-full pt-4"><ArticleDetailView article={currentArticle} onBack={() => setActiveTab(previousTab as any)} onSummarize={handleSummarizeArticle}/></div>}
-            {activeTab === 'recipe' && currentRecipe && <div className="w-full h-full"><RecipeDetailView recipe={currentRecipe} onBack={() => setActiveTab(previousTab as any)} /></div>}
-            {activeTab === 'pricing' && <div className="w-full h-full"><PricingView /></div>}
-            {activeTab === 'history' && <div className="w-full h-full pt-4"><HistoryView history={history} onSelectItem={handleHistorySelect}/></div>}
-            
-            {activeTab === 'settings' && (
-                <div className="w-full h-full">
-                    <SettingsView 
-                        isNotionConnected={!!notionToken}
-                        onConnectNotion={initiateNotionLogin}
-                        currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper}
-                        user={sessionUser} onLogout={handleLogout}
-                        weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange}
-                        onUpgradeClick={handleUpgradeClick}
-                        osVersion={osVersion}
-                        onUpdateOS={handleOsUpdate}
-                        isCloudEnabled={isCloudEnabled}
-                        onToggleCloud={handleToggleCloud}
-                        lastSynced={lastSynced}
-                        onManualSync={handleManualSync}
-                        isAutoSyncEnabled={isAutoSyncEnabled}
-                        onToggleAutoSync={handleToggleAutoSync}
-                    />
-                </div>
-            )}
+            {activeTab === 'article' && currentArticle && <ArticleDetailView article={currentArticle} onBack={() => setActiveTab(previousTab)} onSummarize={(url) => handleSearch(`Summarize: ${url}`, 'web')} />}
+            {activeTab === 'recipe' && currentRecipe && <RecipeDetailView recipe={currentRecipe} onBack={() => setActiveTab(previousTab)} />}
+            {activeTab === 'pricing' && <PricingView />}
+            {activeTab === 'history' && <HistoryView history={history} onSelectItem={(item) => item.type === 'search' ? handleSearch(item.title, 'web') : setCurrentArticle(item.data)} />}
+            {activeTab === 'settings' && <SettingsView isNotionConnected={!!notionToken} onConnectNotion={initiateNotionLogin} currentWallpaper={currentWallpaper} onWallpaperChange={setCurrentWallpaper} user={sessionUser} onLogout={handleLogout} weatherUnit={weatherUnit} onToggleWeatherUnit={handleWeatherUnitChange} onUpgradeClick={() => setActiveTab('pricing')} osVersion={osVersion} onUpdateOS={handleOsUpdate} isCloudEnabled={isCloudEnabled} onToggleCloud={handleToggleCloud} lastSynced={lastSynced} onManualSync={handleManualSync} isAutoSyncEnabled={isAutoSyncEnabled} onToggleAutoSync={handleToggleAutoSync} />}
         </div>
       </main>
     </div>
